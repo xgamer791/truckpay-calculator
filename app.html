@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TruckPay Calculator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'DM Sans', system-ui; background: linear-gradient(to br, #0f172a, #1e293b); color: white; min-height: 100vh; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+        .header { margin-bottom: 48px; }
+        .header h1 { font-size: 32px; font-weight: bold; background: linear-gradient(to right, #60a5fa, #22d3ee); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px; }
+        .header p { color: #94a3b8; font-size: 14px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr 300px; gap: 24px; }
+        .card { background: rgba(30, 41, 59, 0.8); backdrop-filter: blur(10px); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 12px; padding: 24px; }
+        .card h2 { color: #60a5fa; margin-bottom: 16px; font-size: 18px; }
+        .button-group { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+        button { padding: 12px 16px; border: none; border-radius: 8px; font-weight: 500; cursor: pointer; transition: all 0.3s; }
+        .btn-upload { background: #2563eb; color: white; }
+        .btn-upload:hover { background: #1d4ed8; transform: translateY(-2px); }
+        .btn-camera { background: #0891b2; color: white; }
+        .btn-camera:hover { background: #0e7490; transform: translateY(-2px); }
+        .btn-add { background: #059669; color: white; }
+        .btn-add:hover { background: #047857; }
+        .input-group { display: flex; gap: 8px; }
+        input[type="text"], input[type="number"] { flex: 1; background: rgba(30, 41, 59, 0.5); border: 1px solid #475569; border-radius: 8px; padding: 8px 12px; color: white; }
+        input[type="text"]::placeholder, input[type="number"]::placeholder { color: #64748b; }
+        input[type="file"] { display: none; }
+        .settings { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .setting-field label { display: block; font-size: 14px; color: #cbd5e1; margin-bottom: 8px; font-weight: 500; }
+        .summary { padding: 24px; background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.6)); border-radius: 12px; }
+        .summary-value { font-size: 32px; font-weight: bold; background: linear-gradient(to right, #4ade80, #10b981); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-family: monospace; }
+        .summary-item { display: flex; justify-content: space-between; font-size: 14px; margin: 12px 0; }
+        .summary-label { color: #94a3b8; }
+        .summary-value-small { color: #60a5fa; font-family: monospace; font-weight: 600; }
+        table { width: 100%; margin-top: 24px; font-size: 14px; }
+        th { text-align: left; padding: 12px; color: #60a5fa; font-weight: 600; border-bottom: 1px solid #334155; }
+        td { padding: 12px; border-bottom: 1px solid rgba(148, 163, 184, 0.1); }
+        tr:hover { background: rgba(30, 41, 59, 0.3); }
+        .delete-btn { background: none; border: none; color: #ef4444; cursor: pointer; padding: 0; font-size: 18px; }
+        .delete-btn:hover { color: #dc2626; }
+        @media (max-width: 1024px) { .grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💰 TruckPay Calculator</h1>
+            <p>Professional pay breakdown with photo OCR mileage extraction</p>
+        </div>
+
+        <div class="grid">
+            <div class="card" style="grid-column: span 2;">
+                <h2>📸 Mileage Input</h2>
+                <div class="button-group">
+                    <button class="btn-upload" onclick="document.getElementById('fileInput').click()">📤 Upload Photo</button>
+                    <button class="btn-camera" onclick="document.getElementById('cameraInput').click()">📷 Take Photo</button>
+                </div>
+                <input type="file" id="fileInput" accept="image/*" onchange="processImage(this.files[0])">
+                <input type="file" id="cameraInput" accept="image/*" capture="environment" onchange="processImage(this.files[0])">
+                
+                <div style="border-top: 1px solid #475569; padding-top: 16px; margin-top: 16px;">
+                    <p style="font-size: 14px; color: #94a3b8; margin-bottom: 12px;">Or enter manually</p>
+                    <div class="input-group">
+                        <input type="number" id="manualInput" placeholder="Enter miles..." style="flex: 1;">
+                        <button class="btn-add" onclick="addManualMileage()">Add</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>⚙️ Settings</h2>
+                <div class="settings">
+                    <div class="setting-field">
+                        <label>Tonnage</label>
+                        <input type="number" id="tonnage" value="24" style="width: 100%;">
+                    </div>
+                    <div class="setting-field">
+                        <label>Commission %</label>
+                        <input type="number" id="commission" value="30" style="width: 100%;">
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>💵 Summary</h2>
+                <p style="font-size: 12px; color: #94a3b8; margin-bottom: 8px;">Total Pay</p>
+                <div class="summary-value" id="totalPay">$0.00</div>
+                <div class="summary" style="margin-top: 16px; background: transparent; padding: 0; border: none;">
+                    <div class="summary-item">
+                        <span class="summary-label">Total Miles</span>
+                        <span class="summary-value-small" id="totalMiles">0</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Trips</span>
+                        <span class="summary-value-small" id="tripCount">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top: 24px;">
+            <h2>📊 Detailed Breakdown</h2>
+            <table id="resultsTable" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>Miles</th>
+                        <th>Rate</th>
+                        <th>Base Pay</th>
+                        <th>w/ Tonnage</th>
+                        <th>Your Pay (30%)</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+            <p id="emptyMsg" style="text-align: center; color: #64748b; padding: 32px;">Add mileage to see breakdown</p>
+        </div>
+    </div>
+
+    <script>
+        const RATE_SHEET = [
+            { miles: 92, rate: 15.89 }, { miles: 92, rate: 8.75 }, { miles: 92, rate: 16.25 },
+            { miles: 27, rate: 7.10 }, { miles: 61, rate: 14.40 }, { miles: 65, rate: 15.42 },
+            { miles: 27, rate: 7.61 }, { miles: 11, rate: 5.06 }, { miles: 39, rate: 10.26 },
+            { miles: 2, rate: 3.84 }, { miles: 14, rate: 5.68 }, { miles: 25, rate: 7.32 },
+            { miles: 45, rate: 11.24 }, { miles: 8, rate: 4.65 }, { miles: 3, rate: 3.97 },
+            { miles: 21, rate: 6.75 }, { miles: 17, rate: 6.00 }, { miles: 6, rate: 4.38 },
+            { miles: 13, rate: 5.12 }, { miles: 14, rate: 5.18 }, { miles: 16, rate: 6.03 },
+            { miles: 30, rate: 8.01 }, { miles: 49, rate: 10.15 }, { miles: 13, rate: 5.85 },
+            { miles: 13, rate: 5.41 }, { miles: 62, rate: 14.72 }
+        ];
+
+        let mileages = [];
+
+        function findRate(miles) {
+            return RATE_SHEET.find(entry => entry.miles === miles);
+        }
+
+        function calculatePay(miles) {
+            const rate = findRate(miles);
+            if (!rate) return null;
+            const tonnage = parseFloat(document.getElementById('tonnage').value) || 24;
+            const commission = parseFloat(document.getElementById('commission').value) || 30;
+            return {
+                miles,
+                rate: rate.rate,
+                basePay: miles * rate.rate,
+                withTonnage: miles * rate.rate * (tonnage / 100),
+                commissionAmount: miles * rate.rate * (tonnage / 100) * (commission / 100)
+            };
+        }
+
+        async function processImage(file) {
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const result = await Tesseract.recognize(e.target.result, 'eng');
+                    const numbers = result.data.text.match(/\b\d+\b/g) || [];
+                    numbers.map(n => parseInt(n)).filter(n => n > 0 && n < 500).forEach(n => {
+                        if (!mileages.includes(n)) mileages.push(n);
+                    });
+                    updateDisplay();
+                } catch (err) {
+                    alert('Error: ' + err.message);
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function addManualMileage() {
+            const input = document.getElementById('manualInput');
+            const miles = parseInt(input.value);
+            if (!isNaN(miles) && miles > 0) {
+                if (!mileages.includes(miles)) mileages.push(miles);
+                input.value = '';
+                updateDisplay();
+            }
+        }
+
+        function removeMileage(index) {
+            mileages.splice(index, 1);
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            const calcs = mileages.map(m => calculatePay(m)).filter(Boolean);
+            const total = calcs.reduce((sum, c) => sum + c.commissionAmount, 0);
+            const totalMiles = calcs.reduce((sum, c) => sum + c.miles, 0);
+
+            document.getElementById('totalPay').textContent = '$' + total.toFixed(2);
+            document.getElementById('totalMiles').textContent = totalMiles;
+            document.getElementById('tripCount').textContent = calcs.length;
+
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = calcs.map((c, i) => `
+                <tr>
+                    <td>${c.miles}</td>
+                    <td>$${c.rate.toFixed(2)}</td>
+                    <td>$${c.basePay.toFixed(2)}</td>
+                    <td>$${c.withTonnage.toFixed(2)}</td>
+                    <td style="color: #4ade80; font-weight: bold;">$${c.commissionAmount.toFixed(2)}</td>
+                    <td><button class="delete-btn" onclick="removeMileage(${i})">✕</button></td>
+                </tr>
+            `).join('');
+
+            const table = document.getElementById('resultsTable');
+            const empty = document.getElementById('emptyMsg');
+            if (calcs.length > 0) {
+                table.style.display = 'table';
+                empty.style.display = 'none';
+            } else {
+                table.style.display = 'none';
+                empty.style.display = 'block';
+            }
+        }
+
+        document.getElementById('manualInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addManualMileage();
+        });
+
+        updateDisplay();
+    </script>
+</body>
+</html>
