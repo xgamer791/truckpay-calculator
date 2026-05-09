@@ -9,7 +9,7 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         html, body { touch-action: manipulation; }
         body { background: #0f172a; color: white; font-family: -apple-system, sans-serif; padding: 15px; overflow-x: hidden; }
-        button, textarea, input { touch-action: manipulation; font-size: 16px; }
+        button, textarea, input, select { touch-action: manipulation; font-size: 16px; }
         .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 1.25rem; }
         textarea { background: rgba(0, 0, 0, 0.5) !important; border: 1px solid rgba(255, 255, 255, 0.3) !important; color: #fff !important; border-radius: 12px; font-size: 18px !important; }
         .btn-primary { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); width: 100%; padding: 18px; border-radius: 14px; font-size: 18px; font-weight: 800; }
@@ -23,8 +23,8 @@
         .swipe-content { display: flex; justify-content: space-between; align-items: center; padding: 16px; background: #1e293b; transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1); position: relative; z-index: 2; }
         .swiped .swipe-content { transform: translateX(-90px); }
         .swiped-right .swipe-content { transform: translateX(90px); }
-        .day-header-text { font-size: 16px; font-weight: 900; color: #60a5fa; text-transform: uppercase; letter-spacing: 0.05em; }
-        .day-total-text { font-size: 19px; font-weight: 900; color: #4ade80; }
+        .day-header-text { font-size: 16px; font-weight: 900; color: #60a5fa; text-transform: uppercase; letter-spacing: 0.05em; max-width: 65%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .day-total-text { font-size: 19px; font-weight: 900; color: #4ade80; flex-shrink: 0; }
         .mileage-pay-text { font-size: 1.125rem; font-weight: 700; color: white; }
         .custom-badge { color: #60a5fa; margin-left: 6px; font-weight: 800; }
         .day-section { margin-bottom: 24px; }
@@ -40,6 +40,101 @@
         .ticket-overlay img { max-width: 100%; max-height: 70vh; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
         .ticket-overlay-actions { display: flex; gap: 10px; margin-top: 24px; width: 100%; max-width: 420px; }
         .ticket-overlay-actions button { flex: 1; padding: 16px 8px; border: none; border-radius: 12px; font-weight: 900; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: white; }
+
+        /* ===== HEADER + HAMBURGER ===== */
+        .app-header { display: flex; justify-content: space-between; align-items: flex-start; padding: 40px 0 48px; }
+        .header-title h1 { font-size: 2.25rem; font-weight: 900; font-style: italic; letter-spacing: -0.02em; line-height: 1; }
+        .header-title h1 span { color: #3b82f6; }
+        .header-title p { color: #94a3b8; font-size: 13px; font-weight: 700; margin-top: 4px; }
+        .menu-btn { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; cursor: pointer; flex-shrink: 0; transition: all 0.15s; }
+        .menu-btn:active { transform: scale(0.92); background: rgba(255,255,255,0.08); }
+        .menu-btn svg { color: #cbd5e1; }
+
+        /* ===== HAMBURGER POPOVER ===== */
+        .menu-popover { position: fixed; top: 84px; right: 15px; background: #0f172a; border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(59,130,246,0.05); z-index: 9998; min-width: 200px; opacity: 0; transform: translateY(-8px) scale(0.96); transform-origin: top right; pointer-events: none; transition: opacity 0.18s ease, transform 0.18s cubic-bezier(0.16, 1, 0.3, 1); }
+        .menu-popover.active { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+        .menu-backdrop { position: fixed; inset: 0; z-index: 9997; display: none; }
+        .menu-backdrop.active { display: block; }
+        .menu-item { display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px 16px; background: transparent; border: none; color: white; font-size: 15px; font-weight: 700; text-align: left; cursor: pointer; font-family: inherit; transition: background 0.12s; }
+        .menu-item:active { background: rgba(59,130,246,0.1); }
+        .menu-item:first-child { border-top-left-radius: 16px; border-top-right-radius: 16px; }
+        .menu-item:last-child { border-bottom-left-radius: 16px; border-bottom-right-radius: 16px; }
+        .menu-item + .menu-item { border-top: 1px solid rgba(255,255,255,0.06); }
+        .menu-item-icon { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: rgba(59,130,246,0.12); color: #60a5fa; border-radius: 9px; flex-shrink: 0; }
+
+        /* ===== SLIDE-UP MODALS (shared) ===== */
+        .chart-overlay, .edit-overlay, .add-overlay, .settings-overlay, .help-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px); z-index: 10000; display: none; align-items: flex-end; opacity: 0; transition: opacity 0.25s ease; }
+        .chart-overlay.active, .edit-overlay.active, .add-overlay.active, .settings-overlay.active, .help-overlay.active { display: flex; opacity: 1; }
+        .chart-modal, .edit-modal, .add-modal, .settings-modal, .help-modal { width: 100%; background: #0f172a; border-top-left-radius: 28px; border-top-right-radius: 28px; border-top: 1px solid rgba(255,255,255,0.1); padding: 20px 22px 32px; transform: translateY(100%); transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1); max-height: 90vh; overflow-y: auto; }
+        .chart-overlay.active .chart-modal, .edit-overlay.active .edit-modal, .add-overlay.active .add-modal, .settings-overlay.active .settings-modal, .help-overlay.active .help-modal { transform: translateY(0); }
+        .chart-handle { width: 40px; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; margin: 0 auto 20px; }
+        .chart-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; }
+        .chart-eyebrow { font-size: 10px; font-weight: 900; color: #3b82f6; letter-spacing: 0.2em; margin-bottom: 4px; }
+        .chart-title { font-size: 22px; font-weight: 900; letter-spacing: -0.02em; color: white; }
+        .chart-total { font-size: 28px; font-weight: 900; color: #4ade80; letter-spacing: -0.03em; line-height: 1; }
+        .chart-bars { display: flex; align-items: flex-end; justify-content: space-around; gap: 4px; height: 220px; padding: 24px 4px 0; border-top: 1px solid rgba(255,255,255,0.05); }
+        .chart-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; min-width: 0; }
+        .chart-bar-value { font-size: 9px; font-weight: 800; color: #94a3b8; margin-bottom: 6px; white-space: nowrap; letter-spacing: -0.02em; min-height: 11px; }
+        .chart-bar-track { flex: 1; width: 100%; display: flex; align-items: flex-end; padding: 0 2px; }
+        .chart-bar { width: 100%; background: linear-gradient(180deg, #4ade80 0%, #16a34a 100%); border-radius: 4px 4px 0 0; height: 0; transition: height 0.7s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow: 0 0 16px rgba(74, 222, 128, 0.25); }
+        .chart-bar.empty { background: rgba(255,255,255,0.06); box-shadow: none; }
+        .chart-bar-label { font-size: 10px; font-weight: 800; color: #64748b; margin-top: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
+        .chart-empty { text-align: center; padding: 60px 20px; color: #64748b; font-size: 13px; font-weight: 700; }
+        .chart-close { width: 100%; margin-top: 24px; padding: 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 14px; font-weight: 900; font-size: 12px; letter-spacing: 0.15em; cursor: pointer; font-family: inherit; }
+        .chart-close:active { transform: scale(0.98); background: rgba(255,255,255,0.08); }
+        .edit-eyebrow { font-size: 10px; font-weight: 900; color: #3b82f6; letter-spacing: 0.2em; margin-bottom: 4px; }
+        .edit-title { font-size: 22px; font-weight: 900; letter-spacing: -0.02em; color: white; margin-bottom: 4px; }
+        .edit-subtitle { font-size: 13px; color: #64748b; font-weight: 700; margin-bottom: 24px; }
+        .edit-label { font-size: 10px; font-weight: 900; color: #94a3b8; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 8px; display: block; }
+        .edit-input, .edit-select { width: 100%; background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.2); color: white; padding: 14px 16px; border-radius: 12px; font-size: 18px; font-weight: 700; font-family: inherit; }
+        .edit-select { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>"); background-repeat: no-repeat; background-position: right 16px center; padding-right: 44px; }
+        .edit-input:focus, .edit-select:focus { outline: none; border-color: #3b82f6; }
+        .edit-textarea { width: 100%; background: rgba(0, 0, 0, 0.5) !important; border: 1px solid rgba(255, 255, 255, 0.2) !important; color: #fff !important; padding: 14px 16px; border-radius: 12px; font-size: 15px !important; font-weight: 600; font-family: inherit; resize: vertical; min-height: 60px; }
+        .edit-row { margin-bottom: 18px; }
+        .mode-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; background: rgba(0,0,0,0.4); border-radius: 12px; padding: 4px; }
+        .mode-tab { padding: 12px 4px; background: transparent; border: none; color: #64748b; font-weight: 800; font-size: 10px; letter-spacing: 0.05em; text-transform: uppercase; border-radius: 9px; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+        .mode-tab.active { background: #3b82f6; color: white; box-shadow: 0 2px 8px rgba(59,130,246,0.3); }
+        .mode-help { font-size: 11px; color: #64748b; margin-top: 8px; line-height: 1.4; }
+        .pay-preview { background: rgba(74, 222, 128, 0.08); border: 1px solid rgba(74, 222, 128, 0.2); border-radius: 12px; padding: 14px 16px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; }
+        .pay-preview-label { font-size: 10px; font-weight: 900; color: #94a3b8; letter-spacing: 0.15em; text-transform: uppercase; }
+        .pay-preview-value { font-size: 22px; font-weight: 900; color: #4ade80; letter-spacing: -0.02em; }
+        .multi-apply { display: none; align-items: center; gap: 12px; padding: 14px; background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.2); border-radius: 12px; margin-bottom: 18px; cursor: pointer; }
+        .multi-apply input { width: 22px; height: 22px; accent-color: #3b82f6; flex-shrink: 0; }
+        .multi-apply label { font-size: 13px; font-weight: 700; color: #cbd5e1; cursor: pointer; flex: 1; }
+        .edit-actions { display: flex; gap: 10px; margin-top: 8px; }
+        .edit-btn-cancel, .edit-btn-save { flex: 1; padding: 16px; border: none; border-radius: 14px; font-weight: 900; font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; color: white; cursor: pointer; font-family: inherit; }
+        .edit-btn-cancel { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); }
+        .edit-btn-save { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+        .edit-btn-cancel:active, .edit-btn-save:active { transform: scale(0.98); }
+        .add-preview { font-size: 12px; color: #4ade80; font-weight: 800; margin-top: 8px; min-height: 14px; }
+
+        /* ===== SETTINGS - SLIDER ===== */
+        .ton-display { display: flex; align-items: baseline; justify-content: center; gap: 8px; margin: 8px 0 18px; }
+        .ton-value { font-size: 64px; font-weight: 900; letter-spacing: -0.04em; color: #4ade80; line-height: 1; }
+        .ton-unit { font-size: 14px; font-weight: 800; color: #64748b; letter-spacing: 0.15em; text-transform: uppercase; }
+        .ton-slider { width: 100%; -webkit-appearance: none; appearance: none; height: 8px; background: linear-gradient(90deg, #1e3a5f 0%, #3b82f6 100%); border-radius: 4px; outline: none; margin: 12px 0 8px; }
+        .ton-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 32px; height: 32px; border-radius: 50%; background: white; border: 4px solid #3b82f6; cursor: pointer; box-shadow: 0 4px 12px rgba(59,130,246,0.5); }
+        .ton-slider::-moz-range-thumb { width: 32px; height: 32px; border-radius: 50%; background: white; border: 4px solid #3b82f6; cursor: pointer; box-shadow: 0 4px 12px rgba(59,130,246,0.5); }
+        .ton-range-labels { display: flex; justify-content: space-between; font-size: 11px; font-weight: 800; color: #475569; letter-spacing: 0.1em; }
+
+        /* ===== HELP / README ===== */
+        .help-content { color: #cbd5e1; }
+        .help-section { margin-bottom: 28px; }
+        .help-section:last-child { margin-bottom: 8px; }
+        .help-section-title { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 900; color: white; letter-spacing: 0.02em; margin-bottom: 12px; }
+        .help-section-icon { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; background: rgba(59,130,246,0.12); color: #60a5fa; border-radius: 9px; flex-shrink: 0; }
+        .help-section p { font-size: 14px; line-height: 1.6; font-weight: 600; margin-bottom: 8px; }
+        .help-section p:last-child { margin-bottom: 0; }
+        .help-section strong { color: white; font-weight: 800; }
+        .help-section .kbd { display: inline-block; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 2px 8px; font-size: 12px; font-weight: 800; color: #60a5fa; }
+        .help-tip { background: rgba(251,191,36,0.06); border-left: 3px solid #fbbf24; border-radius: 6px; padding: 10px 14px; margin-top: 8px; font-size: 13px; line-height: 1.5; color: #fde68a; }
+        .help-tip strong { color: #fbbf24; }
+        .swipe-demo { display: flex; gap: 8px; margin-top: 10px; }
+        .swipe-demo-pill { flex: 1; padding: 10px; border-radius: 8px; font-size: 11px; font-weight: 900; letter-spacing: 0.1em; text-align: center; color: white; }
+        .swipe-demo-pill.left { background: rgba(59,130,246,0.2); border: 1px solid rgba(59,130,246,0.3); color: #60a5fa; }
+        .swipe-demo-pill.right { background: rgba(239,68,68,0.2); border: 1px solid rgba(239,68,68,0.3); color: #f87171; }
+
+        /* ===== FOOTER ===== */
         .pro-footer { margin-top: 60px; padding: 32px 4px 40px; position: relative; }
         .pro-footer::before { content: ''; position: absolute; top: 0; left: 10%; right: 10%; height: 1px; background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.5), transparent); }
         .footer-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 28px; }
@@ -65,52 +160,7 @@
         .footer-meta { display: flex; justify-content: center; align-items: center; gap: 8px; font-size: 10px; font-weight: 700; color: #475569; }
         .footer-meta-dot { width: 3px; height: 3px; background: #334155; border-radius: 50%; }
         .footer-version { color: #3b82f6; font-weight: 900; }
-        .chart-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px); z-index: 10000; display: none; align-items: flex-end; opacity: 0; transition: opacity 0.25s ease; }
-        .chart-overlay.active { display: flex; opacity: 1; }
-        .chart-modal { width: 100%; background: #0f172a; border-top-left-radius: 28px; border-top-right-radius: 28px; border-top: 1px solid rgba(255,255,255,0.1); padding: 20px 22px 32px; transform: translateY(100%); transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
-        .chart-overlay.active .chart-modal { transform: translateY(0); }
-        .chart-handle { width: 40px; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; margin: 0 auto 20px; }
-        .chart-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; }
-        .chart-eyebrow { font-size: 10px; font-weight: 900; color: #3b82f6; letter-spacing: 0.2em; margin-bottom: 4px; }
-        .chart-title { font-size: 22px; font-weight: 900; letter-spacing: -0.02em; color: white; }
-        .chart-total { font-size: 28px; font-weight: 900; color: #4ade80; letter-spacing: -0.03em; line-height: 1; }
-        .chart-bars { display: flex; align-items: flex-end; justify-content: space-around; gap: 4px; height: 220px; padding: 24px 4px 0; border-top: 1px solid rgba(255,255,255,0.05); }
-        .chart-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; min-width: 0; }
-        .chart-bar-value { font-size: 9px; font-weight: 800; color: #94a3b8; margin-bottom: 6px; white-space: nowrap; letter-spacing: -0.02em; min-height: 11px; }
-        .chart-bar-track { flex: 1; width: 100%; display: flex; align-items: flex-end; padding: 0 2px; }
-        .chart-bar { width: 100%; background: linear-gradient(180deg, #4ade80 0%, #16a34a 100%); border-radius: 4px 4px 0 0; height: 0; transition: height 0.7s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow: 0 0 16px rgba(74, 222, 128, 0.25); }
-        .chart-bar.empty { background: rgba(255,255,255,0.06); box-shadow: none; }
-        .chart-bar-label { font-size: 10px; font-weight: 800; color: #64748b; margin-top: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
-        .chart-empty { text-align: center; padding: 60px 20px; color: #64748b; font-size: 13px; font-weight: 700; }
-        .chart-close { width: 100%; margin-top: 24px; padding: 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 14px; font-weight: 900; font-size: 12px; letter-spacing: 0.15em; cursor: pointer; font-family: inherit; }
-        .chart-close:active { transform: scale(0.98); background: rgba(255,255,255,0.08); }
-        .edit-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px); z-index: 10000; display: none; align-items: flex-end; opacity: 0; transition: opacity 0.25s ease; }
-        .edit-overlay.active { display: flex; opacity: 1; }
-        .edit-modal { width: 100%; background: #0f172a; border-top-left-radius: 28px; border-top-right-radius: 28px; border-top: 1px solid rgba(255,255,255,0.1); padding: 20px 22px 32px; transform: translateY(100%); transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1); max-height: 90vh; overflow-y: auto; }
-        .edit-overlay.active .edit-modal { transform: translateY(0); }
-        .edit-eyebrow { font-size: 10px; font-weight: 900; color: #3b82f6; letter-spacing: 0.2em; margin-bottom: 4px; }
-        .edit-title { font-size: 22px; font-weight: 900; letter-spacing: -0.02em; color: white; margin-bottom: 4px; }
-        .edit-subtitle { font-size: 13px; color: #64748b; font-weight: 700; margin-bottom: 24px; }
-        .edit-label { font-size: 10px; font-weight: 900; color: #94a3b8; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 8px; display: block; }
-        .edit-input { width: 100%; background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.2); color: white; padding: 14px 16px; border-radius: 12px; font-size: 18px; font-weight: 700; font-family: inherit; }
-        .edit-input:focus { outline: none; border-color: #3b82f6; }
-        .edit-textarea { width: 100%; background: rgba(0, 0, 0, 0.5) !important; border: 1px solid rgba(255, 255, 255, 0.2) !important; color: #fff !important; padding: 14px 16px; border-radius: 12px; font-size: 15px !important; font-weight: 600; font-family: inherit; resize: vertical; min-height: 60px; }
-        .edit-row { margin-bottom: 18px; }
-        .mode-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; background: rgba(0,0,0,0.4); border-radius: 12px; padding: 4px; }
-        .mode-tab { padding: 12px 4px; background: transparent; border: none; color: #64748b; font-weight: 800; font-size: 10px; letter-spacing: 0.05em; text-transform: uppercase; border-radius: 9px; cursor: pointer; font-family: inherit; transition: all 0.15s; }
-        .mode-tab.active { background: #3b82f6; color: white; box-shadow: 0 2px 8px rgba(59,130,246,0.3); }
-        .mode-help { font-size: 11px; color: #64748b; margin-top: 8px; line-height: 1.4; }
-        .pay-preview { background: rgba(74, 222, 128, 0.08); border: 1px solid rgba(74, 222, 128, 0.2); border-radius: 12px; padding: 14px 16px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; }
-        .pay-preview-label { font-size: 10px; font-weight: 900; color: #94a3b8; letter-spacing: 0.15em; text-transform: uppercase; }
-        .pay-preview-value { font-size: 22px; font-weight: 900; color: #4ade80; letter-spacing: -0.02em; }
-        .multi-apply { display: none; align-items: center; gap: 12px; padding: 14px; background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.2); border-radius: 12px; margin-bottom: 18px; cursor: pointer; }
-        .multi-apply input { width: 22px; height: 22px; accent-color: #3b82f6; flex-shrink: 0; }
-        .multi-apply label { font-size: 13px; font-weight: 700; color: #cbd5e1; cursor: pointer; flex: 1; }
-        .edit-actions { display: flex; gap: 10px; margin-top: 8px; }
-        .edit-btn-cancel, .edit-btn-save { flex: 1; padding: 16px; border: none; border-radius: 14px; font-weight: 900; font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; color: white; cursor: pointer; font-family: inherit; }
-        .edit-btn-cancel { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); }
-        .edit-btn-save { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
-        .edit-btn-cancel:active, .edit-btn-save:active { transform: scale(0.98); }
+
         .note-popup { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 10001; display: flex; align-items: center; justify-content: center; padding: 24px; }
         .note-popup-card { background: #0f172a; border: 1px solid rgba(255,255,255,0.1); border-radius: 18px; padding: 22px; max-width: 420px; width: 100%; }
         .note-popup-eyebrow { font-size: 10px; font-weight: 900; color: #fbbf24; letter-spacing: 0.2em; margin-bottom: 10px; }
@@ -119,10 +169,42 @@
     </style>
 </head>
 <body>
-    <header class="pt-10 pb-12 px-1 text-left">
-        <h1 class="text-4xl font-black italic tracking-tight">DriverPay <span class="text-blue-500">Pro</span></h1>
-        <p class="text-gray-400 text-sm font-bold mt-1">25 Ton Avg @ 30% Commission</p>
+    <header class="app-header">
+        <div class="header-title">
+            <h1>DriverPay <span>Pro</span></h1>
+            <p id="headerSubtitle">25 Ton Avg @ 30% Commission</p>
+        </div>
+        <button class="menu-btn" onclick="toggleMenu(event)" aria-label="Menu">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <line x1="3" y1="12" x2="21" y2="12"/>
+                <line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
     </header>
+
+    <div class="menu-backdrop" id="menuBackdrop" onclick="closeMenu()"></div>
+    <div class="menu-popover" id="menuPopover">
+        <button class="menu-item" onclick="closeMenu(); openSettings()">
+            <span class="menu-item-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+            </span>
+            Settings
+        </button>
+        <button class="menu-item" onclick="closeMenu(); openHelp()">
+            <span class="menu-item-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                    <line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+            </span>
+            Help
+        </button>
+    </div>
 
     <div class="glass p-6 mb-10">
         <div class="flex flex-col gap-5">
@@ -157,11 +239,7 @@
                 <div class="footer-stat-label">Lifetime</div>
             </button>
         </div>
-        <div class="footer-road">
-            <div class="footer-road-dash"></div>
-            <div class="footer-road-dash"></div>
-            <div class="footer-road-dash"></div>
-        </div>
+        <div class="footer-road"><div class="footer-road-dash"></div><div class="footer-road-dash"></div><div class="footer-road-dash"></div></div>
         <div class="footer-brand">
             <div class="footer-mark">
                 <div class="footer-mark-icon">
@@ -177,7 +255,7 @@
             </div>
             <div class="footer-tagline">Built for the long haul</div>
             <div class="footer-meta">
-                <span class="footer-version">v2.3</span>
+                <span class="footer-version">v2.4</span>
                 <span class="footer-meta-dot"></span>
                 <span>© 2026</span>
                 <span class="footer-meta-dot"></span>
@@ -196,10 +274,32 @@
                 </div>
                 <div class="chart-total" id="chartTotal">$0</div>
             </div>
-            <div id="chartBody">
-                <div class="chart-bars" id="chartBars"></div>
-            </div>
+            <div id="chartBody"><div class="chart-bars" id="chartBars"></div></div>
             <button class="chart-close" onclick="closeChart()">CLOSE</button>
+        </div>
+    </div>
+
+    <div class="add-overlay" id="addOverlay">
+        <div class="add-modal">
+            <div class="chart-handle"></div>
+            <div class="edit-eyebrow">ADD LOADS</div>
+            <div class="edit-title" id="addTitle">To Settlement</div>
+            <div class="edit-subtitle">Enter mileage values separated by commas.</div>
+            <div class="edit-row">
+                <label class="edit-label">Mileage (comma-separated)</label>
+                <textarea id="addMiles" class="edit-textarea" rows="3" placeholder="e.g. 52, 100, 36" oninput="updateAddPreview()"></textarea>
+                <div class="add-preview" id="addPreview"></div>
+            </div>
+            <div class="edit-row">
+                <label class="edit-label">Day</label>
+                <select id="addDay" class="edit-select">
+                    <option value="Friday">Friday</option><option value="Saturday">Saturday</option><option value="Sunday">Sunday</option><option value="Monday">Monday</option><option value="Tuesday">Tuesday</option><option value="Wednesday">Wednesday</option><option value="Thursday">Thursday</option>
+                </select>
+            </div>
+            <div class="edit-actions">
+                <button class="edit-btn-cancel" onclick="closeAddModal()">Cancel</button>
+                <button class="edit-btn-save" onclick="saveAddLoads()">Add</button>
+            </div>
         </div>
     </div>
 
@@ -209,17 +309,20 @@
             <div class="edit-eyebrow">EDIT LOAD</div>
             <div class="edit-title" id="editLoadInfo">21 miles</div>
             <div class="edit-subtitle" id="editAutoPreview"></div>
-
             <div class="edit-row">
                 <label class="edit-label">Note (optional)</label>
                 <textarea id="editNote" class="edit-textarea" rows="2" placeholder="e.g. wet load, broker XYZ, ticket #1234..."></textarea>
             </div>
-
+            <div class="edit-row">
+                <label class="edit-label">Day</label>
+                <select id="editDay" class="edit-select">
+                    <option value="Friday">Friday</option><option value="Saturday">Saturday</option><option value="Sunday">Sunday</option><option value="Monday">Monday</option><option value="Tuesday">Tuesday</option><option value="Wednesday">Wednesday</option><option value="Thursday">Thursday</option>
+                </select>
+            </div>
             <div class="edit-row">
                 <label class="edit-label">Tonnage</label>
                 <input type="number" id="editTons" class="edit-input" inputmode="decimal" step="0.01" placeholder="25" oninput="updatePayPreview()">
             </div>
-
             <div class="edit-row">
                 <label class="edit-label">Pricing Mode</label>
                 <div class="mode-tabs">
@@ -229,27 +332,22 @@
                 </div>
                 <div class="mode-help" id="modeHelp">Standard rate table × tons × 30% commission.</div>
             </div>
-
             <div class="edit-row" id="editFixedRow" style="display:none;">
                 <label class="edit-label">Truck Total ($)</label>
                 <input type="number" id="editFixed" class="edit-input" inputmode="decimal" step="0.01" placeholder="350.00" oninput="updatePayPreview()">
             </div>
-
             <div class="edit-row" id="editPerTonRow" style="display:none;">
                 <label class="edit-label">Truck Rate / Ton ($)</label>
                 <input type="number" id="editPerTon" class="edit-input" inputmode="decimal" step="0.01" placeholder="14.00" oninput="updatePayPreview()">
             </div>
-
             <div class="pay-preview">
                 <span class="pay-preview-label">Driver Pay</span>
                 <span class="pay-preview-value" id="payPreview">$0.00</span>
             </div>
-
             <div class="multi-apply" id="multiApplyRow" onclick="document.getElementById('multiApply').click()">
                 <input type="checkbox" id="multiApply" onclick="event.stopPropagation()">
                 <label for="multiApply" id="multiApplyLabel" onclick="event.stopPropagation()">Apply to all loads</label>
             </div>
-
             <div class="edit-actions">
                 <button class="edit-btn-cancel" onclick="closeEditModal()">Cancel</button>
                 <button class="edit-btn-save" onclick="saveEdit()">Save</button>
@@ -257,12 +355,163 @@
         </div>
     </div>
 
+    <!-- ===== SETTINGS MODAL ===== -->
+    <div class="settings-overlay" id="settingsOverlay">
+        <div class="settings-modal">
+            <div class="chart-handle"></div>
+            <div class="edit-eyebrow">SETTINGS</div>
+            <div class="edit-title">Adjust Average Tonnage</div>
+            <div class="edit-subtitle">Sets the default tons used for new loads. You can still override per-load when editing.</div>
+
+            <div class="ton-display">
+                <span class="ton-value" id="tonValueDisplay">25</span>
+                <span class="ton-unit">Tons</span>
+            </div>
+
+            <input type="range" id="tonSlider" class="ton-slider" min="17" max="30" step="0.1" value="25" oninput="onTonSliderChange()">
+            <div class="ton-range-labels"><span>17</span><span>30</span></div>
+
+            <div class="edit-actions" style="margin-top: 32px;">
+                <button class="edit-btn-cancel" onclick="closeSettings()">Cancel</button>
+                <button class="edit-btn-save" onclick="saveSettings()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== HELP MODAL ===== -->
+    <div class="help-overlay" id="helpOverlay">
+        <div class="help-modal">
+            <div class="chart-handle"></div>
+            <div class="edit-eyebrow">HELP & TIPS</div>
+            <div class="edit-title">How DriverPay Pro Works</div>
+            <div class="edit-subtitle">A quick rundown of everything you can do.</div>
+
+            <div class="help-content">
+                <div class="help-section">
+                    <div class="help-section-title">
+                        <span class="help-section-icon">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        </span>
+                        Adding Loads
+                    </div>
+                    <p>Type mileage values into the box at the top — comma-separated for multiple loads — and tap <strong>Add to Current Period</strong>. Each value becomes one load tagged with today's day.</p>
+                    <p>To add loads to a past day or settlement, tap any settlement card to expand it, then hit <strong>+ Add Load</strong>.</p>
+                    <div class="help-tip"><strong>Tip:</strong> Settlements run Friday → Thursday and pay out the following Saturday. Anything you log auto-files into the right week.</div>
+                </div>
+
+                <div class="help-section">
+                    <div class="help-section-title">
+                        <span class="help-section-icon">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                        </span>
+                        Swipe Actions
+                    </div>
+                    <p>Each load card responds to swipes:</p>
+                    <div class="swipe-demo">
+                        <div class="swipe-demo-pill left">← SWIPE RIGHT FOR EDIT</div>
+                        <div class="swipe-demo-pill right">SWIPE LEFT FOR DELETE →</div>
+                    </div>
+                    <p style="margin-top: 12px;">Edit lets you change tonnage, pricing, day, and add notes. Delete removes the load instantly.</p>
+                </div>
+
+                <div class="help-section">
+                    <div class="help-section-title">
+                        <span class="help-section-icon">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                        </span>
+                        Load Tickets
+                    </div>
+                    <p>Every load has a camera icon. <strong style="color:#ef4444;">Red</strong> = no ticket uploaded yet. <strong style="color:#3b82f6;">Blue</strong> = ticket on file. Tap the icon to capture, then tap again to view, retake, or delete.</p>
+                    <div class="help-tip"><strong>Tip:</strong> The scanner auto-crops and enhances tickets so they read like a clean copy, even shot quickly with one hand.</div>
+                </div>
+
+                <div class="help-section">
+                    <div class="help-section-title">
+                        <span class="help-section-icon">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                        </span>
+                        Custom Pricing
+                    </div>
+                    <p>The auto rate handles most loads, but for special jobs swipe-edit and pick a pricing mode:</p>
+                    <p><strong>Auto</strong> — standard rate table × tons × 30%.</p>
+                    <p><strong>Fixed $</strong> — type the truck's total payout. You get 30% of that.</p>
+                    <p><strong>$ / Ton</strong> — type the truck's per-ton rate. You get 30% × rate × tons.</p>
+                    <p>The driver pay preview updates live as you type. Loads with custom pricing show a blue <strong>· CUSTOM</strong> tag.</p>
+                </div>
+
+                <div class="help-section">
+                    <div class="help-section-title">
+                        <span class="help-section-icon">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        </span>
+                        Notes
+                    </div>
+                    <p>In the edit modal, drop a quick note on any load — broker name, ticket number, "wet load", whatever. A yellow note icon shows next to the camera so you know which loads have notes. Tap to read.</p>
+                </div>
+
+                <div class="help-section">
+                    <div class="help-section-title">
+                        <span class="help-section-icon">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                        </span>
+                        Revenue Charts
+                    </div>
+                    <p>The three boxes at the bottom show <strong>This Month</strong>, <strong>This Year</strong>, and <strong>Lifetime</strong> earnings. Tap any one to see a bar chart breakdown — settlements within the month, months within the year, years across all time.</p>
+                </div>
+
+                <div class="help-section">
+                    <div class="help-section-title">
+                        <span class="help-section-icon">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                        </span>
+                        Settings
+                    </div>
+                    <p>Open the menu (top right) → <strong>Settings</strong> to set your average tonnage anywhere from 17–30 tons. New loads default to this value. Existing loads keep their saved tonnage.</p>
+                </div>
+
+                <div class="help-section">
+                    <div class="help-section-title">
+                        <span class="help-section-icon">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                        </span>
+                        Your Data
+                    </div>
+                    <p>All data lives <strong>locally on this device only</strong> — nothing is sent anywhere. Clearing browser data or switching devices wipes your history, so screenshot the revenue chart at year-end if you want a paper trail.</p>
+                </div>
+            </div>
+
+            <button class="chart-close" onclick="closeHelp()">CLOSE</button>
+        </div>
+    </div>
+
     <script>
+        const VALID_DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
         const DAY_ORDER = { 'Friday': -8, 'Saturday': -7, 'Sunday': -6, 'Monday': -5, 'Tuesday': -4, 'Wednesday': -3, 'Thursday': -2 };
         const initializedEntries = new Set();
         const rateData = [[2,3.84],[3,3.97],[6,4.38],[8,4.65],[11,5.06],[13,5.46],[14,5.43],[16,6.03],[17,6.00],[21,6.75],[25,7.32],[27,7.36],[30,8.01],[39,10.26],[45,11.24],[49,10.15],[61,14.40],[62,14.72],[65,15.42],[92,16.07]];
+        const SETTINGS_KEY = 'driverpay_settings';
+        const DEFAULT_SETTINGS = { avgTons: 25 };
 
-        // Body scroll lock for iOS-safe modal behavior
+        function loadSettings() {
+            try {
+                const raw = localStorage.getItem(SETTINGS_KEY);
+                if (!raw) return { ...DEFAULT_SETTINGS };
+                const parsed = JSON.parse(raw);
+                let avg = parseFloat(parsed.avgTons);
+                if (isNaN(avg) || avg < 17) avg = 17;
+                if (avg > 30) avg = 30;
+                return { avgTons: avg };
+            } catch (e) { return { ...DEFAULT_SETTINGS }; }
+        }
+        function saveSettingsObj(s) { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); }
+        let settings = loadSettings();
+
+        function applySettingsToHeader() {
+            const sub = document.getElementById('headerSubtitle');
+            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission`;
+        }
+
+        // Body scroll lock
         let savedScrollY = 0;
         function lockBodyScroll() {
             if (document.body.dataset.locked === '1') return;
@@ -283,6 +532,30 @@
             window.scrollTo(0, savedScrollY);
         }
 
+        function isValidDay(d) { return typeof d === 'string' && VALID_DAYS.indexOf(d) !== -1; }
+
+        function sanitizeHistoryDays() {
+            try {
+                let h = JSON.parse(localStorage.getItem('driver_history') || '[]');
+                let changed = false;
+                h.forEach(s => {
+                    (s.loads || []).forEach(l => {
+                        if (!isValidDay(l.day)) {
+                            let recovered = null;
+                            if (typeof l.day === 'string') {
+                                for (const d of VALID_DAYS) {
+                                    if (l.day.indexOf(d) !== -1) { recovered = d; break; }
+                                }
+                            }
+                            l.day = recovered || 'Friday';
+                            changed = true;
+                        }
+                    });
+                });
+                if (changed) localStorage.setItem('driver_history', JSON.stringify(h));
+            } catch (e) {}
+        }
+
         function getRate(m){
             if(m<=2) return 3.84;
             if(m>=92){ let s=(16.07-15.42)/(92-65); return 16.07+(m-92)*s; }
@@ -293,19 +566,76 @@
             return 0;
         }
 
-        // All pricing modes apply 30% driver commission to truck gross.
         function getLoadPay(l) {
             if (l.pricingMode === 'fixed' && typeof l.customTotal === 'number') return l.customTotal * 0.30;
             if (l.pricingMode === 'perton' && typeof l.customRate === 'number') return l.customRate * l.tons * 0.30;
             return getRate(l.miles) * l.tons * 0.30;
         }
 
+        // ===== HAMBURGER MENU =====
+        function toggleMenu(e) {
+            if (e) e.stopPropagation();
+            const popover = document.getElementById('menuPopover');
+            const backdrop = document.getElementById('menuBackdrop');
+            if (popover.classList.contains('active')) closeMenu();
+            else { popover.classList.add('active'); backdrop.classList.add('active'); }
+        }
+        function closeMenu() {
+            document.getElementById('menuPopover').classList.remove('active');
+            document.getElementById('menuBackdrop').classList.remove('active');
+        }
+
+        // ===== SETTINGS MODAL =====
+        function openSettings() {
+            const slider = document.getElementById('tonSlider');
+            slider.value = settings.avgTons;
+            document.getElementById('tonValueDisplay').textContent = formatTons(settings.avgTons);
+            document.getElementById('settingsOverlay').classList.add('active');
+            lockBodyScroll();
+        }
+        function closeSettings() {
+            document.getElementById('settingsOverlay').classList.remove('active');
+            unlockBodyScroll();
+        }
+        function formatTons(v) {
+            const n = parseFloat(v);
+            return Number.isInteger(n) ? n.toString() : n.toFixed(1);
+        }
+        function onTonSliderChange() {
+            const v = document.getElementById('tonSlider').value;
+            document.getElementById('tonValueDisplay').textContent = formatTons(v);
+        }
+        function saveSettings() {
+            let v = parseFloat(document.getElementById('tonSlider').value);
+            if (isNaN(v)) v = 25;
+            v = Math.max(17, Math.min(30, v));
+            v = Math.round(v * 10) / 10;
+            settings.avgTons = v;
+            saveSettingsObj(settings);
+            applySettingsToHeader();
+            closeSettings();
+        }
+
+        // ===== HELP MODAL =====
+        function openHelp() {
+            document.getElementById('helpOverlay').classList.add('active');
+            lockBodyScroll();
+        }
+        function closeHelp() {
+            document.getElementById('helpOverlay').classList.remove('active');
+            unlockBodyScroll();
+        }
+
         function calculateAndSave(){
             try {
                 const r = document.getElementById('mileageInput').value;
                 if(!r) { alert('Input is empty'); return; }
-                const newMiles = r.split(',').map(m=>parseFloat(m.trim())).filter(m=>!isNaN(m));
+                const newMiles = r.split(',').map(m=>parseFloat(m.trim())).filter(m=>!isNaN(m) && m > 0);
                 if(newMiles.length === 0) { alert('No valid numbers found'); return; }
+                const huge = newMiles.filter(m => m > 500);
+                if (huge.length > 0) {
+                    if (!confirm(`${huge.length} load(s) over 500 miles detected (${huge.join(', ')}). Add anyway?\n\nTip: missing comma between numbers can cause this.`)) return;
+                }
                 const now = new Date();
                 const isoDate = now.toISOString().split('T')[0];
                 const currentDayName = now.toLocaleDateString('en-US', { weekday: 'long' });
@@ -326,9 +656,10 @@
         }
 
         function modifySettlement(payoutDate, milesArray, dayName) {
+            const safeDay = isValidDay(dayName) ? dayName : 'Friday';
             let history = JSON.parse(localStorage.getItem('driver_history') || '[]');
             const idx = history.findIndex(e => e.payoutDate === payoutDate);
-            const newEntries = milesArray.map(m => ({ id: Math.random().toString(36).substr(2, 9), miles: m, tons: 25, day: dayName }));
+            const newEntries = milesArray.map(m => ({ id: Math.random().toString(36).substr(2, 9), miles: m, tons: settings.avgTons, day: safeDay }));
             if(idx !== -1) history[idx].loads = [...history[idx].loads, ...newEntries];
             else history.unshift({ id: Date.now(), payoutDate, loads: newEntries });
             localStorage.setItem('driver_history', JSON.stringify(history));
@@ -350,9 +681,47 @@
             headerEl.parentElement.classList.toggle('collapsed');
         }
 
-        // ===== EDIT MODAL =====
-        let editingLoad = null;
+        let addingTo = null;
+        function openAddModal(sId, payoutDate) {
+            addingTo = { sId, payoutDate };
+            const dateStr = new Date(payoutDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            document.getElementById('addTitle').textContent = `Settlement · ${dateStr}`;
+            document.getElementById('addMiles').value = '';
+            document.getElementById('addPreview').textContent = '';
+            const today = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+            document.getElementById('addDay').value = isValidDay(today) ? today : 'Friday';
+            document.getElementById('addOverlay').classList.add('active');
+            lockBodyScroll();
+        }
+        function closeAddModal() {
+            document.getElementById('addOverlay').classList.remove('active');
+            addingTo = null;
+            unlockBodyScroll();
+        }
+        function updateAddPreview() {
+            const raw = document.getElementById('addMiles').value;
+            const miles = raw.split(',').map(m => parseFloat(m.trim())).filter(m => !isNaN(m) && m > 0);
+            const preview = document.getElementById('addPreview');
+            if (miles.length === 0) { preview.textContent = ''; return; }
+            const total = miles.reduce((sum, m) => sum + getRate(m) * settings.avgTons * 0.30, 0);
+            preview.textContent = `${miles.length} load${miles.length === 1 ? '' : 's'} · est. $${total.toFixed(2)} at ${formatTons(settings.avgTons)} tons`;
+        }
+        function saveAddLoads() {
+            if (!addingTo) return;
+            const raw = document.getElementById('addMiles').value;
+            const miles = raw.split(',').map(m => parseFloat(m.trim())).filter(m => !isNaN(m) && m > 0);
+            if (miles.length === 0) { alert('Enter at least one mileage value'); return; }
+            const huge = miles.filter(m => m > 500);
+            if (huge.length > 0) {
+                if (!confirm(`${huge.length} load(s) over 500 miles detected (${huge.join(', ')}). Add anyway?\n\nTip: missing comma between numbers can cause this.`)) return;
+            }
+            const day = document.getElementById('addDay').value;
+            modifySettlement(addingTo.payoutDate, miles, day);
+            closeAddModal();
+            renderHistory();
+        }
 
+        let editingLoad = null;
         function openEditModal(sId, lId) {
             document.querySelectorAll('.swipe-container').forEach(c => c.classList.remove('swiped', 'swiped-right'));
             const h = JSON.parse(localStorage.getItem('driver_history') || '[]');
@@ -360,20 +729,17 @@
             if (!s) return;
             const l = s.loads.find(l => l.id == lId);
             if (!l) return;
-
             editingLoad = { sId, lId, miles: l.miles };
-
-            document.getElementById('editLoadInfo').textContent = `${l.miles} miles · ${l.day}`;
+            document.getElementById('editLoadInfo').textContent = `${l.miles} miles`;
             const autoPay = (getRate(l.miles) * l.tons * 0.30).toFixed(2);
             document.getElementById('editAutoPreview').textContent = `Auto rate: $${getRate(l.miles).toFixed(2)}/ton truck · pays $${autoPay} at ${l.tons} tons`;
             document.getElementById('editNote').value = l.note || '';
+            document.getElementById('editDay').value = isValidDay(l.day) ? l.day : 'Friday';
             document.getElementById('editTons').value = l.tons;
-
             const mode = l.pricingMode || 'auto';
             document.getElementById('editFixed').value = (mode === 'fixed' && typeof l.customTotal === 'number') ? l.customTotal : '';
             document.getElementById('editPerTon').value = (mode === 'perton' && typeof l.customRate === 'number') ? l.customRate : '';
             setPricingMode(mode);
-
             const matchingCount = s.loads.filter(ld => ld.miles === l.miles).length;
             const multiRow = document.getElementById('multiApplyRow');
             const multiCheck = document.getElementById('multiApply');
@@ -386,12 +752,10 @@
                 multiRow.style.display = 'none';
                 multiCheck.checked = false;
             }
-
             document.getElementById('editOverlay').classList.add('active');
             lockBodyScroll();
             updatePayPreview();
         }
-
         function setPricingMode(mode) {
             document.querySelectorAll('.mode-tab').forEach(t => t.classList.toggle('active', t.dataset.mode === mode));
             document.getElementById('editFixedRow').style.display = mode === 'fixed' ? 'block' : 'none';
@@ -402,66 +766,46 @@
             else help.textContent = "Truck's rate per ton. Driver gets 30% commission of (rate × tons).";
             updatePayPreview();
         }
-
         function updatePayPreview() {
             if (!editingLoad) return;
             const tons = parseFloat(document.getElementById('editTons').value) || 0;
             const activeMode = document.querySelector('.mode-tab.active');
             const mode = activeMode ? activeMode.dataset.mode : 'auto';
             let pay = 0;
-            if (mode === 'auto') {
-                pay = getRate(editingLoad.miles) * tons * 0.30;
-            } else if (mode === 'fixed') {
-                const v = parseFloat(document.getElementById('editFixed').value) || 0;
-                pay = v * 0.30;
-            } else {
-                const v = parseFloat(document.getElementById('editPerTon').value) || 0;
-                pay = v * tons * 0.30;
-            }
+            if (mode === 'auto') pay = getRate(editingLoad.miles) * tons * 0.30;
+            else if (mode === 'fixed') pay = (parseFloat(document.getElementById('editFixed').value) || 0) * 0.30;
+            else pay = (parseFloat(document.getElementById('editPerTon').value) || 0) * tons * 0.30;
             document.getElementById('payPreview').textContent = '$' + pay.toFixed(2);
         }
-
         function closeEditModal() {
             document.getElementById('editOverlay').classList.remove('active');
             editingLoad = null;
             unlockBodyScroll();
         }
-
         function saveEdit() {
             if (!editingLoad) return;
             const tonsVal = parseFloat(document.getElementById('editTons').value);
             if (isNaN(tonsVal) || tonsVal <= 0) { alert('Enter a valid tonnage'); return; }
-
             const noteVal = document.getElementById('editNote').value.trim();
+            const dayVal = document.getElementById('editDay').value;
+            const safeDay = isValidDay(dayVal) ? dayVal : 'Friday';
             const activeMode = document.querySelector('.mode-tab.active');
             const mode = activeMode ? activeMode.dataset.mode : 'auto';
-
-            const updates = { tons: tonsVal, note: noteVal };
-
-            if (mode === 'auto') {
-                updates.pricingMode = 'auto';
-                updates.customTotal = null;
-                updates.customRate = null;
-            } else if (mode === 'fixed') {
+            const updates = { tons: tonsVal, note: noteVal, day: safeDay };
+            if (mode === 'auto') { updates.pricingMode = 'auto'; updates.customTotal = null; updates.customRate = null; }
+            else if (mode === 'fixed') {
                 const v = parseFloat(document.getElementById('editFixed').value);
                 if (isNaN(v) || v < 0) { alert('Enter a valid truck total'); return; }
-                updates.pricingMode = 'fixed';
-                updates.customTotal = v;
-                updates.customRate = null;
+                updates.pricingMode = 'fixed'; updates.customTotal = v; updates.customRate = null;
             } else {
                 const v = parseFloat(document.getElementById('editPerTon').value);
                 if (isNaN(v) || v < 0) { alert('Enter a valid rate per ton'); return; }
-                updates.pricingMode = 'perton';
-                updates.customRate = v;
-                updates.customTotal = null;
+                updates.pricingMode = 'perton'; updates.customRate = v; updates.customTotal = null;
             }
-
             const applyMulti = document.getElementById('multiApply').checked;
-
             let h = JSON.parse(localStorage.getItem('driver_history') || '[]');
             const sIdx = h.findIndex(s => s.id == editingLoad.sId);
             if (sIdx === -1) { closeEditModal(); return; }
-
             h[sIdx].loads = h[sIdx].loads.map(l => {
                 const matches = applyMulti ? (l.miles === editingLoad.miles) : (l.id == editingLoad.lId);
                 if (!matches) return l;
@@ -471,7 +815,6 @@
                 if (!merged.note) delete merged.note;
                 return merged;
             });
-
             localStorage.setItem('driver_history', JSON.stringify(h));
             closeEditModal();
             renderHistory();
@@ -489,16 +832,14 @@
             card.className = 'note-popup-card';
             const eyebrow = document.createElement('div');
             eyebrow.className = 'note-popup-eyebrow';
-            eyebrow.textContent = `${l.miles} MILES · ${l.day.toUpperCase()}`;
+            eyebrow.textContent = `${l.miles} MILES · ${(l.day || '').toUpperCase()}`;
             const text = document.createElement('div');
             text.className = 'note-popup-text';
             text.textContent = l.note;
             const btn = document.createElement('button');
             btn.className = 'note-popup-close';
             btn.textContent = 'CLOSE';
-            card.appendChild(eyebrow);
-            card.appendChild(text);
-            card.appendChild(btn);
+            card.appendChild(eyebrow); card.appendChild(text); card.appendChild(btn);
             overlay.appendChild(card);
             document.body.appendChild(overlay);
             lockBodyScroll();
@@ -507,7 +848,6 @@
             overlay.onclick = (e) => { if (e.target === overlay) close(); };
         }
 
-        // ===== TICKET HANDLING =====
         function compressImage(file, maxWidth, quality) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -543,9 +883,7 @@
             detCanvas.getContext('2d').drawImage(srcCanvas, 0, 0, detW, detH);
             const detData = detCanvas.getContext('2d').getImageData(0, 0, detW, detH).data;
             const gray = new Float32Array(detW * detH);
-            for (let i = 0, p = 0; i < detData.length; i += 4, p++) {
-                gray[p] = (detData[i] + detData[i+1] + detData[i+2]) / 3;
-            }
+            for (let i = 0, p = 0; i < detData.length; i += 4, p++) gray[p] = (detData[i] + detData[i+1] + detData[i+2]) / 3;
             const blurred = boxBlur2D(gray, detW, detH, 4);
             let maxB = 0;
             for (let p = 0; p < blurred.length; p++) if (blurred[p] > maxB) maxB = blurred[p];
@@ -553,10 +891,8 @@
             const threshold = maxB * 0.88;
             const rowCount = new Int32Array(detH);
             const colCount = new Int32Array(detW);
-            for (let y = 0; y < detH; y++) {
-                for (let x = 0; x < detW; x++) {
-                    if (blurred[y * detW + x] >= threshold) { rowCount[y]++; colCount[x]++; }
-                }
+            for (let y = 0; y < detH; y++) for (let x = 0; x < detW; x++) {
+                if (blurred[y * detW + x] >= threshold) { rowCount[y]++; colCount[x]++; }
             }
             const rowMin = (detW * 0.25) | 0;
             const colMin = (detH * 0.25) | 0;
@@ -588,16 +924,14 @@
             const imgData = ctx.getImageData(0, 0, w, h);
             const data = imgData.data;
             const gray = new Float32Array(w * h);
-            for (let i = 0, p = 0; i < data.length; i += 4, p++) {
-                gray[p] = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
-            }
+            for (let i = 0, p = 0; i < data.length; i += 4, p++) gray[p] = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
             const radius = Math.max(20, Math.floor(Math.min(w, h) / 18));
             const blurred = boxBlur2D(gray, w, h, radius);
             for (let p = 0, i = 0; p < gray.length; p++, i += 4) {
                 const px = gray[p], avg = blurred[p];
                 const cutoff = avg * 0.85;
                 let v;
-                if (px >= cutoff) { v = 255; }
+                if (px >= cutoff) v = 255;
                 else { const t = px / cutoff; v = (Math.pow(t, 1.15) * 255) | 0; }
                 data[i] = data[i+1] = data[i+2] = v;
             }
@@ -605,35 +939,26 @@
         }
 
         function boxBlur2D(src, w, h, radius) {
-            const tmp = new Float32Array(w * h);
-            const dst = new Float32Array(w * h);
+            const tmp = new Float32Array(w * h); const dst = new Float32Array(w * h);
             const winSize = radius * 2 + 1;
             for (let y = 0; y < h; y++) {
                 let sum = 0;
-                for (let i = -radius; i <= radius; i++) {
-                    const x = i < 0 ? 0 : (i >= w ? w - 1 : i);
-                    sum += src[y * w + x];
-                }
+                for (let i = -radius; i <= radius; i++) { const x = i < 0 ? 0 : (i >= w ? w - 1 : i); sum += src[y * w + x]; }
                 for (let x = 0; x < w; x++) {
                     tmp[y * w + x] = sum / winSize;
                     const outX = x - radius < 0 ? 0 : x - radius;
                     const inX = x + radius + 1 >= w ? w - 1 : x + radius + 1;
-                    sum -= src[y * w + outX];
-                    sum += src[y * w + inX];
+                    sum -= src[y * w + outX]; sum += src[y * w + inX];
                 }
             }
             for (let x = 0; x < w; x++) {
                 let sum = 0;
-                for (let i = -radius; i <= radius; i++) {
-                    const y = i < 0 ? 0 : (i >= h ? h - 1 : i);
-                    sum += tmp[y * w + x];
-                }
+                for (let i = -radius; i <= radius; i++) { const y = i < 0 ? 0 : (i >= h ? h - 1 : i); sum += tmp[y * w + x]; }
                 for (let y = 0; y < h; y++) {
                     dst[y * w + x] = sum / winSize;
                     const outY = y - radius < 0 ? 0 : y - radius;
                     const inY = y + radius + 1 >= h ? h - 1 : y + radius + 1;
-                    sum -= tmp[outY * w + x];
-                    sum += tmp[inY * w + x];
+                    sum -= tmp[outY * w + x]; sum += tmp[inY * w + x];
                 }
             }
             return dst;
@@ -642,10 +967,7 @@
         function uploadTicket(sId, lId) {
             document.querySelectorAll('.swipe-container').forEach(c => c.classList.remove('swiped', 'swiped-right'));
             const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = 'image/*';
-            input.capture = 'environment';
-            input.style.display = 'none';
+            input.type = 'file'; input.accept = 'image/*'; input.capture = 'environment'; input.style.display = 'none';
             document.body.appendChild(input);
             input.onchange = async (e) => {
                 const file = e.target.files && e.target.files[0];
@@ -653,11 +975,8 @@
                 try {
                     const dataUrl = await compressImage(file, 1024, 0.7);
                     saveTicket(sId, lId, dataUrl);
-                } catch (err) {
-                    alert('Failed to process image: ' + (err.message || err));
-                } finally {
-                    input.remove();
-                }
+                } catch (err) { alert('Failed to process image: ' + (err.message || err)); }
+                finally { input.remove(); }
             };
             input.click();
         }
@@ -669,12 +988,8 @@
             const lIdx = h[sIdx].loads.findIndex(l => l.id == lId);
             if (lIdx === -1) return;
             h[sIdx].loads[lIdx].ticket = dataUrl;
-            try {
-                localStorage.setItem('driver_history', JSON.stringify(h));
-                renderHistory();
-            } catch (err) {
-                alert('Storage full. Delete some older settlements or photos to free up space.');
-            }
+            try { localStorage.setItem('driver_history', JSON.stringify(h)); renderHistory(); }
+            catch (err) { alert('Storage full. Delete some older settlements or photos to free up space.'); }
         }
 
         function removeTicket(sId, lId) {
@@ -690,20 +1005,12 @@
 
         function viewTicket(sId, lId) {
             const h = JSON.parse(localStorage.getItem('driver_history') || '[]');
-            const s = h.find(s => s.id == sId);
-            if (!s) return;
+            const s = h.find(s => s.id == sId); if (!s) return;
             const l = s.loads.find(l => l.id == lId);
             if (!l || !l.ticket) return;
             const overlay = document.createElement('div');
             overlay.className = 'ticket-overlay';
-            overlay.innerHTML = `
-                <img src="${l.ticket}" alt="Load ticket">
-                <div class="ticket-overlay-actions">
-                    <button class="vt-close" style="background:#1e293b;">CLOSE</button>
-                    <button class="vt-retake" style="background:#3b82f6;">RETAKE</button>
-                    <button class="vt-delete" style="background:#ef4444;">DELETE</button>
-                </div>
-            `;
+            overlay.innerHTML = `<img src="${l.ticket}" alt="Load ticket"><div class="ticket-overlay-actions"><button class="vt-close" style="background:#1e293b;">CLOSE</button><button class="vt-retake" style="background:#3b82f6;">RETAKE</button><button class="vt-delete" style="background:#ef4444;">DELETE</button></div>`;
             document.body.appendChild(overlay);
             lockBodyScroll();
             const close = () => { overlay.remove(); unlockBodyScroll(); };
@@ -712,24 +1019,17 @@
             overlay.querySelector('.vt-delete').onclick = () => { removeTicket(sId, lId); close(); };
         }
 
-        // ===== HISTORY RENDER =====
         function renderHistory(){
             const history = JSON.parse(localStorage.getItem('driver_history') || '[]');
             const list = document.getElementById('historyList');
             if (!list) return;
-
             const expandedEntries = new Set();
-            list.querySelectorAll('.glass.expanded').forEach(c => {
-                if (c.dataset.entryId) expandedEntries.add(c.dataset.entryId);
-            });
+            list.querySelectorAll('.glass.expanded').forEach(c => { if (c.dataset.entryId) expandedEntries.add(c.dataset.entryId); });
             const collapsedDayKeys = new Set();
             list.querySelectorAll('.day-section.collapsed').forEach(s => {
                 const card = s.closest('.glass');
-                if (card && card.dataset.entryId && s.dataset.day) {
-                    collapsedDayKeys.add(card.dataset.entryId + '|' + s.dataset.day);
-                }
+                if (card && card.dataset.entryId && s.dataset.day) collapsedDayKeys.add(card.dataset.entryId + '|' + s.dataset.day);
             });
-
             list.innerHTML = '';
             const todayDayName = new Date().toLocaleDateString('en-US', { weekday: 'long' });
             const latestDate = history.length > 0 ? Math.max(...history.map(e => new Date(e.payoutDate).getTime())) : null;
@@ -740,8 +1040,9 @@
                 entry.loads.forEach(l => {
                     const pay = getLoadPay(l);
                     totalNet += pay;
-                    if(!grouped[l.day]) grouped[l.day] = [];
-                    grouped[l.day].push({ ...l, pay });
+                    const dayKey = isValidDay(l.day) ? l.day : 'Friday';
+                    if(!grouped[dayKey]) grouped[dayKey] = [];
+                    grouped[dayKey].push({ ...l, pay });
                 });
                 const cameraSvg = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`;
                 const noteSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`;
@@ -752,80 +1053,30 @@
                 });
                 for(const day of sortedDays) {
                     const dayTotal = grouped[day].reduce((sum, item) => sum + item.pay, 0);
-                    breakdownHtml += `
-                        <div class="day-section" data-day="${day}">
-                            <div class="flex justify-between items-center mb-3 px-1 day-header" onclick="toggleDay(this, event)">
-                                <span class="day-header-text">${day}</span>
-                                <span class="day-total-text">$${dayTotal.toFixed(2)}</span>
-                            </div>
-                            <div class="day-loads">
-                                ${grouped[day].map(l => {
-                                    const isCustom = l.pricingMode === 'fixed' || l.pricingMode === 'perton';
-                                    return `
-                                    <div class="swipe-container" id="container-${l.id}"
-                                         ontouchstart="ts(event, '${l.id}')"
-                                         ontouchmove="tm(event, '${l.id}')"
-                                         ontouchend="te(event, '${l.id}')">
-                                        <div class="edit-box-flat" onclick="openEditModal('${entry.id}','${l.id}')">EDIT</div>
-                                        <div class="delete-box-flat" onclick="removeLoad('${entry.id}', '${l.id}')">DELETE</div>
-                                        <div class="swipe-content">
-                                            <div class="flex flex-col">
-                                                <div class="flex items-center">
-                                                    <span class="text-lg font-bold text-gray-100">${l.miles} miles</span>
-                                                    <span class="ticket-icon ${l.ticket ? 'has-ticket' : 'no-ticket'}" onclick="event.stopPropagation();${l.ticket ? `viewTicket('${entry.id}','${l.id}')` : `uploadTicket('${entry.id}','${l.id}')`}">${cameraSvg}</span>
-                                                    ${l.note ? `<span class="note-icon" onclick="event.stopPropagation();viewNote('${entry.id}','${l.id}')">${noteSvg}</span>` : ''}
-                                                </div>
-                                                <div class="flex items-center text-[10px] text-gray-500 font-bold uppercase">
-                                                    <span>${l.tons} TONS</span>
-                                                    ${isCustom ? '<span class="custom-badge">· CUSTOM</span>' : ''}
-                                                </div>
-                                            </div>
-                                            <span class="mileage-pay-text">$${l.pay.toFixed(2)}</span>
-                                        </div>
-                                    </div>`;
-                                }).join('')}
-                            </div>
-                        </div>`;
+                    breakdownHtml += `<div class="day-section" data-day="${day}"><div class="flex justify-between items-center mb-3 px-1 day-header" onclick="toggleDay(this, event)"><span class="day-header-text">${day}</span><span class="day-total-text">$${dayTotal.toFixed(2)}</span></div><div class="day-loads">${grouped[day].map(l => {
+                        const isCustom = l.pricingMode === 'fixed' || l.pricingMode === 'perton';
+                        return `<div class="swipe-container" id="container-${l.id}" ontouchstart="ts(event, '${l.id}')" ontouchmove="tm(event, '${l.id}')" ontouchend="te(event, '${l.id}')"><div class="edit-box-flat" onclick="openEditModal('${entry.id}','${l.id}')">EDIT</div><div class="delete-box-flat" onclick="removeLoad('${entry.id}', '${l.id}')">DELETE</div><div class="swipe-content"><div class="flex flex-col"><div class="flex items-center"><span class="text-lg font-bold text-gray-100">${l.miles} miles</span><span class="ticket-icon ${l.ticket ? 'has-ticket' : 'no-ticket'}" onclick="event.stopPropagation();${l.ticket ? `viewTicket('${entry.id}','${l.id}')` : `uploadTicket('${entry.id}','${l.id}')`}">${cameraSvg}</span>${l.note ? `<span class="note-icon" onclick="event.stopPropagation();viewNote('${entry.id}','${l.id}')">${noteSvg}</span>` : ''}</div><div class="flex items-center text-[10px] text-gray-500 font-bold uppercase"><span>${l.tons} TONS</span>${isCustom ? '<span class="custom-badge">· CUSTOM</span>' : ''}</div></div><span class="mileage-pay-text">$${l.pay.toFixed(2)}</span></div></div>`;
+                    }).join('')}</div></div>`;
                 }
                 const card = document.createElement('div');
                 card.className = 'glass p-6';
                 card.dataset.entryId = entry.id;
                 if (expandedEntries.has(String(entry.id))) card.classList.add('expanded');
                 card.onclick = (e) => { if(!e.target.closest('.swipe-container') && !e.target.closest('button') && !e.target.closest('.day-header')) card.classList.toggle('expanded'); };
-                card.innerHTML = `
-                    <div class="flex justify-between items-center relative">
-                        <div>
-                            <p class="text-[10px] text-blue-400 font-black uppercase tracking-widest">Settlement</p>
-                            <p class="text-xl font-black tracking-tight">${new Date(entry.payoutDate + 'T00:00:00').toLocaleDateString('en-US', {month:'short', day:'numeric'})}</p>
-                        </div>
-                        ${isCurrent ? '<span class="blink-current text-blue-500/80 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">CURRENT</span>' : ''}
-                        <p class="text-2xl font-black text-green-400 tracking-tighter">$${totalNet.toFixed(2)}</p>
-                    </div>
-                    <div class="details-panel" onclick="event.stopPropagation()">
-                        ${breakdownHtml}
-                        <div class="flex gap-2 mt-4">
-                            <button onclick="addManualToCard('${entry.id}', '${entry.payoutDate}')" class="flex-1 bg-blue-500/20 text-blue-400 py-4 rounded-xl font-black text-xs uppercase tracking-widest active:scale-95">+ Add Load</button>
-                            <button onclick="if(confirm('Delete settlement?')){ localStorage.setItem('driver_history', JSON.stringify(JSON.parse(localStorage.getItem('driver_history')).filter(s=>s.id!='${entry.id}'))); renderHistory(); }" class="flex-1 bg-red-500/10 text-red-400 py-4 rounded-xl font-black text-xs uppercase tracking-widest text-center active:scale-95">Delete All</button>
-                        </div>
-                    </div>`;
+                card.innerHTML = `<div class="flex justify-between items-center relative"><div><p class="text-[10px] text-blue-400 font-black uppercase tracking-widest">Settlement</p><p class="text-xl font-black tracking-tight">${new Date(entry.payoutDate + 'T00:00:00').toLocaleDateString('en-US', {month:'short', day:'numeric'})}</p></div>${isCurrent ? '<span class="blink-current text-blue-500/80 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">CURRENT</span>' : ''}<p class="text-2xl font-black text-green-400 tracking-tighter">$${totalNet.toFixed(2)}</p></div><div class="details-panel" onclick="event.stopPropagation()">${breakdownHtml}<div class="flex gap-2 mt-4"><button onclick="openAddModal('${entry.id}', '${entry.payoutDate}')" class="flex-1 bg-blue-500/20 text-blue-400 py-4 rounded-xl font-black text-xs uppercase tracking-widest active:scale-95">+ Add Load</button><button onclick="if(confirm('Delete settlement?')){ localStorage.setItem('driver_history', JSON.stringify(JSON.parse(localStorage.getItem('driver_history')).filter(s=>s.id!='${entry.id}'))); renderHistory(); }" class="flex-1 bg-red-500/10 text-red-400 py-4 rounded-xl font-black text-xs uppercase tracking-widest text-center active:scale-95">Delete All</button></div></div>`;
                 const isFirstRender = !initializedEntries.has(String(entry.id));
                 initializedEntries.add(String(entry.id));
                 card.querySelectorAll('.day-section').forEach(s => {
                     const dayKey = String(entry.id) + '|' + s.dataset.day;
-                    if (isFirstRender) {
-                        if (isCurrent && s.dataset.day !== todayDayName) s.classList.add('collapsed');
-                    } else {
-                        if (collapsedDayKeys.has(dayKey)) s.classList.add('collapsed');
-                    }
+                    if (isFirstRender) { if (isCurrent && s.dataset.day !== todayDayName) s.classList.add('collapsed'); }
+                    else { if (collapsedDayKeys.has(dayKey)) s.classList.add('collapsed'); }
                 });
                 list.appendChild(card);
             });
-
             renderFooterStats();
         }
 
-        let xStart = null;
-        let startState = null;
+        let xStart = null; let startState = null;
         function ts(e, id) {
             xStart = e.touches[0].clientX;
             const el = document.getElementById('container-' + id);
@@ -855,18 +1106,6 @@
         }
         function te() { xStart = null; startState = null; }
 
-        function addManualToCard(sId, pDate) {
-            const input = prompt("Enter mileage (comma-separated for multiple):");
-            if (!input) return;
-            const miles = input.split(',').map(m => parseFloat(m.trim())).filter(m => !isNaN(m));
-            if (miles.length === 0) return;
-            const day = prompt("Enter Day (e.g. Monday):");
-            if (!day) return;
-            modifySettlement(pDate, miles, day);
-            renderHistory();
-        }
-
-        // ===== STATS + CHART =====
         function getPayments() {
             const history = JSON.parse(localStorage.getItem('driver_history') || '[]');
             return history.map(s => {
@@ -875,14 +1114,8 @@
                 return { date: new Date(s.payoutDate + 'T00:00:00'), amount: total };
             });
         }
-
-        function fmtShort(n) {
-            if (n >= 1000) return '$' + (n / 1000).toFixed(1) + 'K';
-            return '$' + Math.round(n);
-        }
-        function fmtFull(n) {
-            return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-        }
+        function fmtShort(n) { if (n >= 1000) return '$' + (n / 1000).toFixed(1) + 'K'; return '$' + Math.round(n); }
+        function fmtFull(n) { return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }); }
 
         function renderFooterStats() {
             const payments = getPayments();
@@ -906,48 +1139,31 @@
         function showRevenueChart(timeframe) {
             const payments = getPayments();
             const now = new Date();
-            let bars = [];
-            let title = '';
-            let total = 0;
-
+            let bars = []; let title = ''; let total = 0;
             if (timeframe === 'month') {
                 title = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-                const monthPayments = payments
-                    .filter(p => p.date.getMonth() === now.getMonth() && p.date.getFullYear() === now.getFullYear())
-                    .sort((a, b) => a.date - b.date);
+                const monthPayments = payments.filter(p => p.date.getMonth() === now.getMonth() && p.date.getFullYear() === now.getFullYear()).sort((a, b) => a.date - b.date);
                 bars = monthPayments.map(p => ({ label: p.date.getDate().toString(), value: p.amount }));
                 total = monthPayments.reduce((s, p) => s + p.amount, 0);
             } else if (timeframe === 'year') {
                 title = now.getFullYear().toString();
                 const monthsArr = Array(12).fill(0);
-                payments.forEach(p => {
-                    if (p.date.getFullYear() === now.getFullYear()) {
-                        monthsArr[p.date.getMonth()] += p.amount;
-                        total += p.amount;
-                    }
-                });
+                payments.forEach(p => { if (p.date.getFullYear() === now.getFullYear()) { monthsArr[p.date.getMonth()] += p.amount; total += p.amount; } });
                 const monthLabels = ['J','F','M','A','M','J','J','A','S','O','N','D'];
                 bars = monthsArr.map((v, i) => ({ label: monthLabels[i], value: v }));
             } else {
                 title = 'All Time';
                 const years = {};
-                payments.forEach(p => {
-                    const y = p.date.getFullYear();
-                    years[y] = (years[y] || 0) + p.amount;
-                    total += p.amount;
-                });
+                payments.forEach(p => { const y = p.date.getFullYear(); years[y] = (years[y] || 0) + p.amount; total += p.amount; });
                 bars = Object.keys(years).sort().map(y => ({ label: y, value: years[y] }));
             }
-
             const titleEl = document.getElementById('chartTitle');
             const totalEl = document.getElementById('chartTotal');
             const body = document.getElementById('chartBody');
             const overlay = document.getElementById('chartOverlay');
             if (!titleEl || !totalEl || !body || !overlay) return;
-
             titleEl.textContent = title;
             totalEl.textContent = fmtFull(total);
-
             if (bars.length === 0 || total === 0) {
                 body.innerHTML = '<div class="chart-empty">No revenue logged for this period yet.</div>';
             } else {
@@ -959,31 +1175,29 @@
                     return `<div class="chart-bar-wrap"><div class="chart-bar-value">${valueLabel}</div><div class="chart-bar-track"><div class="chart-bar ${b.value === 0 ? 'empty' : ''}" data-target="${pct}"></div></div><div class="chart-bar-label">${b.label}</div></div>`;
                 }).join('')}</div>`;
             }
-
             overlay.classList.add('active');
             lockBodyScroll();
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                    body.querySelectorAll('.chart-bar').forEach(bar => { bar.style.height = bar.dataset.target + '%'; });
-                });
-            });
+            requestAnimationFrame(() => { requestAnimationFrame(() => { body.querySelectorAll('.chart-bar').forEach(bar => { bar.style.height = bar.dataset.target + '%'; }); }); });
         }
-
-        function closeChart() {
-            const overlay = document.getElementById('chartOverlay');
-            if (overlay) overlay.classList.remove('active');
-            unlockBodyScroll();
-        }
+        function closeChart() { const overlay = document.getElementById('chartOverlay'); if (overlay) overlay.classList.remove('active'); unlockBodyScroll(); }
 
         try {
-            const overlayEl = document.getElementById('chartOverlay');
-            if (overlayEl) overlayEl.addEventListener('click', e => { if (e.target.id === 'chartOverlay') closeChart(); });
-            const editOv = document.getElementById('editOverlay');
-            if (editOv) editOv.addEventListener('click', e => { if (e.target.id === 'editOverlay') closeEditModal(); });
+            sanitizeHistoryDays();
+            applySettingsToHeader();
+            ['chartOverlay','editOverlay','addOverlay','settingsOverlay','helpOverlay'].forEach(id => {
+                const ov = document.getElementById(id);
+                if (!ov) return;
+                ov.addEventListener('click', e => {
+                    if (e.target.id !== id) return;
+                    if (id === 'chartOverlay') closeChart();
+                    else if (id === 'editOverlay') closeEditModal();
+                    else if (id === 'addOverlay') closeAddModal();
+                    else if (id === 'settingsOverlay') closeSettings();
+                    else if (id === 'helpOverlay') closeHelp();
+                });
+            });
             renderHistory();
-        } catch (err) {
-            alert('Startup error: ' + (err && err.message ? err.message : err));
-        }
+        } catch (err) { alert('Startup error: ' + (err && err.message ? err.message : err)); }
     </script>
 </body>
 </html>
