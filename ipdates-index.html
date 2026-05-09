@@ -31,10 +31,11 @@
         .day-section.collapsed { margin-bottom: 12px; }
         .day-section.collapsed .day-loads { display: none; }
         .day-header { cursor: pointer; -webkit-user-select: none; user-select: none; }
-        .ticket-icon { display: inline-flex; align-items: center; justify-content: center; margin-left: 10px; padding: 4px; cursor: pointer; flex-shrink: 0; }
+        .ticket-icon, .note-icon { display: inline-flex; align-items: center; justify-content: center; margin-left: 8px; padding: 4px; cursor: pointer; flex-shrink: 0; }
         .ticket-icon.has-ticket { color: #3b82f6; }
         .ticket-icon.no-ticket { color: #ef4444; }
-        .ticket-icon:active { opacity: 0.6; }
+        .note-icon { color: #fbbf24; }
+        .ticket-icon:active, .note-icon:active { opacity: 0.6; }
         .ticket-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
         .ticket-overlay img { max-width: 100%; max-height: 70vh; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
         .ticket-overlay-actions { display: flex; gap: 10px; margin-top: 24px; width: 100%; max-width: 420px; }
@@ -83,8 +84,6 @@
         .chart-empty { text-align: center; padding: 60px 20px; color: #64748b; font-size: 13px; font-weight: 700; }
         .chart-close { width: 100%; margin-top: 24px; padding: 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 14px; font-weight: 900; font-size: 12px; letter-spacing: 0.15em; cursor: pointer; font-family: inherit; }
         .chart-close:active { transform: scale(0.98); background: rgba(255,255,255,0.08); }
-
-        /* ===== EDIT MODAL ===== */
         .edit-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px); z-index: 10000; display: none; align-items: flex-end; opacity: 0; transition: opacity 0.25s ease; }
         .edit-overlay.active { display: flex; opacity: 1; }
         .edit-modal { width: 100%; background: #0f172a; border-top-left-radius: 28px; border-top-right-radius: 28px; border-top: 1px solid rgba(255,255,255,0.1); padding: 20px 22px 32px; transform: translateY(100%); transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1); max-height: 90vh; overflow-y: auto; }
@@ -95,11 +94,15 @@
         .edit-label { font-size: 10px; font-weight: 900; color: #94a3b8; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 8px; display: block; }
         .edit-input { width: 100%; background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.2); color: white; padding: 14px 16px; border-radius: 12px; font-size: 18px; font-weight: 700; font-family: inherit; }
         .edit-input:focus { outline: none; border-color: #3b82f6; }
+        .edit-textarea { width: 100%; background: rgba(0, 0, 0, 0.5) !important; border: 1px solid rgba(255, 255, 255, 0.2) !important; color: #fff !important; padding: 14px 16px; border-radius: 12px; font-size: 15px !important; font-weight: 600; font-family: inherit; resize: vertical; min-height: 60px; }
         .edit-row { margin-bottom: 18px; }
         .mode-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; background: rgba(0,0,0,0.4); border-radius: 12px; padding: 4px; }
         .mode-tab { padding: 12px 4px; background: transparent; border: none; color: #64748b; font-weight: 800; font-size: 10px; letter-spacing: 0.05em; text-transform: uppercase; border-radius: 9px; cursor: pointer; font-family: inherit; transition: all 0.15s; }
         .mode-tab.active { background: #3b82f6; color: white; box-shadow: 0 2px 8px rgba(59,130,246,0.3); }
         .mode-help { font-size: 11px; color: #64748b; margin-top: 8px; line-height: 1.4; }
+        .pay-preview { background: rgba(74, 222, 128, 0.08); border: 1px solid rgba(74, 222, 128, 0.2); border-radius: 12px; padding: 14px 16px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; }
+        .pay-preview-label { font-size: 10px; font-weight: 900; color: #94a3b8; letter-spacing: 0.15em; text-transform: uppercase; }
+        .pay-preview-value { font-size: 22px; font-weight: 900; color: #4ade80; letter-spacing: -0.02em; }
         .multi-apply { display: none; align-items: center; gap: 12px; padding: 14px; background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.2); border-radius: 12px; margin-bottom: 18px; cursor: pointer; }
         .multi-apply input { width: 22px; height: 22px; accent-color: #3b82f6; flex-shrink: 0; }
         .multi-apply label { font-size: 13px; font-weight: 700; color: #cbd5e1; cursor: pointer; flex: 1; }
@@ -108,6 +111,11 @@
         .edit-btn-cancel { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); }
         .edit-btn-save { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
         .edit-btn-cancel:active, .edit-btn-save:active { transform: scale(0.98); }
+        .note-popup { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 10001; display: flex; align-items: center; justify-content: center; padding: 24px; }
+        .note-popup-card { background: #0f172a; border: 1px solid rgba(255,255,255,0.1); border-radius: 18px; padding: 22px; max-width: 420px; width: 100%; }
+        .note-popup-eyebrow { font-size: 10px; font-weight: 900; color: #fbbf24; letter-spacing: 0.2em; margin-bottom: 10px; }
+        .note-popup-text { font-size: 15px; color: white; line-height: 1.5; font-weight: 600; white-space: pre-wrap; word-break: break-word; margin-bottom: 18px; }
+        .note-popup-close { width: 100%; padding: 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 12px; font-weight: 900; font-size: 12px; letter-spacing: 0.15em; cursor: pointer; font-family: inherit; }
     </style>
 </head>
 <body>
@@ -169,7 +177,7 @@
             </div>
             <div class="footer-tagline">Built for the long haul</div>
             <div class="footer-meta">
-                <span class="footer-version">v2.2</span>
+                <span class="footer-version">v2.3</span>
                 <span class="footer-meta-dot"></span>
                 <span>© 2026</span>
                 <span class="footer-meta-dot"></span>
@@ -195,7 +203,6 @@
         </div>
     </div>
 
-    <!-- ===== EDIT MODAL ===== -->
     <div class="edit-overlay" id="editOverlay">
         <div class="edit-modal">
             <div class="chart-handle"></div>
@@ -204,8 +211,13 @@
             <div class="edit-subtitle" id="editAutoPreview"></div>
 
             <div class="edit-row">
+                <label class="edit-label">Note (optional)</label>
+                <textarea id="editNote" class="edit-textarea" rows="2" placeholder="e.g. wet load, broker XYZ, ticket #1234..."></textarea>
+            </div>
+
+            <div class="edit-row">
                 <label class="edit-label">Tonnage</label>
-                <input type="number" id="editTons" class="edit-input" inputmode="decimal" step="0.01" placeholder="25">
+                <input type="number" id="editTons" class="edit-input" inputmode="decimal" step="0.01" placeholder="25" oninput="updatePayPreview()">
             </div>
 
             <div class="edit-row">
@@ -219,13 +231,18 @@
             </div>
 
             <div class="edit-row" id="editFixedRow" style="display:none;">
-                <label class="edit-label">Fixed Total ($)</label>
-                <input type="number" id="editFixed" class="edit-input" inputmode="decimal" step="0.01" placeholder="148.63">
+                <label class="edit-label">Truck Total ($)</label>
+                <input type="number" id="editFixed" class="edit-input" inputmode="decimal" step="0.01" placeholder="350.00" oninput="updatePayPreview()">
             </div>
 
             <div class="edit-row" id="editPerTonRow" style="display:none;">
-                <label class="edit-label">Net Pay Per Ton ($)</label>
-                <input type="number" id="editPerTon" class="edit-input" inputmode="decimal" step="0.01" placeholder="6.25">
+                <label class="edit-label">Truck Rate / Ton ($)</label>
+                <input type="number" id="editPerTon" class="edit-input" inputmode="decimal" step="0.01" placeholder="14.00" oninput="updatePayPreview()">
+            </div>
+
+            <div class="pay-preview">
+                <span class="pay-preview-label">Driver Pay</span>
+                <span class="pay-preview-value" id="payPreview">$0.00</span>
             </div>
 
             <div class="multi-apply" id="multiApplyRow" onclick="document.getElementById('multiApply').click()">
@@ -245,6 +262,27 @@
         const initializedEntries = new Set();
         const rateData = [[2,3.84],[3,3.97],[6,4.38],[8,4.65],[11,5.06],[13,5.46],[14,5.43],[16,6.03],[17,6.00],[21,6.75],[25,7.32],[27,7.36],[30,8.01],[39,10.26],[45,11.24],[49,10.15],[61,14.40],[62,14.72],[65,15.42],[92,16.07]];
 
+        // Body scroll lock for iOS-safe modal behavior
+        let savedScrollY = 0;
+        function lockBodyScroll() {
+            if (document.body.dataset.locked === '1') return;
+            savedScrollY = window.scrollY;
+            document.body.dataset.locked = '1';
+            document.body.style.position = 'fixed';
+            document.body.style.top = -savedScrollY + 'px';
+            document.body.style.left = '0';
+            document.body.style.right = '0';
+        }
+        function unlockBodyScroll() {
+            if (document.body.dataset.locked !== '1') return;
+            document.body.dataset.locked = '';
+            document.body.style.position = '';
+            document.body.style.top = '';
+            document.body.style.left = '';
+            document.body.style.right = '';
+            window.scrollTo(0, savedScrollY);
+        }
+
         function getRate(m){
             if(m<=2) return 3.84;
             if(m>=92){ let s=(16.07-15.42)/(92-65); return 16.07+(m-92)*s; }
@@ -255,9 +293,10 @@
             return 0;
         }
 
+        // All pricing modes apply 30% driver commission to truck gross.
         function getLoadPay(l) {
-            if (l.pricingMode === 'fixed' && typeof l.customTotal === 'number') return l.customTotal;
-            if (l.pricingMode === 'perton' && typeof l.customRate === 'number') return l.customRate * l.tons;
+            if (l.pricingMode === 'fixed' && typeof l.customTotal === 'number') return l.customTotal * 0.30;
+            if (l.pricingMode === 'perton' && typeof l.customRate === 'number') return l.customRate * l.tons * 0.30;
             return getRate(l.miles) * l.tons * 0.30;
         }
 
@@ -326,7 +365,8 @@
 
             document.getElementById('editLoadInfo').textContent = `${l.miles} miles · ${l.day}`;
             const autoPay = (getRate(l.miles) * l.tons * 0.30).toFixed(2);
-            document.getElementById('editAutoPreview').textContent = `Auto rate: $${getRate(l.miles).toFixed(2)}/ton gross · pays $${autoPay} at ${l.tons} tons`;
+            document.getElementById('editAutoPreview').textContent = `Auto rate: $${getRate(l.miles).toFixed(2)}/ton truck · pays $${autoPay} at ${l.tons} tons`;
+            document.getElementById('editNote').value = l.note || '';
             document.getElementById('editTons').value = l.tons;
 
             const mode = l.pricingMode || 'auto';
@@ -348,6 +388,8 @@
             }
 
             document.getElementById('editOverlay').classList.add('active');
+            lockBodyScroll();
+            updatePayPreview();
         }
 
         function setPricingMode(mode) {
@@ -356,13 +398,33 @@
             document.getElementById('editPerTonRow').style.display = mode === 'perton' ? 'block' : 'none';
             const help = document.getElementById('modeHelp');
             if (mode === 'auto') help.textContent = 'Standard rate table × tons × 30% commission.';
-            else if (mode === 'fixed') help.textContent = 'Override the total payout for this load. Tons still tracked but ignored for pay.';
-            else help.textContent = 'Net pay per ton (already after commission). Total = rate × tons.';
+            else if (mode === 'fixed') help.textContent = "Truck's total payout. Driver gets 30% commission of this.";
+            else help.textContent = "Truck's rate per ton. Driver gets 30% commission of (rate × tons).";
+            updatePayPreview();
+        }
+
+        function updatePayPreview() {
+            if (!editingLoad) return;
+            const tons = parseFloat(document.getElementById('editTons').value) || 0;
+            const activeMode = document.querySelector('.mode-tab.active');
+            const mode = activeMode ? activeMode.dataset.mode : 'auto';
+            let pay = 0;
+            if (mode === 'auto') {
+                pay = getRate(editingLoad.miles) * tons * 0.30;
+            } else if (mode === 'fixed') {
+                const v = parseFloat(document.getElementById('editFixed').value) || 0;
+                pay = v * 0.30;
+            } else {
+                const v = parseFloat(document.getElementById('editPerTon').value) || 0;
+                pay = v * tons * 0.30;
+            }
+            document.getElementById('payPreview').textContent = '$' + pay.toFixed(2);
         }
 
         function closeEditModal() {
             document.getElementById('editOverlay').classList.remove('active');
             editingLoad = null;
+            unlockBodyScroll();
         }
 
         function saveEdit() {
@@ -370,10 +432,11 @@
             const tonsVal = parseFloat(document.getElementById('editTons').value);
             if (isNaN(tonsVal) || tonsVal <= 0) { alert('Enter a valid tonnage'); return; }
 
+            const noteVal = document.getElementById('editNote').value.trim();
             const activeMode = document.querySelector('.mode-tab.active');
             const mode = activeMode ? activeMode.dataset.mode : 'auto';
 
-            const updates = { tons: tonsVal };
+            const updates = { tons: tonsVal, note: noteVal };
 
             if (mode === 'auto') {
                 updates.pricingMode = 'auto';
@@ -381,7 +444,7 @@
                 updates.customRate = null;
             } else if (mode === 'fixed') {
                 const v = parseFloat(document.getElementById('editFixed').value);
-                if (isNaN(v) || v < 0) { alert('Enter a valid fixed price'); return; }
+                if (isNaN(v) || v < 0) { alert('Enter a valid truck total'); return; }
                 updates.pricingMode = 'fixed';
                 updates.customTotal = v;
                 updates.customRate = null;
@@ -405,12 +468,43 @@
                 const merged = { ...l, ...updates };
                 if (merged.customTotal === null) delete merged.customTotal;
                 if (merged.customRate === null) delete merged.customRate;
+                if (!merged.note) delete merged.note;
                 return merged;
             });
 
             localStorage.setItem('driver_history', JSON.stringify(h));
             closeEditModal();
             renderHistory();
+        }
+
+        function viewNote(sId, lId) {
+            const h = JSON.parse(localStorage.getItem('driver_history') || '[]');
+            const s = h.find(s => s.id == sId);
+            if (!s) return;
+            const l = s.loads.find(l => l.id == lId);
+            if (!l || !l.note) return;
+            const overlay = document.createElement('div');
+            overlay.className = 'note-popup';
+            const card = document.createElement('div');
+            card.className = 'note-popup-card';
+            const eyebrow = document.createElement('div');
+            eyebrow.className = 'note-popup-eyebrow';
+            eyebrow.textContent = `${l.miles} MILES · ${l.day.toUpperCase()}`;
+            const text = document.createElement('div');
+            text.className = 'note-popup-text';
+            text.textContent = l.note;
+            const btn = document.createElement('button');
+            btn.className = 'note-popup-close';
+            btn.textContent = 'CLOSE';
+            card.appendChild(eyebrow);
+            card.appendChild(text);
+            card.appendChild(btn);
+            overlay.appendChild(card);
+            document.body.appendChild(overlay);
+            lockBodyScroll();
+            const close = () => { overlay.remove(); unlockBodyScroll(); };
+            btn.onclick = close;
+            overlay.onclick = (e) => { if (e.target === overlay) close(); };
         }
 
         // ===== TICKET HANDLING =====
@@ -611,7 +705,8 @@
                 </div>
             `;
             document.body.appendChild(overlay);
-            const close = () => overlay.remove();
+            lockBodyScroll();
+            const close = () => { overlay.remove(); unlockBodyScroll(); };
             overlay.querySelector('.vt-close').onclick = close;
             overlay.querySelector('.vt-retake').onclick = () => { close(); uploadTicket(sId, lId); };
             overlay.querySelector('.vt-delete').onclick = () => { removeTicket(sId, lId); close(); };
@@ -649,6 +744,7 @@
                     grouped[l.day].push({ ...l, pay });
                 });
                 const cameraSvg = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`;
+                const noteSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`;
                 let breakdownHtml = '';
                 const sortedDays = Object.keys(grouped).sort((a, b) => {
                     const av = DAY_ORDER[a]; const bv = DAY_ORDER[b];
@@ -677,6 +773,7 @@
                                                 <div class="flex items-center">
                                                     <span class="text-lg font-bold text-gray-100">${l.miles} miles</span>
                                                     <span class="ticket-icon ${l.ticket ? 'has-ticket' : 'no-ticket'}" onclick="event.stopPropagation();${l.ticket ? `viewTicket('${entry.id}','${l.id}')` : `uploadTicket('${entry.id}','${l.id}')`}">${cameraSvg}</span>
+                                                    ${l.note ? `<span class="note-icon" onclick="event.stopPropagation();viewNote('${entry.id}','${l.id}')">${noteSvg}</span>` : ''}
                                                 </div>
                                                 <div class="flex items-center text-[10px] text-gray-500 font-bold uppercase">
                                                     <span>${l.tons} TONS</span>
@@ -864,6 +961,7 @@
             }
 
             overlay.classList.add('active');
+            lockBodyScroll();
             requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
                     body.querySelectorAll('.chart-bar').forEach(bar => { bar.style.height = bar.dataset.target + '%'; });
@@ -874,6 +972,7 @@
         function closeChart() {
             const overlay = document.getElementById('chartOverlay');
             if (overlay) overlay.classList.remove('active');
+            unlockBodyScroll();
         }
 
         try {
