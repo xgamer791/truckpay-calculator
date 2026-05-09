@@ -41,7 +41,6 @@
         .ticket-overlay-actions { display: flex; gap: 10px; margin-top: 24px; width: 100%; max-width: 420px; }
         .ticket-overlay-actions button { flex: 1; padding: 16px 8px; border: none; border-radius: 12px; font-weight: 900; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: white; }
 
-        /* ===== HEADER + HAMBURGER ===== */
         .app-header { display: flex; justify-content: space-between; align-items: flex-start; padding: 40px 0 48px; }
         .header-title h1 { font-size: 2.25rem; font-weight: 900; font-style: italic; letter-spacing: -0.02em; line-height: 1; }
         .header-title h1 span { color: #3b82f6; }
@@ -50,7 +49,6 @@
         .menu-btn:active { transform: scale(0.92); background: rgba(255,255,255,0.08); }
         .menu-btn svg { color: #cbd5e1; }
 
-        /* ===== HAMBURGER POPOVER ===== */
         .menu-popover { position: fixed; top: 84px; right: 15px; background: #0f172a; border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(59,130,246,0.05); z-index: 9998; min-width: 200px; opacity: 0; transform: translateY(-8px) scale(0.96); transform-origin: top right; pointer-events: none; transition: opacity 0.18s ease, transform 0.18s cubic-bezier(0.16, 1, 0.3, 1); }
         .menu-popover.active { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
         .menu-backdrop { position: fixed; inset: 0; z-index: 9997; display: none; }
@@ -62,7 +60,6 @@
         .menu-item + .menu-item { border-top: 1px solid rgba(255,255,255,0.06); }
         .menu-item-icon { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: rgba(59,130,246,0.12); color: #60a5fa; border-radius: 9px; flex-shrink: 0; }
 
-        /* ===== SLIDE-UP MODALS (shared) ===== */
         .chart-overlay, .edit-overlay, .add-overlay, .settings-overlay, .help-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px); z-index: 10000; display: none; align-items: flex-end; opacity: 0; transition: opacity 0.25s ease; }
         .chart-overlay.active, .edit-overlay.active, .add-overlay.active, .settings-overlay.active, .help-overlay.active { display: flex; opacity: 1; }
         .chart-modal, .edit-modal, .add-modal, .settings-modal, .help-modal { width: 100%; background: #0f172a; border-top-left-radius: 28px; border-top-right-radius: 28px; border-top: 1px solid rgba(255,255,255,0.1); padding: 20px 22px 32px; transform: translateY(100%); transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1); max-height: 90vh; overflow-y: auto; }
@@ -108,7 +105,6 @@
         .edit-btn-cancel:active, .edit-btn-save:active { transform: scale(0.98); }
         .add-preview { font-size: 12px; color: #4ade80; font-weight: 800; margin-top: 8px; min-height: 14px; }
 
-        /* ===== SETTINGS - SLIDER ===== */
         .ton-display { display: flex; align-items: baseline; justify-content: center; gap: 8px; margin: 8px 0 18px; }
         .ton-value { font-size: 64px; font-weight: 900; letter-spacing: -0.04em; color: #4ade80; line-height: 1; }
         .ton-unit { font-size: 14px; font-weight: 800; color: #64748b; letter-spacing: 0.15em; text-transform: uppercase; }
@@ -117,7 +113,6 @@
         .ton-slider::-moz-range-thumb { width: 32px; height: 32px; border-radius: 50%; background: white; border: 4px solid #3b82f6; cursor: pointer; box-shadow: 0 4px 12px rgba(59,130,246,0.5); }
         .ton-range-labels { display: flex; justify-content: space-between; font-size: 11px; font-weight: 800; color: #475569; letter-spacing: 0.1em; }
 
-        /* ===== HELP / README ===== */
         .help-content { color: #cbd5e1; }
         .help-section { margin-bottom: 28px; }
         .help-section:last-child { margin-bottom: 8px; }
@@ -134,7 +129,6 @@
         .swipe-demo-pill.left { background: rgba(59,130,246,0.2); border: 1px solid rgba(59,130,246,0.3); color: #60a5fa; }
         .swipe-demo-pill.right { background: rgba(239,68,68,0.2); border: 1px solid rgba(239,68,68,0.3); color: #f87171; }
 
-        /* ===== FOOTER ===== */
         .pro-footer { margin-top: 60px; padding: 32px 4px 40px; position: relative; }
         .pro-footer::before { content: ''; position: absolute; top: 0; left: 10%; right: 10%; height: 1px; background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.5), transparent); }
         .footer-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 28px; }
@@ -255,7 +249,7 @@
             </div>
             <div class="footer-tagline">Built for the long haul</div>
             <div class="footer-meta">
-                <span class="footer-version">v2.4</span>
+                <span class="footer-version">v2.4.1</span>
                 <span class="footer-meta-dot"></span>
                 <span>© 2026</span>
                 <span class="footer-meta-dot"></span>
@@ -355,22 +349,18 @@
         </div>
     </div>
 
-    <!-- ===== SETTINGS MODAL ===== -->
     <div class="settings-overlay" id="settingsOverlay">
         <div class="settings-modal">
             <div class="chart-handle"></div>
             <div class="edit-eyebrow">SETTINGS</div>
             <div class="edit-title">Adjust Average Tonnage</div>
             <div class="edit-subtitle">Sets the default tons used for new loads. You can still override per-load when editing.</div>
-
             <div class="ton-display">
                 <span class="ton-value" id="tonValueDisplay">25</span>
                 <span class="ton-unit">Tons</span>
             </div>
-
             <input type="range" id="tonSlider" class="ton-slider" min="17" max="30" step="0.1" value="25" oninput="onTonSliderChange()">
             <div class="ton-range-labels"><span>17</span><span>30</span></div>
-
             <div class="edit-actions" style="margin-top: 32px;">
                 <button class="edit-btn-cancel" onclick="closeSettings()">Cancel</button>
                 <button class="edit-btn-save" onclick="saveSettings()">Save</button>
@@ -378,32 +368,25 @@
         </div>
     </div>
 
-    <!-- ===== HELP MODAL ===== -->
     <div class="help-overlay" id="helpOverlay">
         <div class="help-modal">
             <div class="chart-handle"></div>
             <div class="edit-eyebrow">HELP & TIPS</div>
             <div class="edit-title">How DriverPay Pro Works</div>
             <div class="edit-subtitle">A quick rundown of everything you can do.</div>
-
             <div class="help-content">
                 <div class="help-section">
                     <div class="help-section-title">
-                        <span class="help-section-icon">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                        </span>
+                        <span class="help-section-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
                         Adding Loads
                     </div>
                     <p>Type mileage values into the box at the top — comma-separated for multiple loads — and tap <strong>Add to Current Period</strong>. Each value becomes one load tagged with today's day.</p>
                     <p>To add loads to a past day or settlement, tap any settlement card to expand it, then hit <strong>+ Add Load</strong>.</p>
                     <div class="help-tip"><strong>Tip:</strong> Settlements run Friday → Thursday and pay out the following Saturday. Anything you log auto-files into the right week.</div>
                 </div>
-
                 <div class="help-section">
                     <div class="help-section-title">
-                        <span class="help-section-icon">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-                        </span>
+                        <span class="help-section-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>
                         Swipe Actions
                     </div>
                     <p>Each load card responds to swipes:</p>
@@ -413,23 +396,17 @@
                     </div>
                     <p style="margin-top: 12px;">Edit lets you change tonnage, pricing, day, and add notes. Delete removes the load instantly.</p>
                 </div>
-
                 <div class="help-section">
                     <div class="help-section-title">
-                        <span class="help-section-icon">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                        </span>
+                        <span class="help-section-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span>
                         Load Tickets
                     </div>
                     <p>Every load has a camera icon. <strong style="color:#ef4444;">Red</strong> = no ticket uploaded yet. <strong style="color:#3b82f6;">Blue</strong> = ticket on file. Tap the icon to capture, then tap again to view, retake, or delete.</p>
                     <div class="help-tip"><strong>Tip:</strong> The scanner auto-crops and enhances tickets so they read like a clean copy, even shot quickly with one hand.</div>
                 </div>
-
                 <div class="help-section">
                     <div class="help-section-title">
-                        <span class="help-section-icon">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                        </span>
+                        <span class="help-section-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>
                         Custom Pricing
                     </div>
                     <p>The auto rate handles most loads, but for special jobs swipe-edit and pick a pricing mode:</p>
@@ -438,48 +415,35 @@
                     <p><strong>$ / Ton</strong> — type the truck's per-ton rate. You get 30% × rate × tons.</p>
                     <p>The driver pay preview updates live as you type. Loads with custom pricing show a blue <strong>· CUSTOM</strong> tag.</p>
                 </div>
-
                 <div class="help-section">
                     <div class="help-section-title">
-                        <span class="help-section-icon">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                        </span>
+                        <span class="help-section-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
                         Notes
                     </div>
                     <p>In the edit modal, drop a quick note on any load — broker name, ticket number, "wet load", whatever. A yellow note icon shows next to the camera so you know which loads have notes. Tap to read.</p>
                 </div>
-
                 <div class="help-section">
                     <div class="help-section-title">
-                        <span class="help-section-icon">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-                        </span>
+                        <span class="help-section-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>
                         Revenue Charts
                     </div>
                     <p>The three boxes at the bottom show <strong>This Month</strong>, <strong>This Year</strong>, and <strong>Lifetime</strong> earnings. Tap any one to see a bar chart breakdown — settlements within the month, months within the year, years across all time.</p>
                 </div>
-
                 <div class="help-section">
                     <div class="help-section-title">
-                        <span class="help-section-icon">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                        </span>
+                        <span class="help-section-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
                         Settings
                     </div>
                     <p>Open the menu (top right) → <strong>Settings</strong> to set your average tonnage anywhere from 17–30 tons. New loads default to this value. Existing loads keep their saved tonnage.</p>
                 </div>
-
                 <div class="help-section">
                     <div class="help-section-title">
-                        <span class="help-section-icon">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-                        </span>
+                        <span class="help-section-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span>
                         Your Data
                     </div>
                     <p>All data lives <strong>locally on this device only</strong> — nothing is sent anywhere. Clearing browser data or switching devices wipes your history, so screenshot the revenue chart at year-end if you want a paper trail.</p>
                 </div>
             </div>
-
             <button class="chart-close" onclick="closeHelp()">CLOSE</button>
         </div>
     </div>
@@ -511,7 +475,6 @@
             if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission`;
         }
 
-        // Body scroll lock
         let savedScrollY = 0;
         function lockBodyScroll() {
             if (document.body.dataset.locked === '1') return;
@@ -534,26 +497,50 @@
 
         function isValidDay(d) { return typeof d === 'string' && VALID_DAYS.indexOf(d) !== -1; }
 
-        function sanitizeHistoryDays() {
+        // Self-healing migration: removes/repairs malformed history records.
+        // - Drops settlements that are not objects, missing payoutDate, or have no valid loads after cleanup.
+        // - Ensures every settlement has a `loads` array (defaults to []).
+        // - Ensures every load has an id, valid miles, valid tons, and a valid day.
+        function sanitizeHistory() {
             try {
-                let h = JSON.parse(localStorage.getItem('driver_history') || '[]');
+                const raw = localStorage.getItem('driver_history');
+                if (!raw) return;
+                let h = JSON.parse(raw);
+                if (!Array.isArray(h)) { localStorage.setItem('driver_history', '[]'); return; }
                 let changed = false;
+                const cleaned = [];
                 h.forEach(s => {
-                    (s.loads || []).forEach(l => {
-                        if (!isValidDay(l.day)) {
+                    if (!s || typeof s !== 'object') { changed = true; return; }
+                    if (!s.payoutDate || typeof s.payoutDate !== 'string') { changed = true; return; }
+                    if (!Array.isArray(s.loads)) { s.loads = []; changed = true; }
+                    const goodLoads = [];
+                    s.loads.forEach(l => {
+                        if (!l || typeof l !== 'object') { changed = true; return; }
+                        const miles = parseFloat(l.miles);
+                        if (isNaN(miles) || miles <= 0) { changed = true; return; }
+                        let tons = parseFloat(l.tons);
+                        if (isNaN(tons) || tons <= 0) { tons = 25; changed = true; }
+                        let day = l.day;
+                        if (!isValidDay(day)) {
                             let recovered = null;
-                            if (typeof l.day === 'string') {
-                                for (const d of VALID_DAYS) {
-                                    if (l.day.indexOf(d) !== -1) { recovered = d; break; }
-                                }
+                            if (typeof day === 'string') {
+                                for (const d of VALID_DAYS) { if (day.indexOf(d) !== -1) { recovered = d; break; } }
                             }
-                            l.day = recovered || 'Friday';
+                            day = recovered || 'Friday';
                             changed = true;
                         }
+                        if (!l.id) { l.id = Math.random().toString(36).substr(2, 9); changed = true; }
+                        goodLoads.push({ ...l, miles, tons, day });
                     });
+                    if (goodLoads.length === 0) { changed = true; return; }
+                    if (goodLoads.length !== s.loads.length) changed = true;
+                    cleaned.push({ ...s, loads: goodLoads });
                 });
-                if (changed) localStorage.setItem('driver_history', JSON.stringify(h));
-            } catch (e) {}
+                if (changed) localStorage.setItem('driver_history', JSON.stringify(cleaned));
+            } catch (e) {
+                // Last resort: if the entire blob is corrupt, reset to empty rather than crash on every render.
+                localStorage.setItem('driver_history', '[]');
+            }
         }
 
         function getRate(m){
@@ -572,7 +559,6 @@
             return getRate(l.miles) * l.tons * 0.30;
         }
 
-        // ===== HAMBURGER MENU =====
         function toggleMenu(e) {
             if (e) e.stopPropagation();
             const popover = document.getElementById('menuPopover');
@@ -585,7 +571,6 @@
             document.getElementById('menuBackdrop').classList.remove('active');
         }
 
-        // ===== SETTINGS MODAL =====
         function openSettings() {
             const slider = document.getElementById('tonSlider');
             slider.value = settings.avgTons;
@@ -616,7 +601,6 @@
             closeSettings();
         }
 
-        // ===== HELP MODAL =====
         function openHelp() {
             document.getElementById('helpOverlay').classList.add('active');
             lockBodyScroll();
@@ -658,18 +642,23 @@
         function modifySettlement(payoutDate, milesArray, dayName) {
             const safeDay = isValidDay(dayName) ? dayName : 'Friday';
             let history = JSON.parse(localStorage.getItem('driver_history') || '[]');
-            const idx = history.findIndex(e => e.payoutDate === payoutDate);
+            const idx = history.findIndex(e => e && e.payoutDate === payoutDate);
             const newEntries = milesArray.map(m => ({ id: Math.random().toString(36).substr(2, 9), miles: m, tons: settings.avgTons, day: safeDay }));
-            if(idx !== -1) history[idx].loads = [...history[idx].loads, ...newEntries];
-            else history.unshift({ id: Date.now(), payoutDate, loads: newEntries });
+            if(idx !== -1) {
+                if (!Array.isArray(history[idx].loads)) history[idx].loads = [];
+                history[idx].loads = [...history[idx].loads, ...newEntries];
+            } else {
+                history.unshift({ id: Date.now(), payoutDate, loads: newEntries });
+            }
             localStorage.setItem('driver_history', JSON.stringify(history));
         }
 
         function removeLoad(sId, lId) {
             let h = JSON.parse(localStorage.getItem('driver_history') || '[]');
-            const sIdx = h.findIndex(s => s.id == sId);
+            const sIdx = h.findIndex(s => s && s.id == sId);
             if(sIdx !== -1) {
-                h[sIdx].loads = h[sIdx].loads.filter(l => l.id != lId);
+                if (!Array.isArray(h[sIdx].loads)) h[sIdx].loads = [];
+                h[sIdx].loads = h[sIdx].loads.filter(l => l && l.id != lId);
                 if(h[sIdx].loads.length === 0) h.splice(sIdx, 1);
                 localStorage.setItem('driver_history', JSON.stringify(h));
                 renderHistory();
@@ -725,9 +714,9 @@
         function openEditModal(sId, lId) {
             document.querySelectorAll('.swipe-container').forEach(c => c.classList.remove('swiped', 'swiped-right'));
             const h = JSON.parse(localStorage.getItem('driver_history') || '[]');
-            const s = h.find(s => s.id == sId);
-            if (!s) return;
-            const l = s.loads.find(l => l.id == lId);
+            const s = h.find(s => s && s.id == sId);
+            if (!s || !Array.isArray(s.loads)) return;
+            const l = s.loads.find(l => l && l.id == lId);
             if (!l) return;
             editingLoad = { sId, lId, miles: l.miles };
             document.getElementById('editLoadInfo').textContent = `${l.miles} miles`;
@@ -740,7 +729,7 @@
             document.getElementById('editFixed').value = (mode === 'fixed' && typeof l.customTotal === 'number') ? l.customTotal : '';
             document.getElementById('editPerTon').value = (mode === 'perton' && typeof l.customRate === 'number') ? l.customRate : '';
             setPricingMode(mode);
-            const matchingCount = s.loads.filter(ld => ld.miles === l.miles).length;
+            const matchingCount = s.loads.filter(ld => ld && ld.miles === l.miles).length;
             const multiRow = document.getElementById('multiApplyRow');
             const multiCheck = document.getElementById('multiApply');
             const multiLabel = document.getElementById('multiApplyLabel');
@@ -804,9 +793,11 @@
             }
             const applyMulti = document.getElementById('multiApply').checked;
             let h = JSON.parse(localStorage.getItem('driver_history') || '[]');
-            const sIdx = h.findIndex(s => s.id == editingLoad.sId);
+            const sIdx = h.findIndex(s => s && s.id == editingLoad.sId);
             if (sIdx === -1) { closeEditModal(); return; }
+            if (!Array.isArray(h[sIdx].loads)) h[sIdx].loads = [];
             h[sIdx].loads = h[sIdx].loads.map(l => {
+                if (!l) return l;
                 const matches = applyMulti ? (l.miles === editingLoad.miles) : (l.id == editingLoad.lId);
                 if (!matches) return l;
                 const merged = { ...l, ...updates };
@@ -822,9 +813,9 @@
 
         function viewNote(sId, lId) {
             const h = JSON.parse(localStorage.getItem('driver_history') || '[]');
-            const s = h.find(s => s.id == sId);
-            if (!s) return;
-            const l = s.loads.find(l => l.id == lId);
+            const s = h.find(s => s && s.id == sId);
+            if (!s || !Array.isArray(s.loads)) return;
+            const l = s.loads.find(l => l && l.id == lId);
             if (!l || !l.note) return;
             const overlay = document.createElement('div');
             overlay.className = 'note-popup';
@@ -983,9 +974,10 @@
 
         function saveTicket(sId, lId, dataUrl) {
             let h = JSON.parse(localStorage.getItem('driver_history') || '[]');
-            const sIdx = h.findIndex(s => s.id == sId);
+            const sIdx = h.findIndex(s => s && s.id == sId);
             if (sIdx === -1) return;
-            const lIdx = h[sIdx].loads.findIndex(l => l.id == lId);
+            if (!Array.isArray(h[sIdx].loads)) return;
+            const lIdx = h[sIdx].loads.findIndex(l => l && l.id == lId);
             if (lIdx === -1) return;
             h[sIdx].loads[lIdx].ticket = dataUrl;
             try { localStorage.setItem('driver_history', JSON.stringify(h)); renderHistory(); }
@@ -994,9 +986,10 @@
 
         function removeTicket(sId, lId) {
             let h = JSON.parse(localStorage.getItem('driver_history') || '[]');
-            const sIdx = h.findIndex(s => s.id == sId);
+            const sIdx = h.findIndex(s => s && s.id == sId);
             if (sIdx === -1) return;
-            const lIdx = h[sIdx].loads.findIndex(l => l.id == lId);
+            if (!Array.isArray(h[sIdx].loads)) return;
+            const lIdx = h[sIdx].loads.findIndex(l => l && l.id == lId);
             if (lIdx === -1) return;
             delete h[sIdx].loads[lIdx].ticket;
             localStorage.setItem('driver_history', JSON.stringify(h));
@@ -1005,8 +998,9 @@
 
         function viewTicket(sId, lId) {
             const h = JSON.parse(localStorage.getItem('driver_history') || '[]');
-            const s = h.find(s => s.id == sId); if (!s) return;
-            const l = s.loads.find(l => l.id == lId);
+            const s = h.find(s => s && s.id == sId);
+            if (!s || !Array.isArray(s.loads)) return;
+            const l = s.loads.find(l => l && l.id == lId);
             if (!l || !l.ticket) return;
             const overlay = document.createElement('div');
             overlay.className = 'ticket-overlay';
@@ -1032,12 +1026,15 @@
             });
             list.innerHTML = '';
             const todayDayName = new Date().toLocaleDateString('en-US', { weekday: 'long' });
-            const latestDate = history.length > 0 ? Math.max(...history.map(e => new Date(e.payoutDate).getTime())) : null;
-            history.forEach(entry => {
+            const validEntries = history.filter(e => e && e.payoutDate);
+            const latestDate = validEntries.length > 0 ? Math.max(...validEntries.map(e => new Date(e.payoutDate).getTime())) : null;
+            validEntries.forEach(entry => {
                 let totalNet = 0;
                 const grouped = {};
                 const isCurrent = new Date(entry.payoutDate).getTime() === latestDate;
-                entry.loads.forEach(l => {
+                const loads = Array.isArray(entry.loads) ? entry.loads : [];
+                loads.forEach(l => {
+                    if (!l) return;
                     const pay = getLoadPay(l);
                     totalNet += pay;
                     const dayKey = isValidDay(l.day) ? l.day : 'Friday';
@@ -1063,7 +1060,7 @@
                 card.dataset.entryId = entry.id;
                 if (expandedEntries.has(String(entry.id))) card.classList.add('expanded');
                 card.onclick = (e) => { if(!e.target.closest('.swipe-container') && !e.target.closest('button') && !e.target.closest('.day-header')) card.classList.toggle('expanded'); };
-                card.innerHTML = `<div class="flex justify-between items-center relative"><div><p class="text-[10px] text-blue-400 font-black uppercase tracking-widest">Settlement</p><p class="text-xl font-black tracking-tight">${new Date(entry.payoutDate + 'T00:00:00').toLocaleDateString('en-US', {month:'short', day:'numeric'})}</p></div>${isCurrent ? '<span class="blink-current text-blue-500/80 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">CURRENT</span>' : ''}<p class="text-2xl font-black text-green-400 tracking-tighter">$${totalNet.toFixed(2)}</p></div><div class="details-panel" onclick="event.stopPropagation()">${breakdownHtml}<div class="flex gap-2 mt-4"><button onclick="openAddModal('${entry.id}', '${entry.payoutDate}')" class="flex-1 bg-blue-500/20 text-blue-400 py-4 rounded-xl font-black text-xs uppercase tracking-widest active:scale-95">+ Add Load</button><button onclick="if(confirm('Delete settlement?')){ localStorage.setItem('driver_history', JSON.stringify(JSON.parse(localStorage.getItem('driver_history')).filter(s=>s.id!='${entry.id}'))); renderHistory(); }" class="flex-1 bg-red-500/10 text-red-400 py-4 rounded-xl font-black text-xs uppercase tracking-widest text-center active:scale-95">Delete All</button></div></div>`;
+                card.innerHTML = `<div class="flex justify-between items-center relative"><div><p class="text-[10px] text-blue-400 font-black uppercase tracking-widest">Settlement</p><p class="text-xl font-black tracking-tight">${new Date(entry.payoutDate + 'T00:00:00').toLocaleDateString('en-US', {month:'short', day:'numeric'})}</p></div>${isCurrent ? '<span class="blink-current text-blue-500/80 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">CURRENT</span>' : ''}<p class="text-2xl font-black text-green-400 tracking-tighter">$${totalNet.toFixed(2)}</p></div><div class="details-panel" onclick="event.stopPropagation()">${breakdownHtml}<div class="flex gap-2 mt-4"><button onclick="openAddModal('${entry.id}', '${entry.payoutDate}')" class="flex-1 bg-blue-500/20 text-blue-400 py-4 rounded-xl font-black text-xs uppercase tracking-widest active:scale-95">+ Add Load</button><button onclick="if(confirm('Delete settlement?')){ localStorage.setItem('driver_history', JSON.stringify(JSON.parse(localStorage.getItem('driver_history')).filter(s=>s && s.id!='${entry.id}'))); renderHistory(); }" class="flex-1 bg-red-500/10 text-red-400 py-4 rounded-xl font-black text-xs uppercase tracking-widest text-center active:scale-95">Delete All</button></div></div>`;
                 const isFirstRender = !initializedEntries.has(String(entry.id));
                 initializedEntries.add(String(entry.id));
                 card.querySelectorAll('.day-section').forEach(s => {
@@ -1108,9 +1105,10 @@
 
         function getPayments() {
             const history = JSON.parse(localStorage.getItem('driver_history') || '[]');
-            return history.map(s => {
+            return history.filter(s => s && s.payoutDate).map(s => {
                 let total = 0;
-                (s.loads || []).forEach(l => { total += getLoadPay(l); });
+                const loads = Array.isArray(s.loads) ? s.loads : [];
+                loads.forEach(l => { if (l) total += getLoadPay(l); });
                 return { date: new Date(s.payoutDate + 'T00:00:00'), amount: total };
             });
         }
@@ -1182,7 +1180,7 @@
         function closeChart() { const overlay = document.getElementById('chartOverlay'); if (overlay) overlay.classList.remove('active'); unlockBodyScroll(); }
 
         try {
-            sanitizeHistoryDays();
+            sanitizeHistory();
             applySettingsToHeader();
             ['chartOverlay','editOverlay','addOverlay','settingsOverlay','helpOverlay'].forEach(id => {
                 const ov = document.getElementById(id);
