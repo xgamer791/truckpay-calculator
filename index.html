@@ -34,6 +34,8 @@
         .ticket-icon, .note-icon { display: inline-flex; align-items: center; justify-content: center; margin-left: 8px; padding: 4px; cursor: pointer; flex-shrink: 0; }
         .ticket-icon.has-ticket { color: #3b82f6; }
         .ticket-icon.no-ticket { color: #ef4444; }
+        .ticket-icon.camera-disabled { color: #64748b; opacity: 0.4; cursor: not-allowed; }
+        .ticket-icon.camera-disabled:active { opacity: 0.4; }
         .note-icon { color: #fbbf24; }
         .ticket-icon:active, .note-icon:active { opacity: 0.6; }
         .ticket-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
@@ -1028,6 +1030,10 @@
             return dst;
         }
 
+        function cameraDisabledAlert() {
+            alert('Camera scanner not available at this time.');
+        }
+
         function uploadTicket(sId, lId) {
             document.querySelectorAll('.swipe-container').forEach(c => c.classList.remove('swiped', 'swiped-right'));
             const input = document.createElement('input');
@@ -1125,7 +1131,7 @@
                     const dayTotal = grouped[day].reduce((sum, item) => sum + item.pay, 0);
                     breakdownHtml += `<div class="day-section" data-day="${day}"><div class="flex justify-between items-center mb-3 px-1 day-header" onclick="toggleDay(this, event)"><span class="day-header-text">${day}</span><span class="day-total-text">$${dayTotal.toFixed(2)}</span></div><div class="day-loads">${grouped[day].map(l => {
                         const isCustom = l.pricingMode === 'fixed' || l.pricingMode === 'perton';
-                        return `<div class="swipe-container" id="container-${l.id}" ontouchstart="ts(event, '${l.id}')" ontouchmove="tm(event, '${l.id}')" ontouchend="te(event, '${l.id}')"><div class="edit-box-flat" onclick="openEditModal('${entry.id}','${l.id}')">EDIT</div><div class="delete-box-flat" onclick="removeLoad('${entry.id}', '${l.id}')">DELETE</div><div class="swipe-content"><div class="flex flex-col"><div class="flex items-center"><span class="text-lg font-bold text-gray-100">${l.miles} miles</span><span class="ticket-icon ${l.ticket ? 'has-ticket' : 'no-ticket'}" onclick="event.stopPropagation();${l.ticket ? `viewTicket('${entry.id}','${l.id}')` : `uploadTicket('${entry.id}','${l.id}')`}">${cameraSvg}</span>${l.note ? `<span class="note-icon" onclick="event.stopPropagation();viewNote('${entry.id}','${l.id}')">${noteSvg}</span>` : ''}</div><div class="flex items-center text-[10px] text-gray-500 font-bold uppercase"><span>${l.tons} TONS</span>${isCustom ? '<span class="custom-badge">· CUSTOM</span>' : ''}</div></div><span class="mileage-pay-text">$${l.pay.toFixed(2)}</span></div></div>`;
+                        return `<div class="swipe-container" id="container-${l.id}" ontouchstart="ts(event, '${l.id}')" ontouchmove="tm(event, '${l.id}')" ontouchend="te(event, '${l.id}')"><div class="edit-box-flat" onclick="openEditModal('${entry.id}','${l.id}')">EDIT</div><div class="delete-box-flat" onclick="removeLoad('${entry.id}', '${l.id}')">DELETE</div><div class="swipe-content"><div class="flex flex-col"><div class="flex items-center"><span class="text-lg font-bold text-gray-100">${l.miles} miles</span><span class="ticket-icon camera-disabled" onclick="event.stopPropagation();cameraDisabledAlert()">${cameraSvg}</span>${l.note ? `<span class="note-icon" onclick="event.stopPropagation();viewNote('${entry.id}','${l.id}')">${noteSvg}</span>` : ''}</div><div class="flex items-center text-[10px] text-gray-500 font-bold uppercase"><span>${l.tons} TONS</span>${isCustom ? '<span class="custom-badge">· CUSTOM</span>' : ''}</div></div><span class="mileage-pay-text">$${l.pay.toFixed(2)}</span></div></div>`;
                     }).join('')}</div></div>`;
                 }
                 const card = document.createElement('div');
