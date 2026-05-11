@@ -105,10 +105,6 @@
         .edit-btn-cancel { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); }
         .edit-btn-save { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
         .edit-btn-cancel:active, .edit-btn-save:active { transform: scale(0.98); }
-        .settings-divider { height: 1px; background: rgba(255,255,255,0.06); margin: 28px 0 20px; }
-        .settings-clear-btn { width: 100%; padding: 14px; border: 1px solid rgba(239,68,68,0.3); background: rgba(239,68,68,0.08); color: #f87171; border-radius: 14px; font-weight: 900; font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; font-family: inherit; }
-        .settings-clear-btn:active { transform: scale(0.98); background: rgba(239,68,68,0.15); }
-        .settings-clear-hint { font-size: 11px; color: #64748b; text-align: center; margin-top: 8px; }
         .add-preview { font-size: 12px; color: #4ade80; font-weight: 800; margin-top: 8px; min-height: 14px; }
 
         .ton-display { display: flex; align-items: baseline; justify-content: center; gap: 8px; margin: 8px 0 18px; }
@@ -379,10 +375,7 @@
             </div>
             <input type="range" id="tonSlider" class="ton-slider" min="17" max="30" step="0.1" value="25" oninput="onTonSliderChange()">
             <div class="ton-range-labels"><span>17</span><span>30</span></div>
-            <div class="settings-divider"></div>
-            <button class="settings-clear-btn" onclick="clearCache()">Clear Cache</button>
-            <div class="settings-clear-hint">Resets app settings and reloads. Your saved loads and tickets stay.</div>
-            <div class="edit-actions" style="margin-top: 24px;">
+            <div class="edit-actions" style="margin-top: 32px;">
                 <button class="edit-btn-cancel" onclick="closeSettings()">Cancel</button>
                 <button class="edit-btn-save" onclick="saveSettings()">Save</button>
             </div>
@@ -689,23 +682,6 @@
             saveSettingsObj(settings);
             applySettingsToHeader();
             closeSettings();
-        }
-
-        function clearCache() {
-            appConfirm('Resets app settings and reloads. Your saved loads and tickets will stay.', {
-                title: 'Clear Cache?',
-                variant: 'warn',
-                confirmText: 'Clear',
-            }).then(ok => {
-                if (!ok) return;
-                const keysToRemove = [];
-                for (let i = 0; i < localStorage.length; i++) {
-                    const k = localStorage.key(i);
-                    if (k && k !== 'driver_history') keysToRemove.push(k);
-                }
-                keysToRemove.forEach(k => localStorage.removeItem(k));
-                location.reload();
-            });
         }
 
         function openHelp() {
