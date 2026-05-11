@@ -164,20 +164,20 @@
         .note-popup-text { font-size: 15px; color: white; line-height: 1.5; font-weight: 600; white-space: pre-wrap; word-break: break-word; margin-bottom: 18px; }
         .note-popup-close { width: 100%; padding: 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 12px; font-weight: 900; font-size: 12px; letter-spacing: 0.15em; cursor: pointer; font-family: inherit; }
 
-        .confirm-popup { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 10002; display: flex; align-items: center; justify-content: center; padding: 24px; opacity: 0; transition: opacity 0.2s ease; }
-        .confirm-popup.active { opacity: 1; }
-        .confirm-card { background: #0f172a; border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 24px; max-width: 380px; width: 100%; transform: scale(0.92); transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
-        .confirm-popup.active .confirm-card { transform: scale(1); }
-        .confirm-icon { width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; background: rgba(239,68,68,0.12); color: #ef4444; border-radius: 14px; margin-bottom: 16px; }
-        .confirm-icon.warn { background: rgba(251,191,36,0.12); color: #fbbf24; }
-        .confirm-title { font-size: 19px; font-weight: 900; color: white; letter-spacing: -0.01em; margin-bottom: 6px; }
-        .confirm-message { font-size: 14px; line-height: 1.5; color: #94a3b8; font-weight: 600; margin-bottom: 22px; }
-        .confirm-actions { display: flex; gap: 10px; }
-        .confirm-btn { flex: 1; padding: 14px; border: none; border-radius: 12px; font-weight: 900; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: white; cursor: pointer; font-family: inherit; }
-        .confirm-btn-cancel { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); }
-        .confirm-btn-confirm { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
-        .confirm-btn-confirm.warn { background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); color: #0f172a; }
-        .confirm-btn:active { transform: scale(0.97); }
+        .popup-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); backdrop-filter: blur(4px); z-index: 10002; display: flex; align-items: flex-end; justify-content: center; padding: 16px; padding-bottom: max(24px, env(safe-area-inset-bottom)); opacity: 0; transition: opacity 0.2s ease; }
+        .popup-overlay.active { opacity: 1; }
+        .popup-card { background: #1e293b; border: 1px solid rgba(255,255,255,0.08); border-radius: 18px; padding: 20px 22px; max-width: 480px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.6); transform: translateY(120%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        .popup-overlay.active .popup-card { transform: translateY(0); }
+        .popup-icon { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: rgba(239,68,68,0.12); color: #ef4444; border-radius: 11px; margin-bottom: 12px; }
+        .popup-icon.warn { background: rgba(251,191,36,0.12); color: #fbbf24; }
+        .popup-title { font-size: 17px; font-weight: 900; color: white; letter-spacing: -0.01em; margin-bottom: 4px; }
+        .popup-message { font-size: 14px; line-height: 1.5; color: #cbd5e1; font-weight: 600; }
+        .popup-actions { display: flex; justify-content: flex-end; align-items: center; gap: 22px; margin-top: 16px; }
+        .popup-btn { background: transparent; border: none; color: #60a5fa; font-weight: 800; font-size: 15px; cursor: pointer; font-family: inherit; padding: 6px 2px; letter-spacing: 0.01em; }
+        .popup-btn:active { opacity: 0.55; }
+        .popup-btn.muted { color: #94a3b8; }
+        .popup-btn.danger { color: #f87171; }
+        .popup-btn.warn { color: #fbbf24; }
     </style>
 </head>
 <body>
@@ -524,25 +524,25 @@
                 const confirmText = opts.confirmText || 'Delete';
                 const cancelText = opts.cancelText || 'Cancel';
                 const overlay = document.createElement('div');
-                overlay.className = 'confirm-popup';
+                overlay.className = 'popup-overlay';
                 const iconSvg = variant === 'warn'
-                    ? `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`
-                    : `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>`;
+                    ? `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`
+                    : `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>`;
                 overlay.innerHTML = `
-                    <div class="confirm-card">
-                        <div class="confirm-icon ${variant === 'warn' ? 'warn' : ''}">${iconSvg}</div>
-                        <div class="confirm-title"></div>
-                        <div class="confirm-message"></div>
-                        <div class="confirm-actions">
-                            <button class="confirm-btn confirm-btn-cancel"></button>
-                            <button class="confirm-btn confirm-btn-confirm ${variant === 'warn' ? 'warn' : ''}"></button>
+                    <div class="popup-card">
+                        <div class="popup-icon ${variant === 'warn' ? 'warn' : ''}">${iconSvg}</div>
+                        <div class="popup-title"></div>
+                        <div class="popup-message"></div>
+                        <div class="popup-actions">
+                            <button class="popup-btn muted popup-btn-cancel"></button>
+                            <button class="popup-btn ${variant === 'warn' ? 'warn' : 'danger'} popup-btn-confirm"></button>
                         </div>
                     </div>
                 `;
-                overlay.querySelector('.confirm-title').textContent = title;
-                overlay.querySelector('.confirm-message').textContent = message;
-                const cancelBtn = overlay.querySelector('.confirm-btn-cancel');
-                const confirmBtn = overlay.querySelector('.confirm-btn-confirm');
+                overlay.querySelector('.popup-title').textContent = title;
+                overlay.querySelector('.popup-message').textContent = message;
+                const cancelBtn = overlay.querySelector('.popup-btn-cancel');
+                const confirmBtn = overlay.querySelector('.popup-btn-confirm');
                 cancelBtn.textContent = cancelText;
                 confirmBtn.textContent = confirmText;
                 document.body.appendChild(overlay);
@@ -555,6 +555,38 @@
                 cancelBtn.onclick = () => cleanup(false);
                 confirmBtn.onclick = () => cleanup(true);
                 overlay.onclick = (e) => { if (e.target === overlay) cleanup(false); };
+            });
+        }
+
+        function appAlert(message, opts) {
+            opts = opts || {};
+            return new Promise(resolve => {
+                const title = opts.title || '';
+                const closeText = opts.closeText || 'Close';
+                const overlay = document.createElement('div');
+                overlay.className = 'popup-overlay';
+                overlay.innerHTML = `
+                    <div class="popup-card">
+                        ${title ? `<div class="popup-title"></div>` : ''}
+                        <div class="popup-message"></div>
+                        <div class="popup-actions">
+                            <button class="popup-btn popup-btn-close"></button>
+                        </div>
+                    </div>
+                `;
+                if (title) overlay.querySelector('.popup-title').textContent = title;
+                overlay.querySelector('.popup-message').textContent = message;
+                const closeBtn = overlay.querySelector('.popup-btn-close');
+                closeBtn.textContent = closeText;
+                document.body.appendChild(overlay);
+                lockBodyScroll();
+                requestAnimationFrame(() => overlay.classList.add('active'));
+                const cleanup = () => {
+                    overlay.classList.remove('active');
+                    setTimeout(() => { overlay.remove(); unlockBodyScroll(); resolve(); }, 200);
+                };
+                closeBtn.onclick = cleanup;
+                overlay.onclick = (e) => { if (e.target === overlay) cleanup(); };
             });
         }
 
@@ -688,9 +720,9 @@
         function calculateAndSave(){
             try {
                 const r = document.getElementById('mileageInput').value;
-                if(!r) { alert('Input is empty'); return; }
+                if(!r) { appAlert('Input is empty'); return; }
                 const newMiles = r.split(',').map(m=>parseFloat(m.trim())).filter(m=>!isNaN(m) && m > 0);
-                if(newMiles.length === 0) { alert('No valid numbers found'); return; }
+                if(newMiles.length === 0) { appAlert('No valid numbers found'); return; }
                 const huge = newMiles.filter(m => m > 500);
                 const proceed = () => {
                     try {
@@ -701,7 +733,7 @@
                         modifySettlement(payoutDate, newMiles, currentDayName);
                         document.getElementById('mileageInput').value = '';
                         renderHistory();
-                    } catch (err) { alert('ERROR: ' + (err && err.message ? err.message : err)); }
+                    } catch (err) { appAlert('ERROR: ' + (err && err.message ? err.message : err)); }
                 };
                 if (huge.length > 0) {
                     appConfirm(`${huge.length} load(s) over 500 miles detected (${huge.join(', ')}). Missing comma between numbers can cause this. Add anyway?`, { title: 'Confirm Large Mileage', variant: 'warn', confirmText: 'Add' })
@@ -709,7 +741,7 @@
                 } else {
                     proceed();
                 }
-            } catch (err) { alert('ERROR: ' + (err && err.message ? err.message : err)); }
+            } catch (err) { appAlert('ERROR: ' + (err && err.message ? err.message : err)); }
         }
 
         function getPayoutDate(dateStr) {
@@ -793,7 +825,7 @@
             if (!addingTo) return;
             const raw = document.getElementById('addMiles').value;
             const miles = raw.split(',').map(m => parseFloat(m.trim())).filter(m => !isNaN(m) && m > 0);
-            if (miles.length === 0) { alert('Enter at least one mileage value'); return; }
+            if (miles.length === 0) { appAlert('Enter at least one mileage value'); return; }
             const day = document.getElementById('addDay').value;
             const proceed = () => {
                 modifySettlement(addingTo.payoutDate, miles, day);
@@ -873,7 +905,7 @@
         function saveEdit() {
             if (!editingLoad) return;
             const tonsVal = parseFloat(document.getElementById('editTons').value);
-            if (isNaN(tonsVal) || tonsVal <= 0) { alert('Enter a valid tonnage'); return; }
+            if (isNaN(tonsVal) || tonsVal <= 0) { appAlert('Enter a valid tonnage'); return; }
             const noteVal = document.getElementById('editNote').value.trim();
             const dayVal = document.getElementById('editDay').value;
             const safeDay = isValidDay(dayVal) ? dayVal : 'Friday';
@@ -883,11 +915,11 @@
             if (mode === 'auto') { updates.pricingMode = 'auto'; updates.customTotal = null; updates.customRate = null; }
             else if (mode === 'fixed') {
                 const v = parseFloat(document.getElementById('editFixed').value);
-                if (isNaN(v) || v < 0) { alert('Enter a valid truck total'); return; }
+                if (isNaN(v) || v < 0) { appAlert('Enter a valid truck total'); return; }
                 updates.pricingMode = 'fixed'; updates.customTotal = v; updates.customRate = null;
             } else {
                 const v = parseFloat(document.getElementById('editPerTon').value);
-                if (isNaN(v) || v < 0) { alert('Enter a valid rate per ton'); return; }
+                if (isNaN(v) || v < 0) { appAlert('Enter a valid rate per ton'); return; }
                 updates.pricingMode = 'perton'; updates.customRate = v; updates.customTotal = null;
             }
             const applyMulti = document.getElementById('multiApply').checked;
@@ -1055,7 +1087,7 @@
         }
 
         function cameraDisabledAlert() {
-            alert('Camera scanner not available at this time.');
+            appAlert('Camera scanner not available at this time.');
         }
 
         function uploadTicket(sId, lId) {
@@ -1069,7 +1101,7 @@
                 try {
                     const dataUrl = await compressImage(file, 1024, 0.7);
                     saveTicket(sId, lId, dataUrl);
-                } catch (err) { alert('Failed to process image: ' + (err.message || err)); }
+                } catch (err) { appAlert('Failed to process image: ' + (err.message || err)); }
                 finally { input.remove(); }
             };
             input.click();
@@ -1084,7 +1116,7 @@
             if (lIdx === -1) return;
             h[sIdx].loads[lIdx].ticket = dataUrl;
             try { localStorage.setItem('driver_history', JSON.stringify(h)); renderHistory(); }
-            catch (err) { alert('Storage full. Delete some older settlements or photos to free up space.'); }
+            catch (err) { appAlert('Storage full. Delete some older settlements or photos to free up space.'); }
         }
 
         function removeTicket(sId, lId) {
@@ -1298,7 +1330,7 @@
                 });
             });
             renderHistory();
-        } catch (err) { alert('Startup error: ' + (err && err.message ? err.message : err)); }
+        } catch (err) { appAlert('Startup error: ' + (err && err.message ? err.message : err)); }
     </script>
 </body>
 </html>
