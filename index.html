@@ -1012,6 +1012,17 @@
             unlockBodyScroll();
         }
 
+        function fitToLongEdge(srcW, srcH, longEdge) {
+            if (srcW >= srcH) {
+                const w = Math.min(longEdge, srcW);
+                const h = Math.max(1, Math.round(w * srcH / srcW));
+                return { w, h };
+            }
+            const h = Math.min(longEdge, srcH);
+            const w = Math.max(1, Math.round(h * srcW / srcH));
+            return { w, h };
+        }
+
         function fileToImage(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -1026,27 +1037,144 @@
             });
         }
 
-        function fitToLongEdge(srcW, srcH, longEdge) {
-            if (srcW >= srcH) {
-                const w = Math.min(longEdge, srcW);
-                const h = Math.max(1, Math.round(w * srcH / srcW));
-                return { w, h };
+        function readExifOrientation(buf) {
+            try {
+                const view = new DataView(buf);
+                if (view.byteLength < 4) return 1;
+                if (view.getUint16(0, false) !== 0xFFD8) return 1;
+                let offset = 2;
+                while (offset < view.byteLength - 1) {
+                    const marker = view.getUint16(offset, false);
+                    offset += 2;
+                    if (marker === 0xFFE1) {
+                        if (offset + 10 > view.byteLength) return 1;
+                        if (view.getUint32(offset + 2, false) !== 0x45786966) return 1;
+                        const tiffStart = offset + 8;
+                        const little = view.getUint16(tiffStart, false) === 0x4949;
+                        const ifdOffset = view.getUint32(tiffStart + 4, little);
+                        const tagCount = view.getUint16(tiffStart + ifdOffset, little);
+                        for (let i = 0; i < tagCount; i++) {
+                            const tagOffset = tiffStart + ifdOffset + 2 + i * 12;
+                            if (view.getUint16(tagOffset, little) === 0x0112) {
+                                return view.getUint16(tagOffset + 8, little) || 1;
+                            }
+                        }
+                        return 1;
+                    } else if ((marker & 0xFF00) !== 0xFF00) {
+                        return 1;
+                    } else {
+                        if (offset + 2 > view.byteLength) return 1;
+                        offset += view.getUint16(offset, false);
+                    }
+                }
+            } catch (err) {
+                console.warn('[scan] EXIF parse failed:', err);
             }
-            const h = Math.min(longEdge, srcH);
-            const w = Math.max(1, Math.round(h * srcW / srcH));
-            return { w, h };
+            return 1;
         }
 
-        function rawCanvas(img) {
-            const { w, h } = fitToLongEdge(img.width, img.height, SCAN_LONG_EDGE);
+        function drawOrientedToCanvas(source, srcW, srcH, orientation) {
+            const swap = orientation >= 5 && orientation <= 8;
+            const canvas = document.createElement('canvas');
+            canvas.width = swap ? srcH : srcW;
+            canvas.height = swap ? srcW : srcH;
+            const ctx = canvas.getContext('2d');
+            switch (orientation) {
+                case 2: ctx.transform(-1, 0, 0, 1, srcW, 0); break;
+                case 3: ctx.transform(-1, 0, 0, -1, srcW, srcH); break;
+                case 4: ctx.transform(1, 0, 0, -1, 0, srcH); break;
+                case 5: ctx.transform(0, 1, 1, 0, 0, 0); break;
+                case 6: ctx.transform(0, 1, -1, 0, srcH, 0); break;
+                case 7: ctx.transform(0, -1, -1, 0, srcH, srcW); break;
+                case 8: ctx.transform(0, -1, 1, 0, 0, srcW); break;
+            }
+            ctx.drawImage(source, 0, 0);
+            return canvas;
+        }
+
+        async function loadOrientedCanvas(file) {
+            if (typeof createImageBitmap === 'function') {
+                try {
+                    const bm = await createImageBitmap(file, { imageOrientation: 'from-image' });
+                    const c = document.createElement('canvas');
+                    c.width = bm.width;
+                    c.height = bm.height;
+                    c.getContext('2d').drawImage(bm, 0, 0);
+                    if (bm.close) bm.close();
+                    console.log('[scan] oriented via createImageBitmap:', c.width + 'x' + c.height);
+                    return { canvas: c, method: 'createImageBitmap' };
+                } catch (err) {
+                    console.warn('[scan] createImageBitmap with imageOrientation failed, falling back to manual EXIF:', err);
+                }
+            }
+            let orientation = 1;
+            try {
+                const buf = await file.arrayBuffer();
+                orientation = readExifOrientation(buf);
+            } catch (err) {
+                console.warn('[scan] could not read file bytes for EXIF:', err);
+            }
+            const img = await fileToImage(file);
+            const w = img.naturalWidth || img.width;
+            const h = img.naturalHeight || img.height;
+            const oriented = drawOrientedToCanvas(img, w, h, orientation);
+            console.log('[scan] oriented via manual EXIF (orientation=' + orientation + '):', oriented.width + 'x' + oriented.height);
+            return { canvas: oriented, method: 'manual-exif:' + orientation };
+        }
+
+        function downsizeCanvas(src, longEdge) {
+            const { w, h } = fitToLongEdge(src.width, src.height, longEdge);
+            if (w === src.width && h === src.height) return src;
             const c = document.createElement('canvas');
-            c.width = w; c.height = h;
-            c.getContext('2d').drawImage(img, 0, 0, w, h);
+            c.width = w;
+            c.height = h;
+            c.getContext('2d').drawImage(src, 0, 0, w, h);
             return c;
         }
 
+        function describeCorners(c) {
+            if (!c) return 'null';
+            const pt = p => p ? '(' + Math.round(p.x) + ',' + Math.round(p.y) + ')' : '∅';
+            return 'TL' + pt(c.topLeftCorner) + ' TR' + pt(c.topRightCorner) + ' BR' + pt(c.bottomRightCorner) + ' BL' + pt(c.bottomLeftCorner);
+        }
+
+        function validateCorners(corners, imgW, imgH) {
+            if (!corners) return { ok: false, reason: 'no corners returned' };
+            const tl = corners.topLeftCorner, tr = corners.topRightCorner, br = corners.bottomRightCorner, bl = corners.bottomLeftCorner;
+            const pts = [tl, tr, br, bl];
+            for (const p of pts) {
+                if (!p || typeof p.x !== 'number' || typeof p.y !== 'number' || !isFinite(p.x) || !isFinite(p.y)) {
+                    return { ok: false, reason: 'corner missing or non-numeric' };
+                }
+                const pad = 5;
+                if (p.x < -pad || p.y < -pad || p.x > imgW + pad || p.y > imgH + pad) {
+                    return { ok: false, reason: 'corner (' + Math.round(p.x) + ',' + Math.round(p.y) + ') outside ' + imgW + 'x' + imgH };
+                }
+            }
+            const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+            const top = dist(tl, tr), right = dist(tr, br), bottom = dist(br, bl), left = dist(bl, tl);
+            const minSide = Math.min(imgW, imgH) * 0.2;
+            if (top < minSide || right < minSide || bottom < minSide || left < minSide) {
+                return { ok: false, reason: 'side(s) under 20% of min edge: top=' + Math.round(top) + ' right=' + Math.round(right) + ' bottom=' + Math.round(bottom) + ' left=' + Math.round(left) + ' (min=' + Math.round(minSide) + ')' };
+            }
+            return { ok: true, sides: { top, right, bottom, left } };
+        }
+
+        function targetDimsFromCorners(corners) {
+            const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+            const w = Math.max(dist(corners.topLeftCorner, corners.topRightCorner), dist(corners.bottomLeftCorner, corners.bottomRightCorner));
+            const h = Math.max(dist(corners.topLeftCorner, corners.bottomLeftCorner), dist(corners.topRightCorner, corners.bottomRightCorner));
+            if (w >= h) {
+                return { w: SCAN_LONG_EDGE, h: Math.max(1, Math.round(SCAN_LONG_EDGE * h / w)) };
+            }
+            return { w: Math.max(1, Math.round(SCAN_LONG_EDGE * w / h)), h: SCAN_LONG_EDGE };
+        }
+
         function applyScannerLook(canvas) {
-            if (typeof cv === 'undefined' || !cv.Mat || !cv.adaptiveThreshold) return false;
+            if (typeof cv === 'undefined' || !cv.Mat || !cv.adaptiveThreshold) {
+                console.warn('[scan] applyScannerLook skipped — OpenCV unavailable');
+                return false;
+            }
             let src, gray, bw;
             try {
                 src = cv.imread(canvas);
@@ -1067,20 +1195,93 @@
         }
 
         async function scanTicket(file) {
-            const img = await fileToImage(file);
+            const t0 = performance.now();
+            console.log('[scan] START', { name: file.name, size: file.size, type: file.type });
+
+            const oriented = await loadOrientedCanvas(file);
+            const fullCanvas = oriented.canvas;
+            console.log('[scan] full oriented canvas:', fullCanvas.width + 'x' + fullCanvas.height, '· method:', oriented.method);
+
+            const workingCanvas = downsizeCanvas(fullCanvas, SCAN_LONG_EDGE);
+            console.log('[scan] working canvas (post-downsize):', workingCanvas.width + 'x' + workingCanvas.height);
+
+            let finalCanvas = workingCanvas;
+            let path = 'fallback-raw';
+            let pathDetail = '(scanner not attempted)';
+
             try {
                 const scanner = await loadScanner();
-                const { w: targetW, h: targetH } = fitToLongEdge(img.width, img.height, SCAN_LONG_EDGE);
-                const extracted = scanner.extractPaper(img, targetW, targetH);
-                if (!extracted || !extracted.width || !extracted.height) {
-                    throw new Error('extractPaper returned empty canvas');
+                console.log('[scan] scanner instance ready');
+
+                let contour = null;
+                let corners = null;
+                let srcMat = null;
+                try {
+                    srcMat = cv.imread(workingCanvas);
+                    try {
+                        contour = scanner.findPaperContour(srcMat);
+                        console.log('[scan] findPaperContour ok · contour present:', !!contour);
+                    } catch (err) {
+                        console.error('[scan] findPaperContour threw:', err);
+                    }
+                    if (contour) {
+                        try {
+                            corners = scanner.getCornerPoints(contour, srcMat);
+                            console.log('[scan] getCornerPoints ok:', describeCorners(corners));
+                        } catch (err) {
+                            console.error('[scan] getCornerPoints threw:', err);
+                        }
+                    }
+                } finally {
+                    if (contour && typeof contour.delete === 'function') { try { contour.delete(); } catch (_) {} }
+                    if (srcMat) { try { srcMat.delete(); } catch (_) {} }
                 }
-                applyScannerLook(extracted);
-                return extracted.toDataURL('image/jpeg', SCAN_JPEG_QUALITY);
+
+                const validation = validateCorners(corners, workingCanvas.width, workingCanvas.height);
+                console.log('[scan] corner validation:', validation);
+
+                if (validation.ok) {
+                    const { w: targetW, h: targetH } = targetDimsFromCorners(corners);
+                    console.log('[scan] extractPaper target:', targetW + 'x' + targetH);
+                    let extracted = null;
+                    try {
+                        extracted = scanner.extractPaper(workingCanvas, targetW, targetH, corners);
+                    } catch (err) {
+                        console.error('[scan] extractPaper threw:', err);
+                    }
+                    if (extracted) {
+                        console.log('[scan] extractPaper returned canvas:', extracted.width + 'x' + extracted.height);
+                    } else {
+                        console.warn('[scan] extractPaper returned null/undefined');
+                    }
+                    if (!extracted || !extracted.width || !extracted.height) {
+                        pathDetail = 'extractPaper produced no canvas';
+                    } else if (extracted.width < 100 || extracted.height < 100) {
+                        pathDetail = 'extracted canvas under 100px (' + extracted.width + 'x' + extracted.height + ')';
+                    } else if (extracted.width === workingCanvas.width && extracted.height === workingCanvas.height) {
+                        pathDetail = 'extracted canvas matches input dims — no crop happened';
+                    } else {
+                        finalCanvas = extracted;
+                        path = 'extracted';
+                        pathDetail = 'corners ' + describeCorners(corners);
+                    }
+                    if (path !== 'extracted') console.warn('[scan] extracted canvas rejected:', pathDetail);
+                } else {
+                    pathDetail = validation.reason;
+                }
             } catch (err) {
-                console.error('[scan] perspective pipeline failed, using raw photo:', err);
-                return rawCanvas(img).toDataURL('image/jpeg', SCAN_JPEG_QUALITY);
+                console.error('[scan] scanner pipeline error:', err);
+                pathDetail = (err && err.message) || String(err);
             }
+
+            console.log('[scan] applying B&W threshold · path:', path, '· canvas:', finalCanvas.width + 'x' + finalCanvas.height);
+            const bwOk = applyScannerLook(finalCanvas);
+            console.log('[scan] B&W threshold applied:', bwOk);
+
+            const dataUrl = finalCanvas.toDataURL('image/jpeg', SCAN_JPEG_QUALITY);
+            const dt = Math.round(performance.now() - t0);
+            console.log('[scan] DONE in ' + dt + 'ms · path:', path, '· detail:', pathDetail, '· final:', finalCanvas.width + 'x' + finalCanvas.height, '· bytes:', dataUrl.length);
+            return dataUrl;
         }
 
         function uploadTicket(sId, lId) {
