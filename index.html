@@ -182,6 +182,45 @@
 
         .debug-log { background: rgba(0,0,0,0.55); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 14px; font-family: 'SF Mono', Menlo, Consolas, ui-monospace, monospace; font-size: 11px; line-height: 1.5; color: #cbd5e1; max-height: 55vh; overflow-y: auto; white-space: pre-wrap; word-break: break-word; margin: 12px 0 18px; }
         .debug-meta { font-size: 10px; font-weight: 800; color: #64748b; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 4px; }
+
+        .settlement-card { overflow: hidden; padding: 0 !important; }
+        .settlement-swipe-container { position: relative; overflow: hidden; touch-action: pan-y; }
+        .settlement-swipe-content { padding: 24px 24px 20px; background: rgba(15, 23, 42, 0.92); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1); position: relative; z-index: 2; cursor: pointer; -webkit-user-select: none; user-select: none; }
+        .settlement-options-box { position: absolute; left: 0; top: 0; bottom: 0; width: 90px; background: #3b82f6; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 11px; color: white; letter-spacing: 1px; z-index: 1; cursor: pointer; }
+        .settlement-delete-box { position: absolute; right: 0; top: 0; bottom: 0; width: 90px; background: #ef4444; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 11px; color: white; letter-spacing: 1px; z-index: 1; cursor: pointer; }
+        .settlement-card.settlement-swiped .settlement-swipe-content { transform: translateX(-90px); }
+        .settlement-card.settlement-swiped-right .settlement-swipe-content { transform: translateX(90px); }
+        .settlement-card.expanded .settlement-options-box, .settlement-card.expanded .settlement-delete-box { display: none; }
+        .settlement-card .details-panel { padding: 16px 24px 24px; margin-top: 0; }
+
+        .settlement-options-overlay, .export-picker-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px); z-index: 10000; display: none; align-items: flex-end; opacity: 0; transition: opacity 0.25s ease; }
+        .settlement-options-overlay.active, .export-picker-overlay.active { display: flex; opacity: 1; }
+        .settlement-options-modal, .export-picker-modal { width: 100%; background: #0f172a; border-top-left-radius: 28px; border-top-right-radius: 28px; border-top: 1px solid rgba(255,255,255,0.1); padding: 20px 22px 32px; transform: translateY(100%); transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1); max-height: 90vh; overflow-y: auto; }
+        .settlement-options-overlay.active .settlement-options-modal, .export-picker-overlay.active .export-picker-modal { transform: translateY(0); }
+
+        .action-button { display: flex; align-items: center; gap: 14px; width: 100%; padding: 16px 18px; border: 1px solid; border-radius: 14px; background: transparent; color: white; font-family: inherit; font-size: 15px; font-weight: 800; text-align: left; cursor: pointer; transition: all 0.15s; }
+        .action-button .action-icon { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .action-button.primary { background: rgba(59,130,246,0.08); border-color: rgba(59,130,246,0.25); }
+        .action-button.primary .action-icon { color: #60a5fa; }
+        .action-button.primary:active { background: rgba(59,130,246,0.16); transform: scale(0.98); }
+        .action-button.danger { background: rgba(239,68,68,0.06); border-color: rgba(239,68,68,0.2); color: #f87171; }
+        .action-button.danger .action-icon { color: #f87171; }
+        .action-button.danger:active { background: rgba(239,68,68,0.14); transform: scale(0.98); }
+        .action-button-group { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+
+        .export-toggle-row { display: flex; align-items: center; justify-content: space-between; margin: 16px 0 12px; }
+        .export-toggle { background: transparent; border: none; color: #60a5fa; font-weight: 900; font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; cursor: pointer; font-family: inherit; padding: 4px 0; }
+        .export-toggle:active { opacity: 0.6; }
+        .export-count { font-size: 10px; font-weight: 800; color: #64748b; letter-spacing: 0.12em; text-transform: uppercase; }
+        .export-list { max-height: 45vh; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; padding: 2px; }
+        .export-row { display: flex; align-items: center; gap: 14px; padding: 12px 14px; background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; cursor: pointer; transition: all 0.12s; }
+        .export-row:active { background: rgba(0,0,0,0.5); }
+        .export-row.disabled { opacity: 0.4; cursor: not-allowed; }
+        .export-row.disabled:active { background: rgba(0,0,0,0.35); }
+        .export-row input[type=checkbox] { width: 22px; height: 22px; accent-color: #3b82f6; flex-shrink: 0; cursor: inherit; }
+        .export-row-info { flex: 1; min-width: 0; }
+        .export-row-title { font-size: 15px; font-weight: 700; color: white; }
+        .export-row-sub { font-size: 11px; color: #64748b; font-weight: 700; margin-top: 2px; letter-spacing: 0.02em; }
     </style>
 </head>
 <body>
@@ -280,7 +319,7 @@
             </div>
             <div class="footer-tagline">Built for the long haul</div>
             <div class="footer-meta">
-                <span class="footer-version">v2.6.0</span>
+                <span class="footer-version">v2.7.0</span>
                 <span class="footer-meta-dot"></span>
                 <span>© 2026</span>
                 <span class="footer-meta-dot"></span>
@@ -500,6 +539,55 @@
                 <button class="edit-btn-save" id="debugCopyBtn" onclick="copyScanLog()">Copy</button>
             </div>
             <button class="chart-close" style="margin-top: 16px;" onclick="closeDebug()">CLOSE</button>
+        </div>
+    </div>
+
+    <div class="settlement-options-overlay" id="settlementOptionsOverlay">
+        <div class="settlement-options-modal">
+            <div class="chart-handle"></div>
+            <div class="edit-eyebrow">SETTLEMENT OPTIONS</div>
+            <div class="edit-title" id="settlementOptionsTitle">—</div>
+            <div class="edit-subtitle" id="settlementOptionsSubtitle">—</div>
+            <div class="action-button-group">
+                <button class="action-button primary" onclick="onExportTickets()">
+                    <span class="action-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                            <polyline points="22,6 12,13 2,6"/>
+                        </svg>
+                    </span>
+                    <span>Export Tickets via Email</span>
+                </button>
+                <button class="action-button danger" onclick="onSettlementOptionsDelete()">
+                    <span class="action-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="3 6 5 6 21 6"/>
+                            <path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/>
+                            <path d="M10 11v6"/><path d="M14 11v6"/>
+                        </svg>
+                    </span>
+                    <span>Delete Settlement</span>
+                </button>
+            </div>
+            <button class="chart-close" style="margin-top: 20px;" onclick="closeSettlementOptions()">CANCEL</button>
+        </div>
+    </div>
+
+    <div class="export-picker-overlay" id="exportPickerOverlay">
+        <div class="export-picker-modal">
+            <div class="chart-handle"></div>
+            <div class="edit-eyebrow">SELECT TICKETS</div>
+            <div class="edit-title" id="exportPickerTitle">—</div>
+            <div class="edit-subtitle">Choose which tickets to include. Loads without a scanned ticket are greyed out.</div>
+            <div class="export-toggle-row">
+                <button class="export-toggle" id="exportSelectAllBtn" onclick="toggleSelectAllExport()">Select All</button>
+                <span class="export-count" id="exportCount">0 selected</span>
+            </div>
+            <div class="export-list" id="exportList"></div>
+            <div class="edit-actions" style="margin-top: 20px;">
+                <button class="edit-btn-cancel" onclick="closeExportPicker()">Cancel</button>
+                <button class="edit-btn-save" onclick="sendExportEmail()">Send Email</button>
+            </div>
         </div>
     </div>
 
@@ -1717,11 +1805,11 @@
                     }).join('')}</div></div>`;
                 }
                 const card = document.createElement('div');
-                card.className = 'glass p-6';
+                card.className = 'glass settlement-card';
+                card.id = 'settlement-' + entry.id;
                 card.dataset.entryId = entry.id;
                 if (expandedEntries.has(String(entry.id))) card.classList.add('expanded');
-                card.onclick = (e) => { if(!e.target.closest('.swipe-container') && !e.target.closest('button') && !e.target.closest('.day-header')) card.classList.toggle('expanded'); };
-                card.innerHTML = `<div class="flex justify-between items-center relative"><div><p class="text-[10px] text-blue-400 font-black uppercase tracking-widest">Settlement</p><p class="text-xl font-black tracking-tight">${new Date(entry.payoutDate + 'T00:00:00').toLocaleDateString('en-US', {month:'short', day:'numeric'})}</p></div>${isCurrent ? '<span class="blink-current text-blue-500/80 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">CURRENT</span>' : ''}<p class="text-2xl font-black text-green-400 tracking-tighter">$${totalNet.toFixed(2)}</p></div><div class="details-panel" onclick="event.stopPropagation()">${breakdownHtml}<div class="flex gap-2 mt-4"><button onclick="openAddModal('${entry.id}', '${entry.payoutDate}')" class="flex-1 bg-blue-500/20 text-blue-400 py-4 rounded-xl font-black text-xs uppercase tracking-widest active:scale-95">+ Add Load</button><button onclick="confirmDeleteSettlement('${entry.id}')" class="flex-1 bg-red-500/10 text-red-400 py-4 rounded-xl font-black text-xs uppercase tracking-widest text-center active:scale-95">Delete All</button></div></div>`;
+                card.innerHTML = `<div class="settlement-swipe-container" ontouchstart="ts_s(event, '${entry.id}')" ontouchmove="tm_s(event, '${entry.id}')" ontouchend="te_s(event)"><div class="settlement-options-box" onclick="onSettlementOptionsBoxClick('${entry.id}', event)">OPTIONS</div><div class="settlement-delete-box" onclick="onSettlementDeleteBoxClick('${entry.id}', event)">DELETE</div><div class="settlement-swipe-content" onclick="onSettlementHeaderClick('${entry.id}', event)"><div class="flex justify-between items-center relative"><div><p class="text-[10px] text-blue-400 font-black uppercase tracking-widest">Settlement</p><p class="text-xl font-black tracking-tight">${new Date(entry.payoutDate + 'T00:00:00').toLocaleDateString('en-US', {month:'short', day:'numeric'})}</p></div>${isCurrent ? '<span class="blink-current text-blue-500/80 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">CURRENT</span>' : ''}<p class="text-2xl font-black text-green-400 tracking-tighter">$${totalNet.toFixed(2)}</p></div></div></div><div class="details-panel" onclick="event.stopPropagation()">${breakdownHtml}<div class="flex gap-2 mt-4"><button onclick="openAddModal('${entry.id}', '${entry.payoutDate}')" class="flex-1 bg-blue-500/20 text-blue-400 py-4 rounded-xl font-black text-xs uppercase tracking-widest active:scale-95">+ Add Load</button><button onclick="confirmDeleteSettlement('${entry.id}')" class="flex-1 bg-red-500/10 text-red-400 py-4 rounded-xl font-black text-xs uppercase tracking-widest text-center active:scale-95">Delete All</button></div></div>`;
                 const isFirstRender = !initializedEntries.has(String(entry.id));
                 initializedEntries.add(String(entry.id));
                 card.querySelectorAll('.day-section').forEach(s => {
@@ -1763,6 +1851,248 @@
             }
         }
         function te() { xStart = null; startState = null; }
+
+        function resetAllSwipes() {
+            document.querySelectorAll('.swipe-container').forEach(c => c.classList.remove('swiped', 'swiped-right'));
+            document.querySelectorAll('.settlement-card').forEach(c => c.classList.remove('settlement-swiped', 'settlement-swiped-right'));
+        }
+
+        let xStart_s = null;
+        let startState_s = null;
+        function ts_s(e, sId) {
+            const card = document.getElementById('settlement-' + sId);
+            if (!card || card.classList.contains('expanded')) { xStart_s = null; startState_s = null; return; }
+            xStart_s = e.touches[0].clientX;
+            if (card.classList.contains('settlement-swiped')) startState_s = 'swiped';
+            else if (card.classList.contains('settlement-swiped-right')) startState_s = 'swiped-right';
+            else startState_s = 'neutral';
+        }
+        function tm_s(e, sId) {
+            if (xStart_s === null) return;
+            const card = document.getElementById('settlement-' + sId);
+            if (!card || card.classList.contains('expanded')) return;
+            const xDiff = xStart_s - e.touches[0].clientX;
+            if (xDiff > 40) {
+                if (startState_s === 'swiped-right') card.classList.remove('settlement-swiped-right');
+                else if (startState_s === 'neutral') {
+                    document.querySelectorAll('.settlement-card').forEach(c => { if (c.id !== 'settlement-' + sId) c.classList.remove('settlement-swiped', 'settlement-swiped-right'); });
+                    document.querySelectorAll('.swipe-container').forEach(c => c.classList.remove('swiped', 'swiped-right'));
+                    card.classList.add('settlement-swiped');
+                }
+            } else if (xDiff < -40) {
+                if (startState_s === 'swiped') card.classList.remove('settlement-swiped');
+                else if (startState_s === 'neutral') {
+                    document.querySelectorAll('.settlement-card').forEach(c => { if (c.id !== 'settlement-' + sId) c.classList.remove('settlement-swiped', 'settlement-swiped-right'); });
+                    document.querySelectorAll('.swipe-container').forEach(c => c.classList.remove('swiped', 'swiped-right'));
+                    card.classList.add('settlement-swiped-right');
+                }
+            }
+        }
+        function te_s() { xStart_s = null; startState_s = null; }
+
+        function onSettlementHeaderClick(sId, e) {
+            if (e.target.closest('.settlement-options-box') || e.target.closest('.settlement-delete-box')) return;
+            const card = document.getElementById('settlement-' + sId);
+            if (!card) return;
+            if (card.classList.contains('settlement-swiped') || card.classList.contains('settlement-swiped-right')) {
+                card.classList.remove('settlement-swiped', 'settlement-swiped-right');
+                return;
+            }
+            card.classList.toggle('expanded');
+            if (card.classList.contains('expanded')) {
+                card.classList.remove('settlement-swiped', 'settlement-swiped-right');
+            }
+        }
+
+        function onSettlementOptionsBoxClick(sId, e) {
+            e.stopPropagation();
+            const card = document.getElementById('settlement-' + sId);
+            if (card) card.classList.remove('settlement-swiped', 'settlement-swiped-right');
+            openSettlementOptions(sId);
+        }
+
+        function onSettlementDeleteBoxClick(sId, e) {
+            e.stopPropagation();
+            const card = document.getElementById('settlement-' + sId);
+            if (card) card.classList.remove('settlement-swiped', 'settlement-swiped-right');
+            confirmDeleteSettlement(sId);
+        }
+
+        let currentSettlementOptionsId = null;
+        function openSettlementOptions(sId) {
+            currentSettlementOptionsId = sId;
+            resetAllSwipes();
+            const h = JSON.parse(localStorage.getItem('driver_history') || '[]');
+            const s = h.find(s => s && s.id == sId);
+            if (!s) return;
+            const loads = Array.isArray(s.loads) ? s.loads : [];
+            const total = loads.reduce((sum, l) => sum + (l ? getLoadPay(l) : 0), 0);
+            const dateStr = new Date(s.payoutDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+            document.getElementById('settlementOptionsTitle').textContent = dateStr;
+            document.getElementById('settlementOptionsSubtitle').textContent = loads.length + ' load' + (loads.length === 1 ? '' : 's') + ' · $' + total.toFixed(2);
+            document.getElementById('settlementOptionsOverlay').classList.add('active');
+            lockBodyScroll();
+        }
+
+        function closeSettlementOptions() {
+            document.getElementById('settlementOptionsOverlay').classList.remove('active');
+            unlockBodyScroll();
+        }
+
+        function onSettlementOptionsDelete() {
+            const sId = currentSettlementOptionsId;
+            closeSettlementOptions();
+            if (sId != null) confirmDeleteSettlement(sId);
+        }
+
+        function onExportTickets() {
+            const sId = currentSettlementOptionsId;
+            if (sId == null) return;
+            closeSettlementOptions();
+            proceedExportTickets(sId);
+        }
+
+        let exportingSId = null;
+        async function proceedExportTickets(sId) {
+            const h = JSON.parse(localStorage.getItem('driver_history') || '[]');
+            const s = h.find(s => s && s.id == sId);
+            if (!s) return;
+            const loads = Array.isArray(s.loads) ? s.loads : [];
+            const withTicket = loads.filter(l => l && l.ticket);
+            const withoutTicket = loads.filter(l => l && !l.ticket);
+            if (withoutTicket.length > 0) {
+                const milesText = withoutTicket.map(l => l.miles).join(', ');
+                const ok = await appConfirm(
+                    "You haven't scanned tickets for " + withoutTicket.length + ' of ' + loads.length + ' loads in this settlement (' + milesText + ' miles without tickets). Export anyway?',
+                    { title: 'Missing Tickets', variant: 'warn', confirmText: 'Export Anyway' }
+                );
+                if (!ok) return;
+            }
+            if (withTicket.length === 0) {
+                await appAlert('No tickets to export. Scan some tickets first.');
+                return;
+            }
+            openExportPicker(sId);
+        }
+
+        function openExportPicker(sId) {
+            exportingSId = sId;
+            const h = JSON.parse(localStorage.getItem('driver_history') || '[]');
+            const s = h.find(s => s && s.id == sId);
+            if (!s) return;
+            const loads = (Array.isArray(s.loads) ? s.loads : []).slice().sort((a, b) => {
+                const av = DAY_ORDER[a && a.day]; const bv = DAY_ORDER[b && b.day];
+                return (bv === undefined ? -99 : bv) - (av === undefined ? -99 : av);
+            });
+            const dateStr = new Date(s.payoutDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+            document.getElementById('exportPickerTitle').textContent = dateStr;
+            const listEl = document.getElementById('exportList');
+            listEl.innerHTML = loads.map(l => {
+                const has = !!(l && l.ticket);
+                return '<label class="export-row ' + (has ? '' : 'disabled') + '">'
+                    + '<input type="checkbox" ' + (has ? 'checked' : '') + ' ' + (has ? '' : 'disabled') + ' onchange="updateExportCount()" data-load-id="' + l.id + '">'
+                    + '<div class="export-row-info">'
+                    +   '<div class="export-row-title">' + l.miles + ' miles · ' + l.day + '</div>'
+                    +   '<div class="export-row-sub">' + (has ? 'Ticket attached' : 'No ticket scanned') + '</div>'
+                    + '</div>'
+                    + '</label>';
+            }).join('');
+            updateExportCount();
+            document.getElementById('exportPickerOverlay').classList.add('active');
+            lockBodyScroll();
+        }
+
+        function closeExportPicker() {
+            document.getElementById('exportPickerOverlay').classList.remove('active');
+            exportingSId = null;
+            unlockBodyScroll();
+        }
+
+        function updateExportCount() {
+            const all = document.querySelectorAll('#exportList input[type=checkbox]:not(:disabled)');
+            const checked = document.querySelectorAll('#exportList input[type=checkbox]:checked');
+            const countEl = document.getElementById('exportCount');
+            if (countEl) countEl.textContent = checked.length + ' selected';
+            const btn = document.getElementById('exportSelectAllBtn');
+            if (btn) btn.textContent = (all.length > 0 && all.length === checked.length) ? 'Deselect All' : 'Select All';
+        }
+
+        function toggleSelectAllExport() {
+            const all = document.querySelectorAll('#exportList input[type=checkbox]:not(:disabled)');
+            const checked = document.querySelectorAll('#exportList input[type=checkbox]:checked');
+            const target = !(all.length > 0 && all.length === checked.length);
+            all.forEach(c => { c.checked = target; });
+            updateExportCount();
+        }
+
+        function buildExportHtml(payoutDateStr, loads, totalPay) {
+            const rows = loads.map(l => {
+                const pay = getLoadPay(l);
+                return '<div class="ticket">'
+                    + '<div class="ticket-meta"><strong>' + l.miles + ' miles · ' + l.day + '</strong><span>$' + pay.toFixed(2) + '</span></div>'
+                    + '<img src="' + l.ticket + '" alt="Ticket for ' + l.miles + ' miles">'
+                    + '</div>';
+            }).join('\n');
+            return '<!DOCTYPE html>\n<html><head><meta charset="utf-8"><title>DriverPay Tickets — ' + payoutDateStr + '</title>'
+                + '<style>'
+                + 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f1f5f9; color: #1e293b; max-width: 800px; margin: 0 auto; padding: 24px; }'
+                + 'h1 { font-size: 22px; margin: 0 0 4px; }'
+                + '.summary { color: #64748b; font-size: 14px; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #e2e8f0; }'
+                + '.summary strong { color: #1e293b; }'
+                + '.ticket { background: white; border-radius: 12px; padding: 16px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }'
+                + '.ticket-meta { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; font-size: 14px; color: #475569; }'
+                + '.ticket-meta strong { font-size: 15px; color: #1e293b; }'
+                + '.ticket img { display: block; width: 100%; height: auto; border-radius: 8px; }'
+                + '</style></head><body>'
+                + '<h1>DriverPay Tickets</h1>'
+                + '<div class="summary">Settlement <strong>' + payoutDateStr + '</strong> · ' + loads.length + ' load' + (loads.length === 1 ? '' : 's') + ' · <strong>$' + totalPay.toFixed(2) + '</strong></div>'
+                + rows
+                + '</body></html>';
+        }
+
+        async function sendExportEmail() {
+            if (exportingSId == null) return;
+            const h = JSON.parse(localStorage.getItem('driver_history') || '[]');
+            const s = h.find(s => s && s.id == exportingSId);
+            if (!s) { closeExportPicker(); return; }
+            const checkedIds = new Set();
+            document.querySelectorAll('#exportList input[type=checkbox]:checked').forEach(c => checkedIds.add(c.dataset.loadId));
+            const loads = (Array.isArray(s.loads) ? s.loads : []).filter(l => l && l.ticket && checkedIds.has(String(l.id)));
+            if (loads.length === 0) {
+                await appAlert('Select at least one load with a ticket to export.');
+                return;
+            }
+            const payoutDateStr = new Date(s.payoutDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+            const filename = 'tickets-' + s.payoutDate + '.html';
+            const totalPay = loads.reduce((sum, l) => sum + getLoadPay(l), 0);
+            const html = buildExportHtml(payoutDateStr, loads, totalPay);
+
+            const blob = new Blob([html], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.style.display = 'none';
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1500);
+
+            const bodyLines = [
+                'Tickets for settlement ' + payoutDateStr + ':',
+                '',
+                ...loads.map(l => '- ' + l.miles + ' miles · ' + l.day + ' · $' + getLoadPay(l).toFixed(2)),
+                '',
+                'Total: $' + totalPay.toFixed(2) + ' · ' + loads.length + ' load' + (loads.length === 1 ? '' : 's'),
+                '',
+                'Tickets are saved as ' + filename + ' — please attach it from your Files / Downloads.'
+            ];
+            const subject = 'DriverPay Tickets — Settlement ' + payoutDateStr;
+            const mailto = 'mailto:?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(bodyLines.join('\n'));
+
+            closeExportPicker();
+            await appAlert('Tickets saved as ' + filename + '. Your email app will open — please attach the downloaded file from your Files app.', { title: 'Tickets Ready' });
+            window.location.href = mailto;
+        }
 
         function getPayments() {
             const history = JSON.parse(localStorage.getItem('driver_history') || '[]');
@@ -1844,7 +2174,7 @@
             sanitizeHistory();
             loadScanLog();
             applySettingsToHeader();
-            ['chartOverlay','editOverlay','addOverlay','settingsOverlay','helpOverlay','debugOverlay'].forEach(id => {
+            ['chartOverlay','editOverlay','addOverlay','settingsOverlay','helpOverlay','debugOverlay','settlementOptionsOverlay','exportPickerOverlay'].forEach(id => {
                 const ov = document.getElementById(id);
                 if (!ov) return;
                 ov.addEventListener('click', e => {
@@ -1855,6 +2185,8 @@
                     else if (id === 'settingsOverlay') closeSettings();
                     else if (id === 'helpOverlay') closeHelp();
                     else if (id === 'debugOverlay') closeDebug();
+                    else if (id === 'settlementOptionsOverlay') closeSettlementOptions();
+                    else if (id === 'exportPickerOverlay') closeExportPicker();
                 });
             });
             renderHistory();
