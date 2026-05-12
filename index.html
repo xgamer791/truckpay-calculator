@@ -280,7 +280,7 @@
             </div>
             <div class="footer-tagline">Built for the long haul</div>
             <div class="footer-meta">
-                <span class="footer-version">v2.5.2</span>
+                <span class="footer-version">v2.5.3</span>
                 <span class="footer-meta-dot"></span>
                 <span>© 2026</span>
                 <span class="footer-meta-dot"></span>
@@ -1104,8 +1104,9 @@
             overlay.onclick = (e) => { if (e.target === overlay) close(); };
         }
 
-        const SCAN_LONG_EDGE = 1600;
+        const SCAN_LONG_EDGE = 2000;
         const SCAN_JPEG_QUALITY = 0.72;
+        const SCAN_AUTO_PORTRAIT = true;
         const OPENCV_SRC = 'https://docs.opencv.org/4.7.0/opencv.js';
         const JSCANIFY_SRC = 'https://cdn.jsdelivr.net/gh/ColonelParrot/jscanify@master/src/jscanify.min.js';
 
@@ -1318,6 +1319,17 @@
             return c;
         }
 
+        function rotateCanvas90CW(src) {
+            const out = document.createElement('canvas');
+            out.width = src.height;
+            out.height = src.width;
+            const ctx = out.getContext('2d');
+            ctx.translate(out.width, 0);
+            ctx.rotate(Math.PI / 2);
+            ctx.drawImage(src, 0, 0);
+            return out;
+        }
+
         function describeCorners(c) {
             if (!c) return 'null';
             const pt = p => p ? '(' + Math.round(p.x) + ',' + Math.round(p.y) + ')' : '∅';
@@ -1361,13 +1373,17 @@
                 console.warn('[scan] applyScannerLook skipped — OpenCV unavailable');
                 return false;
             }
-            let src, gray, bw;
+            let src, gray, blurred, bw, kernel;
             try {
                 src = cv.imread(canvas);
                 gray = new cv.Mat();
                 cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+                blurred = new cv.Mat();
+                cv.GaussianBlur(gray, blurred, new cv.Size(3, 3), 0);
                 bw = new cv.Mat();
-                cv.adaptiveThreshold(gray, bw, 255, cv.ADAPTIVE_THRESH_MEAN_C, cv.THRESH_BINARY, 25, 10);
+                cv.adaptiveThreshold(blurred, bw, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 41, 8);
+                kernel = cv.Mat.ones(2, 2, cv.CV_8U);
+                cv.morphologyEx(bw, bw, cv.MORPH_CLOSE, kernel);
                 cv.imshow(canvas, bw);
                 return true;
             } catch (err) {
@@ -1376,7 +1392,9 @@
             } finally {
                 if (src) src.delete();
                 if (gray) gray.delete();
+                if (blurred) blurred.delete();
                 if (bw) bw.delete();
+                if (kernel) kernel.delete();
             }
         }
 
@@ -1459,6 +1477,16 @@
             } catch (err) {
                 console.error('[scan] scanner pipeline error:', err);
                 pathDetail = (err && err.message) || String(err);
+            }
+
+            if (SCAN_AUTO_PORTRAIT) {
+                if (finalCanvas.width > finalCanvas.height) {
+                    const beforeW = finalCanvas.width, beforeH = finalCanvas.height;
+                    finalCanvas = rotateCanvas90CW(finalCanvas);
+                    console.log('[scan] auto-rotated 90deg CW (was ' + beforeW + 'x' + beforeH + ' → now ' + finalCanvas.width + 'x' + finalCanvas.height + ')');
+                } else {
+                    console.log('[scan] no rotation needed (' + finalCanvas.width + 'x' + finalCanvas.height + ')');
+                }
             }
 
             console.log('[scan] applying B&W threshold · path:', path, '· canvas:', finalCanvas.width + 'x' + finalCanvas.height);
