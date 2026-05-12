@@ -34,8 +34,6 @@
         .ticket-icon, .note-icon { display: inline-flex; align-items: center; justify-content: center; margin-left: 8px; padding: 4px; cursor: pointer; flex-shrink: 0; }
         .ticket-icon.has-ticket { color: #3b82f6; }
         .ticket-icon.no-ticket { color: #ef4444; }
-        .ticket-icon.camera-disabled { color: #64748b; opacity: 0.4; cursor: not-allowed; }
-        .ticket-icon.camera-disabled:active { opacity: 0.4; }
         .note-icon { color: #fbbf24; }
         .ticket-icon:active, .note-icon:active { opacity: 0.6; }
         .ticket-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
@@ -174,6 +172,13 @@
         .popup-btn.muted { color: #94a3b8; }
         .popup-btn.danger { color: #f87171; }
         .popup-btn.warn { color: #fbbf24; }
+
+        .scan-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.96); backdrop-filter: blur(10px); z-index: 10010; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; opacity: 0; transition: opacity 0.2s ease; pointer-events: none; }
+        .scan-overlay.active { opacity: 1; pointer-events: auto; }
+        .scan-spinner { width: 56px; height: 56px; border: 4px solid rgba(59, 130, 246, 0.15); border-top-color: #3b82f6; border-radius: 50%; animation: scan-spin 0.9s linear infinite; box-shadow: 0 0 32px rgba(59, 130, 246, 0.25); }
+        @keyframes scan-spin { to { transform: rotate(360deg); } }
+        .scan-label { font-size: 12px; font-weight: 900; color: #60a5fa; letter-spacing: 0.28em; text-transform: uppercase; }
+        .scan-sublabel { font-size: 11px; font-weight: 700; color: #475569; letter-spacing: 0.08em; max-width: 280px; text-align: center; line-height: 1.5; }
     </style>
 </head>
 <body>
@@ -263,7 +268,7 @@
             </div>
             <div class="footer-tagline">Built for the long haul</div>
             <div class="footer-meta">
-                <span class="footer-version">v2.4.3</span>
+                <span class="footer-version">v2.5.0</span>
                 <span class="footer-meta-dot"></span>
                 <span>© 2026</span>
                 <span class="footer-meta-dot"></span>
@@ -460,6 +465,12 @@
             </div>
             <button class="chart-close" onclick="closeHelp()">CLOSE</button>
         </div>
+    </div>
+
+    <div class="scan-overlay" id="scanOverlay" aria-hidden="true">
+        <div class="scan-spinner"></div>
+        <div class="scan-label">Scanning Ticket…</div>
+        <div class="scan-sublabel" id="scanSublabel">Locking onto edges and cleaning up</div>
     </div>
 
     <script>
@@ -946,124 +957,130 @@
             overlay.onclick = (e) => { if (e.target === overlay) close(); };
         }
 
-        function compressImage(file, maxWidth, quality) {
+        const SCAN_LONG_EDGE = 1600;
+        const SCAN_JPEG_QUALITY = 0.72;
+        const OPENCV_SRC = 'https://docs.opencv.org/4.7.0/opencv.js';
+        const JSCANIFY_SRC = 'https://cdn.jsdelivr.net/gh/ColonelParrot/jscanify@master/src/jscanify.min.js';
+
+        let scannerReady = null;
+
+        function loadScript(src) {
+            return new Promise((resolve, reject) => {
+                const existing = document.querySelector(`script[data-scanner-src="${src}"]`);
+                if (existing) {
+                    if (existing.dataset.loaded === '1') return resolve();
+                    existing.addEventListener('load', () => resolve());
+                    existing.addEventListener('error', () => reject(new Error('Failed to load ' + src)));
+                    return;
+                }
+                const s = document.createElement('script');
+                s.src = src;
+                s.async = true;
+                s.dataset.scannerSrc = src;
+                s.onload = () => { s.dataset.loaded = '1'; resolve(); };
+                s.onerror = () => reject(new Error('Failed to load ' + src));
+                document.head.appendChild(s);
+            });
+        }
+
+        function loadScanner() {
+            if (scannerReady) return scannerReady;
+            scannerReady = (async () => {
+                await loadScript(OPENCV_SRC);
+                await loadScript(JSCANIFY_SRC);
+                if (typeof jscanify === 'undefined') throw new Error('jscanify global missing');
+                const inst = new jscanify();
+                await new Promise(resolve => inst.loadOpenCV(resolve));
+                return inst;
+            })().catch(err => { scannerReady = null; throw err; });
+            return scannerReady;
+        }
+
+        function showScanOverlay() {
+            const ov = document.getElementById('scanOverlay');
+            if (!ov) return;
+            ov.setAttribute('aria-hidden', 'false');
+            ov.classList.add('active');
+            lockBodyScroll();
+        }
+
+        function hideScanOverlay() {
+            const ov = document.getElementById('scanOverlay');
+            if (!ov) return;
+            ov.classList.remove('active');
+            ov.setAttribute('aria-hidden', 'true');
+            unlockBodyScroll();
+        }
+
+        function fileToImage(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
-                reader.onload = (e) => {
+                reader.onload = e => {
                     const img = new Image();
-                    img.onload = () => {
-                        try {
-                            const scale = Math.min(1, maxWidth / img.width);
-                            let canvas = document.createElement('canvas');
-                            canvas.width = Math.round(img.width * scale);
-                            canvas.height = Math.round(img.height * scale);
-                            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-                            canvas = autoCropDocument(canvas);
-                            applyScannerFilter(canvas);
-                            resolve(canvas.toDataURL('image/jpeg', quality));
-                        } catch (err) { reject(err); }
-                    };
-                    img.onerror = () => reject(new Error('Could not load image'));
+                    img.onload = () => resolve(img);
+                    img.onerror = () => reject(new Error('Image decode failed'));
                     img.src = e.target.result;
                 };
-                reader.onerror = () => reject(new Error('Could not read file'));
+                reader.onerror = () => reject(new Error('File read failed'));
                 reader.readAsDataURL(file);
             });
         }
 
-        function autoCropDocument(srcCanvas) {
-            const w = srcCanvas.width, h = srcCanvas.height;
-            if (w < 80 || h < 80) return srcCanvas;
-            const detW = 240;
-            const detH = Math.max(80, Math.round(detW * h / w));
-            const detCanvas = document.createElement('canvas');
-            detCanvas.width = detW; detCanvas.height = detH;
-            detCanvas.getContext('2d').drawImage(srcCanvas, 0, 0, detW, detH);
-            const detData = detCanvas.getContext('2d').getImageData(0, 0, detW, detH).data;
-            const gray = new Float32Array(detW * detH);
-            for (let i = 0, p = 0; i < detData.length; i += 4, p++) gray[p] = (detData[i] + detData[i+1] + detData[i+2]) / 3;
-            const blurred = boxBlur2D(gray, detW, detH, 4);
-            let maxB = 0;
-            for (let p = 0; p < blurred.length; p++) if (blurred[p] > maxB) maxB = blurred[p];
-            if (maxB < 60) return srcCanvas;
-            const threshold = maxB * 0.88;
-            const rowCount = new Int32Array(detH);
-            const colCount = new Int32Array(detW);
-            for (let y = 0; y < detH; y++) for (let x = 0; x < detW; x++) {
-                if (blurred[y * detW + x] >= threshold) { rowCount[y]++; colCount[x]++; }
+        function fitToLongEdge(srcW, srcH, longEdge) {
+            if (srcW >= srcH) {
+                const w = Math.min(longEdge, srcW);
+                const h = Math.max(1, Math.round(w * srcH / srcW));
+                return { w, h };
             }
-            const rowMin = (detW * 0.25) | 0;
-            const colMin = (detH * 0.25) | 0;
-            let top = -1, bottom = -1, left = -1, right = -1;
-            for (let y = 0; y < detH; y++) if (rowCount[y] >= rowMin) { top = y; break; }
-            for (let y = detH - 1; y >= 0; y--) if (rowCount[y] >= rowMin) { bottom = y; break; }
-            for (let x = 0; x < detW; x++) if (colCount[x] >= colMin) { left = x; break; }
-            for (let x = detW - 1; x >= 0; x--) if (colCount[x] >= colMin) { right = x; break; }
-            if (top < 0 || left < 0) return srcCanvas;
-            const dW = right - left + 1, dH = bottom - top + 1;
-            if (dW < detW * 0.15 || dH < detH * 0.15) return srcCanvas;
-            if (dW >= detW - 2 && dH >= detH - 2) return srcCanvas;
-            const sx = w / detW, sy = h / detH;
-            const pad = 10;
-            const oLeft = Math.max(0, Math.round(left * sx) - pad);
-            const oRight = Math.min(w - 1, Math.round(right * sx) + pad);
-            const oTop = Math.max(0, Math.round(top * sy) - pad);
-            const oBottom = Math.min(h - 1, Math.round(bottom * sy) + pad);
-            const newW = oRight - oLeft + 1, newH = oBottom - oTop + 1;
-            const out = document.createElement('canvas');
-            out.width = newW; out.height = newH;
-            out.getContext('2d').drawImage(srcCanvas, oLeft, oTop, newW, newH, 0, 0, newW, newH);
-            return out;
+            const h = Math.min(longEdge, srcH);
+            const w = Math.max(1, Math.round(h * srcW / srcH));
+            return { w, h };
         }
 
-        function applyScannerFilter(canvas) {
-            const ctx = canvas.getContext('2d');
-            const w = canvas.width, h = canvas.height;
-            const imgData = ctx.getImageData(0, 0, w, h);
-            const data = imgData.data;
-            const gray = new Float32Array(w * h);
-            for (let i = 0, p = 0; i < data.length; i += 4, p++) gray[p] = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
-            const radius = Math.max(20, Math.floor(Math.min(w, h) / 18));
-            const blurred = boxBlur2D(gray, w, h, radius);
-            for (let p = 0, i = 0; p < gray.length; p++, i += 4) {
-                const px = gray[p], avg = blurred[p];
-                const cutoff = avg * 0.85;
-                let v;
-                if (px >= cutoff) v = 255;
-                else { const t = px / cutoff; v = (Math.pow(t, 1.15) * 255) | 0; }
-                data[i] = data[i+1] = data[i+2] = v;
-            }
-            ctx.putImageData(imgData, 0, 0);
+        function rawCanvas(img) {
+            const { w, h } = fitToLongEdge(img.width, img.height, SCAN_LONG_EDGE);
+            const c = document.createElement('canvas');
+            c.width = w; c.height = h;
+            c.getContext('2d').drawImage(img, 0, 0, w, h);
+            return c;
         }
 
-        function boxBlur2D(src, w, h, radius) {
-            const tmp = new Float32Array(w * h); const dst = new Float32Array(w * h);
-            const winSize = radius * 2 + 1;
-            for (let y = 0; y < h; y++) {
-                let sum = 0;
-                for (let i = -radius; i <= radius; i++) { const x = i < 0 ? 0 : (i >= w ? w - 1 : i); sum += src[y * w + x]; }
-                for (let x = 0; x < w; x++) {
-                    tmp[y * w + x] = sum / winSize;
-                    const outX = x - radius < 0 ? 0 : x - radius;
-                    const inX = x + radius + 1 >= w ? w - 1 : x + radius + 1;
-                    sum -= src[y * w + outX]; sum += src[y * w + inX];
+        function applyScannerLook(canvas) {
+            if (typeof cv === 'undefined' || !cv.Mat || !cv.adaptiveThreshold) return false;
+            let src, gray, bw;
+            try {
+                src = cv.imread(canvas);
+                gray = new cv.Mat();
+                cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+                bw = new cv.Mat();
+                cv.adaptiveThreshold(gray, bw, 255, cv.ADAPTIVE_THRESH_MEAN_C, cv.THRESH_BINARY, 25, 10);
+                cv.imshow(canvas, bw);
+                return true;
+            } catch (err) {
+                console.error('[scan] adaptive threshold failed:', err);
+                return false;
+            } finally {
+                if (src) src.delete();
+                if (gray) gray.delete();
+                if (bw) bw.delete();
+            }
+        }
+
+        async function scanTicket(file) {
+            const img = await fileToImage(file);
+            try {
+                const scanner = await loadScanner();
+                const { w: targetW, h: targetH } = fitToLongEdge(img.width, img.height, SCAN_LONG_EDGE);
+                const extracted = scanner.extractPaper(img, targetW, targetH);
+                if (!extracted || !extracted.width || !extracted.height) {
+                    throw new Error('extractPaper returned empty canvas');
                 }
+                applyScannerLook(extracted);
+                return extracted.toDataURL('image/jpeg', SCAN_JPEG_QUALITY);
+            } catch (err) {
+                console.error('[scan] perspective pipeline failed, using raw photo:', err);
+                return rawCanvas(img).toDataURL('image/jpeg', SCAN_JPEG_QUALITY);
             }
-            for (let x = 0; x < w; x++) {
-                let sum = 0;
-                for (let i = -radius; i <= radius; i++) { const y = i < 0 ? 0 : (i >= h ? h - 1 : i); sum += tmp[y * w + x]; }
-                for (let y = 0; y < h; y++) {
-                    dst[y * w + x] = sum / winSize;
-                    const outY = y - radius < 0 ? 0 : y - radius;
-                    const inY = y + radius + 1 >= h ? h - 1 : y + radius + 1;
-                    sum -= tmp[outY * w + x]; sum += tmp[inY * w + x];
-                }
-            }
-            return dst;
-        }
-
-        function cameraDisabledAlert() {
-            appAlert('Camera scanner not available at this time.');
         }
 
         function uploadTicket(sId, lId) {
@@ -1074,11 +1091,16 @@
             input.onchange = async (e) => {
                 const file = e.target.files && e.target.files[0];
                 if (!file) { input.remove(); return; }
+                showScanOverlay();
                 try {
-                    const dataUrl = await compressImage(file, 1024, 0.7);
+                    const dataUrl = await scanTicket(file);
                     saveTicket(sId, lId, dataUrl);
-                } catch (err) { appAlert('Failed to process image: ' + (err.message || err)); }
-                finally { input.remove(); }
+                } catch (err) {
+                    console.error('[scan] unrecoverable:', err);
+                } finally {
+                    hideScanOverlay();
+                    input.remove();
+                }
             };
             input.click();
         }
@@ -1163,7 +1185,7 @@
                     const dayTotal = grouped[day].reduce((sum, item) => sum + item.pay, 0);
                     breakdownHtml += `<div class="day-section" data-day="${day}"><div class="flex justify-between items-center mb-3 px-1 day-header" onclick="toggleDay(this, event)"><span class="day-header-text">${day}</span><span class="day-total-text">$${dayTotal.toFixed(2)}</span></div><div class="day-loads">${grouped[day].map(l => {
                         const isCustom = l.pricingMode === 'fixed' || l.pricingMode === 'perton';
-                        return `<div class="swipe-container" id="container-${l.id}" ontouchstart="ts(event, '${l.id}')" ontouchmove="tm(event, '${l.id}')" ontouchend="te(event, '${l.id}')"><div class="edit-box-flat" onclick="openEditModal('${entry.id}','${l.id}')">EDIT</div><div class="delete-box-flat" onclick="removeLoad('${entry.id}', '${l.id}')">DELETE</div><div class="swipe-content"><div class="flex flex-col"><div class="flex items-center"><span class="text-lg font-bold text-gray-100">${l.miles} miles</span><span class="ticket-icon camera-disabled" onclick="event.stopPropagation();cameraDisabledAlert()">${cameraSvg}</span>${l.note ? `<span class="note-icon" onclick="event.stopPropagation();viewNote('${entry.id}','${l.id}')">${noteSvg}</span>` : ''}</div><div class="flex items-center text-[10px] text-gray-500 font-bold uppercase"><span>${l.tons} TONS</span>${isCustom ? '<span class="custom-badge">· CUSTOM</span>' : ''}</div></div><span class="mileage-pay-text">$${l.pay.toFixed(2)}</span></div></div>`;
+                        return `<div class="swipe-container" id="container-${l.id}" ontouchstart="ts(event, '${l.id}')" ontouchmove="tm(event, '${l.id}')" ontouchend="te(event, '${l.id}')"><div class="edit-box-flat" onclick="openEditModal('${entry.id}','${l.id}')">EDIT</div><div class="delete-box-flat" onclick="removeLoad('${entry.id}', '${l.id}')">DELETE</div><div class="swipe-content"><div class="flex flex-col"><div class="flex items-center"><span class="text-lg font-bold text-gray-100">${l.miles} miles</span><span class="ticket-icon ${l.ticket ? 'has-ticket' : 'no-ticket'}" onclick="event.stopPropagation();${l.ticket ? `viewTicket('${entry.id}','${l.id}')` : `uploadTicket('${entry.id}','${l.id}')`}">${cameraSvg}</span>${l.note ? `<span class="note-icon" onclick="event.stopPropagation();viewNote('${entry.id}','${l.id}')">${noteSvg}</span>` : ''}</div><div class="flex items-center text-[10px] text-gray-500 font-bold uppercase"><span>${l.tons} TONS</span>${isCustom ? '<span class="custom-badge">· CUSTOM</span>' : ''}</div></div><span class="mileage-pay-text">$${l.pay.toFixed(2)}</span></div></div>`;
                     }).join('')}</div></div>`;
                 }
                 const card = document.createElement('div');
