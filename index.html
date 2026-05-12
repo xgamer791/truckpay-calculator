@@ -179,6 +179,9 @@
         @keyframes scan-spin { to { transform: rotate(360deg); } }
         .scan-label { font-size: 12px; font-weight: 900; color: #60a5fa; letter-spacing: 0.28em; text-transform: uppercase; }
         .scan-sublabel { font-size: 11px; font-weight: 700; color: #475569; letter-spacing: 0.08em; max-width: 280px; text-align: center; line-height: 1.5; }
+
+        .debug-log { background: rgba(0,0,0,0.55); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 14px; font-family: 'SF Mono', Menlo, Consolas, ui-monospace, monospace; font-size: 11px; line-height: 1.5; color: #cbd5e1; max-height: 55vh; overflow-y: auto; white-space: pre-wrap; word-break: break-word; margin: 12px 0 18px; }
+        .debug-meta { font-size: 10px; font-weight: 800; color: #64748b; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 4px; }
     </style>
 </head>
 <body>
@@ -216,6 +219,15 @@
                 </svg>
             </span>
             Help
+        </button>
+        <button class="menu-item" onclick="closeMenu(); openDebug()">
+            <span class="menu-item-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="16 18 22 12 16 6"/>
+                    <polyline points="8 6 2 12 8 18"/>
+                </svg>
+            </span>
+            Scan Debug
         </button>
     </div>
 
@@ -268,7 +280,7 @@
             </div>
             <div class="footer-tagline">Built for the long haul</div>
             <div class="footer-meta">
-                <span class="footer-version">v2.5.0</span>
+                <span class="footer-version">v2.5.1</span>
                 <span class="footer-meta-dot"></span>
                 <span>© 2026</span>
                 <span class="footer-meta-dot"></span>
@@ -467,6 +479,22 @@
         </div>
     </div>
 
+    <div class="help-overlay" id="debugOverlay">
+        <div class="help-modal">
+            <div class="chart-handle"></div>
+            <div class="edit-eyebrow">SCAN DEBUG</div>
+            <div class="edit-title">Latest Scan Log</div>
+            <div class="edit-subtitle">Console output captured from the most recent ticket scan. Persisted across reloads.</div>
+            <div class="debug-meta" id="debugMeta">0 entries</div>
+            <pre class="debug-log" id="debugLog"></pre>
+            <div class="edit-actions">
+                <button class="edit-btn-cancel" onclick="clearScanLog()">Clear</button>
+                <button class="edit-btn-save" id="debugCopyBtn" onclick="copyScanLog()">Copy</button>
+            </div>
+            <button class="chart-close" style="margin-top: 16px;" onclick="closeDebug()">CLOSE</button>
+        </div>
+    </div>
+
     <div class="scan-overlay" id="scanOverlay" aria-hidden="true">
         <div class="scan-spinner"></div>
         <div class="scan-label">Scanning Ticket…</div>
@@ -474,6 +502,125 @@
     </div>
 
     <script>
+        const SCAN_LOG_KEY = 'driverpay_scanlog';
+        const SCAN_LOG_MAX = 200;
+        let scanLog = [];
+
+        function loadScanLog() {
+            try {
+                const raw = localStorage.getItem(SCAN_LOG_KEY);
+                if (!raw) return;
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed)) scanLog = parsed.slice(-SCAN_LOG_MAX);
+            } catch (_) {}
+        }
+
+        function persistScanLog() {
+            try { localStorage.setItem(SCAN_LOG_KEY, JSON.stringify(scanLog)); } catch (_) {}
+        }
+
+        function fmtScanArg(a) {
+            if (a === null) return 'null';
+            if (typeof a === 'undefined') return 'undefined';
+            if (typeof a === 'string') return a;
+            if (typeof a === 'number' || typeof a === 'boolean') return String(a);
+            if (a instanceof Error) return a.name + ': ' + a.message;
+            try { return JSON.stringify(a); } catch (_) { return String(a); }
+        }
+
+        function pushScanLog(level, args) {
+            try {
+                const t = new Date().toISOString().slice(11, 23);
+                const message = Array.prototype.map.call(args, fmtScanArg).join(' ');
+                scanLog.push({ t, level, message });
+                if (scanLog.length > SCAN_LOG_MAX) scanLog.shift();
+                persistScanLog();
+                renderScanLogIfOpen();
+            } catch (_) {}
+        }
+
+        function resetScanLog() {
+            scanLog = [];
+            persistScanLog();
+            renderScanLogIfOpen();
+        }
+
+        function clearScanLog() {
+            resetScanLog();
+        }
+
+        (function patchConsoleForScanLog() {
+            ['log', 'warn', 'error'].forEach(level => {
+                const orig = console[level].bind(console);
+                console[level] = function() {
+                    try {
+                        if (arguments.length > 0 && typeof arguments[0] === 'string' && arguments[0].indexOf('[scan]') === 0) {
+                            pushScanLog(level, arguments);
+                        }
+                    } catch (_) {}
+                    return orig.apply(console, arguments);
+                };
+            });
+        })();
+
+        function scanLogToText() {
+            if (scanLog.length === 0) return '';
+            return scanLog.map(e => e.t + ' [' + e.level.toUpperCase() + '] ' + e.message).join('\n');
+        }
+
+        function renderScanLog() {
+            const el = document.getElementById('debugLog');
+            const meta = document.getElementById('debugMeta');
+            if (!el) return;
+            if (meta) meta.textContent = scanLog.length === 0 ? '0 entries' : (scanLog.length + ' entr' + (scanLog.length === 1 ? 'y' : 'ies'));
+            el.textContent = scanLog.length === 0 ? '(empty — scan a ticket to see logs here)' : scanLogToText();
+            el.scrollTop = el.scrollHeight;
+        }
+
+        function renderScanLogIfOpen() {
+            const ov = document.getElementById('debugOverlay');
+            if (ov && ov.classList.contains('active')) renderScanLog();
+        }
+
+        function openDebug() {
+            renderScanLog();
+            document.getElementById('debugOverlay').classList.add('active');
+            lockBodyScroll();
+        }
+
+        function closeDebug() {
+            document.getElementById('debugOverlay').classList.remove('active');
+            unlockBodyScroll();
+        }
+
+        async function copyScanLog() {
+            const text = scanLog.length === 0 ? '(empty)' : scanLogToText();
+            let ok = false;
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(text);
+                    ok = true;
+                } else {
+                    const ta = document.createElement('textarea');
+                    ta.value = text;
+                    ta.style.position = 'fixed';
+                    ta.style.top = '-9999px';
+                    document.body.appendChild(ta);
+                    ta.focus();
+                    ta.select();
+                    try { ok = document.execCommand('copy'); } catch (_) {}
+                    ta.remove();
+                }
+            } catch (_) {}
+            const btn = document.getElementById('debugCopyBtn');
+            if (btn) {
+                const original = btn.dataset.label || btn.textContent;
+                btn.dataset.label = original;
+                btn.textContent = ok ? 'Copied!' : 'Copy failed';
+                setTimeout(() => { btn.textContent = original; }, 1200);
+            }
+        }
+
         const VALID_DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
         const DAY_ORDER = { 'Friday': -8, 'Saturday': -7, 'Sunday': -6, 'Monday': -5, 'Tuesday': -4, 'Wednesday': -3, 'Thursday': -2 };
         const initializedEntries = new Set();
@@ -1195,6 +1342,7 @@
         }
 
         async function scanTicket(file) {
+            resetScanLog();
             const t0 = performance.now();
             console.log('[scan] START', { name: file.name, size: file.size, type: file.type });
 
@@ -1515,8 +1663,9 @@
 
         try {
             sanitizeHistory();
+            loadScanLog();
             applySettingsToHeader();
-            ['chartOverlay','editOverlay','addOverlay','settingsOverlay','helpOverlay'].forEach(id => {
+            ['chartOverlay','editOverlay','addOverlay','settingsOverlay','helpOverlay','debugOverlay'].forEach(id => {
                 const ov = document.getElementById(id);
                 if (!ov) return;
                 ov.addEventListener('click', e => {
@@ -1526,6 +1675,7 @@
                     else if (id === 'addOverlay') closeAddModal();
                     else if (id === 'settingsOverlay') closeSettings();
                     else if (id === 'helpOverlay') closeHelp();
+                    else if (id === 'debugOverlay') closeDebug();
                 });
             });
             renderHistory();
