@@ -280,7 +280,7 @@
             </div>
             <div class="footer-tagline">Built for the long haul</div>
             <div class="footer-meta">
-                <span class="footer-version">v2.5.3</span>
+                <span class="footer-version">v2.6.0</span>
                 <span class="footer-meta-dot"></span>
                 <span>© 2026</span>
                 <span class="footer-meta-dot"></span>
@@ -392,7 +392,15 @@
             </div>
             <input type="range" id="tonSlider" class="ton-slider" min="17" max="30" step="0.1" value="25" oninput="onTonSliderChange()">
             <div class="ton-range-labels"><span>17</span><span>30</span></div>
-            <div class="edit-actions" style="margin-top: 32px;">
+
+            <div style="margin-top: 28px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.06);">
+                <div class="edit-eyebrow">SCANNER · OPTIONAL</div>
+                <div class="edit-title" style="font-size: 18px; margin: 6px 0 4px;">Anthropic API Key</div>
+                <div class="edit-subtitle" style="margin-bottom: 14px;">Used for auto-rotating scanned tickets. Cost: ~$0.0015 per scan. Key is stored locally on this device only.</div>
+                <input type="password" id="anthropicKeyInput" class="edit-input" placeholder="sk-ant-..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+            </div>
+
+            <div class="edit-actions" style="margin-top: 28px;">
                 <button class="edit-btn-cancel" onclick="closeSettings()">Cancel</button>
                 <button class="edit-btn-save" onclick="saveSettings()">Save</button>
             </div>
@@ -626,7 +634,7 @@
         const initializedEntries = new Set();
         const rateData = [[2,3.84],[3,3.97],[6,4.38],[8,4.65],[11,5.06],[13,5.46],[14,5.43],[16,6.03],[17,6.00],[21,6.75],[25,7.32],[27,7.36],[30,8.01],[39,10.26],[45,11.24],[49,10.15],[61,14.40],[62,14.72],[65,15.42],[92,16.07]];
         const SETTINGS_KEY = 'driverpay_settings';
-        const DEFAULT_SETTINGS = { avgTons: 25 };
+        const DEFAULT_SETTINGS = { avgTons: 25, anthropicApiKey: '' };
 
         function loadSettings() {
             try {
@@ -636,7 +644,8 @@
                 let avg = parseFloat(parsed.avgTons);
                 if (isNaN(avg) || avg < 17) avg = 17;
                 if (avg > 30) avg = 30;
-                return { avgTons: avg };
+                const key = (typeof parsed.anthropicApiKey === 'string') ? parsed.anthropicApiKey : '';
+                return { avgTons: avg, anthropicApiKey: key };
             } catch (e) { return { ...DEFAULT_SETTINGS }; }
         }
         function saveSettingsObj(s) { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); }
@@ -816,6 +825,8 @@
             const slider = document.getElementById('tonSlider');
             slider.value = settings.avgTons;
             document.getElementById('tonValueDisplay').textContent = formatTons(settings.avgTons);
+            const keyInput = document.getElementById('anthropicKeyInput');
+            if (keyInput) keyInput.value = settings.anthropicApiKey || '';
             document.getElementById('settingsOverlay').classList.add('active');
             lockBodyScroll();
         }
@@ -837,6 +848,8 @@
             v = Math.max(17, Math.min(30, v));
             v = Math.round(v * 10) / 10;
             settings.avgTons = v;
+            const keyInput = document.getElementById('anthropicKeyInput');
+            if (keyInput) settings.anthropicApiKey = keyInput.value.trim();
             saveSettingsObj(settings);
             applySettingsToHeader();
             closeSettings();
@@ -1186,6 +1199,8 @@
         function showScanOverlay() {
             const ov = document.getElementById('scanOverlay');
             if (!ov) return;
+            const sub = document.getElementById('scanSublabel');
+            if (sub) sub.textContent = 'Locking onto edges and cleaning up';
             ov.setAttribute('aria-hidden', 'false');
             ov.classList.add('active');
             lockBodyScroll();
@@ -1330,6 +1345,88 @@
             return out;
         }
 
+        function rotateCanvasDegrees(src, degrees) {
+            degrees = ((degrees % 360) + 360) % 360;
+            if (degrees === 0) return src;
+            const out = document.createElement('canvas');
+            if (degrees === 90 || degrees === 270) {
+                out.width = src.height;
+                out.height = src.width;
+            } else {
+                out.width = src.width;
+                out.height = src.height;
+            }
+            const ctx = out.getContext('2d');
+            if (degrees === 90) {
+                ctx.translate(out.width, 0);
+                ctx.rotate(Math.PI / 2);
+            } else if (degrees === 180) {
+                ctx.translate(out.width, out.height);
+                ctx.rotate(Math.PI);
+            } else if (degrees === 270) {
+                ctx.translate(0, out.height);
+                ctx.rotate(-Math.PI / 2);
+            }
+            ctx.drawImage(src, 0, 0);
+            return out;
+        }
+
+        async function requestHaikuRotation(canvas) {
+            const key = (settings && typeof settings.anthropicApiKey === 'string') ? settings.anthropicApiKey.trim() : '';
+            if (!key) {
+                console.log('[scan] Haiku skipped — no API key configured');
+                return 0;
+            }
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+            const base64 = (dataUrl.split(',')[1]) || '';
+            const sizeKb = Math.round(base64.length * 0.75 / 1024);
+            console.log('[scan] Haiku rotation request sent (' + sizeKb + 'kb image)');
+            const t0 = performance.now();
+            try {
+                const res = await fetch('https://api.anthropic.com/v1/messages', {
+                    method: 'POST',
+                    headers: {
+                        'content-type': 'application/json',
+                        'x-api-key': key,
+                        'anthropic-version': '2023-06-01',
+                        'anthropic-dangerous-direct-browser-access': 'true'
+                    },
+                    body: JSON.stringify({
+                        model: 'claude-haiku-4-5',
+                        max_tokens: 20,
+                        messages: [{
+                            role: 'user',
+                            content: [
+                                { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: base64 } },
+                                { type: 'text', text: 'This is a scanned document. Which rotation makes the text readable upright? Reply with EXACTLY one of these four values and nothing else: 0, 90, 180, 270. The number is degrees of clockwise rotation needed to make the text upright.' }
+                            ]
+                        }]
+                    })
+                });
+                const dt = Math.round(performance.now() - t0);
+                if (!res.ok) {
+                    let body = '';
+                    try { body = await res.text(); } catch (_) {}
+                    console.error('[scan] Haiku error: HTTP ' + res.status + ' (took ' + dt + 'ms) · ' + body.slice(0, 300));
+                    return 0;
+                }
+                const json = await res.json();
+                const text = (json && json.content && json.content[0] && json.content[0].text) ? String(json.content[0].text).trim() : '';
+                const m = text.match(/\b(0|90|180|270)\b/);
+                const parsed = m ? parseInt(m[1], 10) : NaN;
+                if (parsed === 0 || parsed === 90 || parsed === 180 || parsed === 270) {
+                    console.log('[scan] Haiku rotation response: ' + parsed + 'deg (took ' + dt + 'ms)');
+                    return parsed;
+                }
+                console.warn('[scan] Haiku unexpected response: "' + text.slice(0, 100) + '" — treating as 0 (took ' + dt + 'ms)');
+                return 0;
+            } catch (err) {
+                const dt = Math.round(performance.now() - t0);
+                console.error('[scan] Haiku error: ' + (err && err.message ? err.message : err) + ' (took ' + dt + 'ms)');
+                return 0;
+            }
+        }
+
         function describeCorners(c) {
             if (!c) return 'null';
             const pt = p => p ? '(' + Math.round(p.x) + ',' + Math.round(p.y) + ')' : '∅';
@@ -1402,6 +1499,11 @@
             resetScanLog();
             const t0 = performance.now();
             console.log('[scan] START', { name: file.name, size: file.size, type: file.type });
+
+            const sublabelTimer = setTimeout(() => {
+                const el = document.getElementById('scanSublabel');
+                if (el) el.textContent = 'Detecting orientation…';
+            }, 8000);
 
             const oriented = await loadOrientedCanvas(file);
             const fullCanvas = oriented.canvas;
@@ -1493,6 +1595,16 @@
             const bwOk = applyScannerLook(finalCanvas);
             console.log('[scan] B&W threshold applied:', bwOk);
 
+            if (bwOk) {
+                const haikuDeg = await requestHaikuRotation(finalCanvas);
+                if (haikuDeg !== 0) {
+                    const beforeW = finalCanvas.width, beforeH = finalCanvas.height;
+                    finalCanvas = rotateCanvasDegrees(finalCanvas, haikuDeg);
+                    console.log('[scan] Haiku applied: rotated ' + haikuDeg + 'deg (was ' + beforeW + 'x' + beforeH + ' → now ' + finalCanvas.width + 'x' + finalCanvas.height + ')');
+                }
+            }
+
+            clearTimeout(sublabelTimer);
             const dataUrl = finalCanvas.toDataURL('image/jpeg', SCAN_JPEG_QUALITY);
             const dt = Math.round(performance.now() - t0);
             console.log('[scan] DONE in ' + dt + 'ms · path:', path, '· detail:', pathDetail, '· final:', finalCanvas.width + 'x' + finalCanvas.height, '· bytes:', dataUrl.length);
