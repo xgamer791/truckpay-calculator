@@ -280,7 +280,7 @@
             </div>
             <div class="footer-tagline">Built for the long haul</div>
             <div class="footer-meta">
-                <span class="footer-version">v2.5.1</span>
+                <span class="footer-version">v2.5.2</span>
                 <span class="footer-meta-dot"></span>
                 <span>© 2026</span>
                 <span class="footer-meta-dot"></span>
@@ -1130,15 +1130,54 @@
             });
         }
 
+        function waitForOpenCV(timeoutMs) {
+            return new Promise((resolve, reject) => {
+                const ready = () => typeof cv !== 'undefined' && cv && cv.Mat && cv.adaptiveThreshold && cv.findContours;
+                if (ready()) { console.log('[scan] OpenCV ready immediately'); return resolve(); }
+
+                const t0 = performance.now();
+                let settled = false;
+                const finish = (via) => {
+                    if (settled) return;
+                    settled = true;
+                    clearInterval(pollId);
+                    const dt = Math.round(performance.now() - t0);
+                    console.log('[scan] OpenCV ready via ' + via + ' after ' + dt + 'ms');
+                    resolve();
+                };
+
+                if (typeof cv !== 'undefined' && cv && !ready()) {
+                    const prev = cv.onRuntimeInitialized;
+                    try {
+                        cv.onRuntimeInitialized = () => {
+                            if (typeof prev === 'function') { try { prev(); } catch (_) {} }
+                            if (ready()) finish('onRuntimeInitialized');
+                        };
+                    } catch (_) {}
+                }
+
+                const pollId = setInterval(() => {
+                    if (ready()) {
+                        finish('poll');
+                    } else if (performance.now() - t0 > timeoutMs) {
+                        clearInterval(pollId);
+                        if (settled) return;
+                        settled = true;
+                        console.error('[scan] OpenCV not ready after ' + timeoutMs + 'ms · cv typeof:', typeof cv);
+                        reject(new Error('OpenCV did not initialize within ' + timeoutMs + 'ms'));
+                    }
+                }, 100);
+            });
+        }
+
         function loadScanner() {
             if (scannerReady) return scannerReady;
             scannerReady = (async () => {
                 await loadScript(OPENCV_SRC);
                 await loadScript(JSCANIFY_SRC);
                 if (typeof jscanify === 'undefined') throw new Error('jscanify global missing');
-                const inst = new jscanify();
-                await new Promise(resolve => inst.loadOpenCV(resolve));
-                return inst;
+                await waitForOpenCV(15000);
+                return new jscanify();
             })().catch(err => { scannerReady = null; throw err; });
             return scannerReady;
         }
