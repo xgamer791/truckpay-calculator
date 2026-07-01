@@ -33,10 +33,20 @@
         .day-section.collapsed .day-loads { max-height: 0; opacity: 0; }
         .day-header { cursor: pointer; -webkit-user-select: none; user-select: none; }
         .ticket-icon, .note-icon { display: inline-flex; align-items: center; justify-content: center; margin-left: 8px; padding: 4px; cursor: pointer; flex-shrink: 0; }
-        .ticket-icon.has-ticket { color: #3b82f6; }
-        .ticket-icon.no-ticket { color: #ef4444; }
+        .ticket-icon.saved, .ticket-icon.has-ticket { color: #22c55e; }
+        .ticket-icon.no-ticket { color: #64748b; }
         .note-icon { color: #fbbf24; }
         .ticket-icon:active, .note-icon:active { opacity: 0.6; }
+        /* Ticket capture states (scanner flow / save-state):
+           default grey camera = no ticket · camera + blue ticket icon = captured pending save · green camera = saved to load */
+        .ticket-pending-icon { display: inline-flex; align-items: center; justify-content: center; margin-left: 4px; padding: 2px; color: #3b82f6; flex-shrink: 0; }
+        .ticket-control { display: flex; align-items: center; gap: 12px; }
+        .ticket-control-btn { display: inline-flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.10); border-radius: 12px; padding: 10px 14px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        .ticket-control-btn:active { opacity: 0.7; }
+        .tc-camera { display: inline-flex; color: #64748b; transition: color 0.15s; }
+        .tc-camera.tc-saved { color: #22c55e; }
+        .ticket-control-status { font-size: 12px; font-weight: 700; color: #94a3b8; }
+        .ticket-control-view { background: none; border: none; color: #60a5fa; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; padding: 6px 4px; margin-left: auto; }
         .ticket-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
         .ticket-overlay img { max-width: 100%; max-height: 70vh; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
         .ticket-overlay-actions { display: flex; gap: 10px; margin-top: 24px; width: 100%; max-width: 420px; }
@@ -325,7 +335,7 @@
             </div>
             <div class="footer-tagline">Built for the long haul</div>
             <div class="footer-meta">
-                <span class="footer-version">v2.7.4</span>
+                <span class="footer-version">v2.8.0</span>
                 <span class="footer-meta-dot"></span>
                 <span>© 2026</span>
                 <span class="footer-meta-dot"></span>
@@ -382,6 +392,17 @@
             <div class="edit-row">
                 <label class="edit-label">Note (optional)</label>
                 <textarea id="editNote" class="edit-textarea" rows="2" placeholder="e.g. wet load, broker XYZ, ticket #1234..."></textarea>
+            </div>
+            <div class="edit-row">
+                <label class="edit-label">Load Ticket</label>
+                <div class="ticket-control">
+                    <button type="button" class="ticket-control-btn" onclick="captureEditTicket()">
+                        <span id="editTicketCamera" class="tc-camera"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span>
+                        <span id="editTicketPending" class="ticket-pending-icon" style="display:none;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z"/><path d="M13 5v2"/><path d="M13 11v2"/><path d="M13 17v2"/></svg></span>
+                    </button>
+                    <span class="ticket-control-status" id="editTicketStatus">No ticket — tap to scan</span>
+                    <button type="button" class="ticket-control-view" id="editTicketView" style="display:none;" onclick="viewEditTicket()">View</button>
+                </div>
             </div>
             <div class="edit-row">
                 <label class="edit-label">Day</label>
@@ -485,7 +506,7 @@
                         <span class="help-section-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span>
                         Load Tickets
                     </div>
-                    <p>Every load has a camera icon. <strong style="color:#ef4444;">Red</strong> = no ticket uploaded yet. <strong style="color:#3b82f6;">Blue</strong> = ticket on file. Tap the icon to capture, then tap again to view, retake, or delete.</p>
+                    <p>Every load has a camera icon. <strong style="color:#64748b;">Grey</strong> = no ticket yet. <strong style="color:#22c55e;">Green</strong> = ticket saved to the load. Tap grey to scan; tap green to view, replace, or delete. Scanning inside a load's Edit screen shows a <strong style="color:#3b82f6;">blue ticket icon</strong> next to the camera — the shot is captured but not saved until you tap Save.</p>
                     <div class="help-tip"><strong>Tip:</strong> The scanner auto-crops and enhances tickets so they read like a clean copy, even shot quickly with one hand.</div>
                 </div>
                 <div class="help-section">
@@ -1090,7 +1111,7 @@
             if (!s || !Array.isArray(s.loads)) return;
             const l = s.loads.find(l => l && l.id == lId);
             if (!l) return;
-            editingLoad = { sId, lId, miles: l.miles };
+            editingLoad = { sId, lId, miles: l.miles, savedTicket: l.ticket || null, stagedTicket: null, removeTicket: false };
             document.getElementById('editLoadInfo').textContent = `${l.miles} miles`;
             const autoPay = (getRate(l.miles) * l.tons * 0.30).toFixed(2);
             document.getElementById('editAutoPreview').textContent = `Auto rate: $${getRate(l.miles).toFixed(2)}/ton truck · pays $${autoPay} at ${l.tons} tons`;
@@ -1116,6 +1137,7 @@
             document.getElementById('editOverlay').classList.add('active');
             lockBodyScroll();
             updatePayPreview();
+            updateEditTicketUI();
         }
         function setPricingMode(mode) {
             document.querySelectorAll('.mode-tab').forEach(t => t.classList.toggle('active', t.dataset.mode === mode));
@@ -1168,19 +1190,108 @@
             const sIdx = h.findIndex(s => s && s.id == editingLoad.sId);
             if (sIdx === -1) { closeEditModal(); return; }
             if (!Array.isArray(h[sIdx].loads)) h[sIdx].loads = [];
+            const ticketChanged = !!editingLoad.stagedTicket || editingLoad.removeTicket;
             h[sIdx].loads = h[sIdx].loads.map(l => {
                 if (!l) return l;
                 const matches = applyMulti ? (l.miles === editingLoad.miles) : (l.id == editingLoad.lId);
-                if (!matches) return l;
-                const merged = { ...l, ...updates };
+                const isEdited = (l.id == editingLoad.lId);
+                if (!matches && !isEdited) return l;
+                const merged = matches ? { ...l, ...updates } : { ...l };
+                // Ticket image only ever attaches to the one edited load — never copied onto
+                // multi-apply siblings (that would duplicate the image). No Batch Mode exists here.
+                if (isEdited && ticketChanged) {
+                    if (editingLoad.stagedTicket) merged.ticket = editingLoad.stagedTicket;
+                    else if (editingLoad.removeTicket) merged.ticket = null;
+                }
                 if (merged.customTotal === null) delete merged.customTotal;
                 if (merged.customRate === null) delete merged.customRate;
+                if (!merged.ticket) delete merged.ticket;
                 if (!merged.note) delete merged.note;
                 return merged;
             });
             localStorage.setItem('driver_history', JSON.stringify(h));
             closeEditModal();
             renderHistory();
+        }
+
+        // ---- Load ticket, staged inside the Edit modal --------------------------------
+        // States: default grey camera = no ticket · camera + blue ticket icon = captured,
+        // pending save · green camera = saved to load. Nothing persists until Save is tapped.
+        function updateEditTicketUI() {
+            if (!editingLoad) return;
+            const cam = document.getElementById('editTicketCamera');
+            const pending = document.getElementById('editTicketPending');
+            const status = document.getElementById('editTicketStatus');
+            const viewBtn = document.getElementById('editTicketView');
+            if (!cam || !pending || !status || !viewBtn) return;
+            const staged = !!editingLoad.stagedTicket;
+            const saved = !!editingLoad.savedTicket && !editingLoad.removeTicket;
+            // Green means "saved to load" only — a fresh unsaved capture is pending, not green.
+            cam.classList.toggle('tc-saved', saved && !staged);
+            pending.style.display = staged ? 'inline-flex' : 'none';
+            if (staged) status.textContent = saved ? 'New photo — Save to replace' : 'Captured — Save to keep';
+            else if (saved) status.textContent = 'Saved to load';
+            else if (editingLoad.removeTicket) status.textContent = 'Will remove on Save';
+            else status.textContent = 'No ticket — tap to scan';
+            viewBtn.style.display = (staged || saved) ? 'inline-flex' : 'none';
+        }
+
+        function captureEditTicket() {
+            if (!editingLoad) return;
+            const hasSaved = !!editingLoad.savedTicket && !editingLoad.removeTicket;
+            const run = () => {
+                const input = document.createElement('input');
+                input.type = 'file'; input.accept = 'image/*'; input.capture = 'environment'; input.style.display = 'none';
+                document.body.appendChild(input);
+                input.onchange = async (e) => {
+                    const file = e.target.files && e.target.files[0];
+                    if (!file) { input.remove(); return; }
+                    showScanOverlay();
+                    try {
+                        const dataUrl = await scanTicket(file);
+                        editingLoad.stagedTicket = dataUrl;   // pending — persisted only when Save is tapped
+                        editingLoad.removeTicket = false;
+                        updateEditTicketUI();
+                    } catch (err) {
+                        console.error('[scan] unrecoverable:', err);
+                    } finally {
+                        hideScanOverlay();
+                        input.remove();
+                    }
+                };
+                input.click();
+            };
+            // Replacing an already-saved image asks first — never a silent overwrite, never a duplicate.
+            if (hasSaved && !editingLoad.stagedTicket) {
+                appConfirm('This load already has a saved ticket. Replace it with a new capture?', { title: 'Replace Ticket', variant: 'warn', confirmText: 'Replace' })
+                    .then(ok => { if (ok) run(); });
+            } else {
+                run();
+            }
+        }
+
+        function viewEditTicket() {
+            if (!editingLoad) return;
+            const img = editingLoad.stagedTicket || (editingLoad.removeTicket ? null : editingLoad.savedTicket);
+            if (!img) return;
+            const isStaged = !!editingLoad.stagedTicket;
+            const overlay = document.createElement('div');
+            overlay.className = 'ticket-overlay';
+            overlay.innerHTML = `<img src="${img}" alt="Load ticket"><div class="ticket-overlay-actions"><button class="vt-close" style="background:#1e293b;">CLOSE</button><button class="vt-remove" style="background:#ef4444;">REMOVE</button></div>`;
+            document.body.appendChild(overlay);
+            lockBodyScroll();
+            const close = () => {
+                overlay.remove();
+                unlockBodyScroll();
+                if (document.getElementById('editOverlay').classList.contains('active')) lockBodyScroll();
+            };
+            overlay.querySelector('.vt-close').onclick = close;
+            overlay.querySelector('.vt-remove').onclick = () => {
+                if (isStaged) editingLoad.stagedTicket = null;   // drop the pending capture
+                else editingLoad.removeTicket = true;            // mark saved image for removal on Save
+                updateEditTicketUI();
+                close();
+            };
         }
 
         function viewNote(sId, lId) {
@@ -1764,7 +1875,12 @@
             lockBodyScroll();
             const close = () => { overlay.remove(); unlockBodyScroll(); };
             overlay.querySelector('.vt-close').onclick = close;
-            overlay.querySelector('.vt-retake').onclick = () => { close(); uploadTicket(sId, lId); };
+            overlay.querySelector('.vt-retake').onclick = async () => {
+                const ok = await appConfirm('Replace this saved ticket with a new capture?', { title: 'Replace Ticket', variant: 'warn', confirmText: 'Replace' });
+                if (!ok) return;
+                close();
+                uploadTicket(sId, lId);   // overwrites the same load's ticket — no duplicate
+            };
             overlay.querySelector('.vt-delete').onclick = () => { removeTicket(sId, lId); close(); };
         }
 
@@ -1807,7 +1923,7 @@
                     const dayTotal = grouped[day].reduce((sum, item) => sum + item.pay, 0);
                     breakdownHtml += `<div class="day-section" data-day="${day}"><div class="flex justify-between items-center mb-3 px-1 day-header" onclick="toggleDay(this, event)"><span class="day-header-text">${day}</span><span class="day-total-text">$${dayTotal.toFixed(2)}</span></div><div class="day-loads">${grouped[day].map(l => {
                         const isCustom = l.pricingMode === 'fixed' || l.pricingMode === 'perton';
-                        return `<div class="swipe-container" id="container-${l.id}" ontouchstart="ts(event, '${l.id}')" ontouchmove="tm(event, '${l.id}')" ontouchend="te(event, '${l.id}')"><div class="edit-box-flat" onclick="openEditModal('${entry.id}','${l.id}')">EDIT</div><div class="delete-box-flat" onclick="removeLoad('${entry.id}', '${l.id}')">DELETE</div><div class="swipe-content"><div class="flex flex-col"><div class="flex items-center"><span class="text-lg font-bold text-gray-100">${l.miles} miles</span><span class="ticket-icon ${l.ticket ? 'has-ticket' : 'no-ticket'}" onclick="event.stopPropagation();${l.ticket ? `viewTicket('${entry.id}','${l.id}')` : `uploadTicket('${entry.id}','${l.id}')`}">${cameraSvg}</span>${l.note ? `<span class="note-icon" onclick="event.stopPropagation();viewNote('${entry.id}','${l.id}')">${noteSvg}</span>` : ''}</div><div class="flex items-center text-[10px] text-gray-500 font-bold uppercase"><span>${l.tons} TONS</span>${isCustom ? '<span class="custom-badge">· CUSTOM</span>' : ''}</div></div><span class="mileage-pay-text">$${l.pay.toFixed(2)}</span></div></div>`;
+                        return `<div class="swipe-container" id="container-${l.id}" ontouchstart="ts(event, '${l.id}')" ontouchmove="tm(event, '${l.id}')" ontouchend="te(event, '${l.id}')"><div class="edit-box-flat" onclick="openEditModal('${entry.id}','${l.id}')">EDIT</div><div class="delete-box-flat" onclick="removeLoad('${entry.id}', '${l.id}')">DELETE</div><div class="swipe-content"><div class="flex flex-col"><div class="flex items-center"><span class="text-lg font-bold text-gray-100">${l.miles} miles</span><span class="ticket-icon ${l.ticket ? 'saved' : 'no-ticket'}" onclick="event.stopPropagation();${l.ticket ? `viewTicket('${entry.id}','${l.id}')` : `uploadTicket('${entry.id}','${l.id}')`}">${cameraSvg}</span>${l.note ? `<span class="note-icon" onclick="event.stopPropagation();viewNote('${entry.id}','${l.id}')">${noteSvg}</span>` : ''}</div><div class="flex items-center text-[10px] text-gray-500 font-bold uppercase"><span>${l.tons} TONS</span>${isCustom ? '<span class="custom-badge">· CUSTOM</span>' : ''}</div></div><span class="mileage-pay-text">$${l.pay.toFixed(2)}</span></div></div>`;
                     }).join('')}</div></div>`;
                 }
                 const card = document.createElement('div');
