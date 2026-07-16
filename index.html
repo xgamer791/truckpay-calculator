@@ -201,9 +201,7 @@
         .doc-scanner-overlay-canvas { pointer-events: none; z-index: 2; }
         .doc-scanner-top { position: absolute; top: 0; left: 0; right: 0; z-index: 4; display: flex; justify-content: space-between; align-items: flex-start; padding: calc(12px + env(safe-area-inset-top, 0px)) 16px 12px; pointer-events: none; }
         .doc-scanner-top > * { pointer-events: auto; }
-        .doc-scanner-hint { position: absolute; left: 50%; top: calc(72px + env(safe-area-inset-top, 0px)); transform: translateX(-50%); z-index: 4; max-width: min(88vw, 360px); text-align: center; font-size: 13px; font-weight: 800; letter-spacing: 0.02em; color: white; text-shadow: 0 2px 10px rgba(0,0,0,0.7); background: rgba(15,23,42,0.55); border: 1px solid rgba(255,255,255,0.12); padding: 10px 14px; border-radius: 12px; pointer-events: none; }
-        .doc-scanner-hint.ready { color: #86efac; border-color: rgba(34,197,94,0.45); }
-        .doc-scanner-hint.warn { color: #fde68a; border-color: rgba(251,191,36,0.4); }
+        .doc-scanner-hint { display: none !important; }
         .doc-scanner-status { position: absolute; left: 50%; bottom: calc(148px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 4; font-size: 12px; font-weight: 900; letter-spacing: 0.16em; text-transform: uppercase; color: #86efac; text-shadow: 0 2px 8px rgba(0,0,0,0.8); pointer-events: none; opacity: 0; transition: opacity 0.2s; }
         .doc-scanner-status.show { opacity: 1; }
         .doc-scanner-bottom { position: absolute; left: 0; right: 0; bottom: 0; z-index: 4; padding: 18px 22px calc(22px + env(safe-area-inset-bottom, 0px)); display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.72) 45%, rgba(0,0,0,0.92) 100%); }
@@ -419,7 +417,7 @@
             </div>
             <div class="footer-tagline">Built for the long haul</div>
             <div class="footer-meta">
-                <span class="footer-version">v2.9.0</span>
+                <span class="footer-version">v2.9.2</span>
                 <span class="footer-meta-dot"></span>
                 <span>© 2026</span>
                 <span class="footer-meta-dot"></span>
@@ -720,7 +718,6 @@
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg>
                 </button>
             </div>
-            <div class="doc-scanner-hint" id="docScannerHint">Position the document inside the frame</div>
             <div class="doc-scanner-status" id="docScannerStatus">Hold still</div>
             <div class="doc-scanner-bottom">
                 <div class="doc-scanner-side">
@@ -2020,11 +2017,12 @@
         }
 
         // ---- CamScanner-style live document scanner ---------------------------------
-        const DOC_DETECT_W = 360;
+        const DOC_DETECT_W = 420;
         const DOC_STABLE_MS = 900;
         const DOC_COOLDOWN_MS = 2500;
-        const DOC_CORNER_SMOOTH = 0.35;
-        const DOC_READY_MOVE_PX = 10;
+        const DOC_DETECT_INTERVAL_MS = 45;
+        const DOC_READY_MOVE_PX = 12;
+        const DOC_LOST_GRACE_MS = 350;
         const DOC_MIN_AREA_RATIO = 0.08;
         const DOC_MAX_AREA_RATIO = 0.92;
         const processingLoads = new Set(); // `${sId}|${lId}` while processing
@@ -2042,10 +2040,16 @@
             raf: 0,
             detectBusy: false,
             lastDetectAt: 0,
-            smoothed: null,
+            lastDrawAt: 0,
+            targetPts: null,   // latest detected corners (detect-canvas space)
+            displayPts: null,  // smoothly interpolated corners for drawing
+            detectW: DOC_DETECT_W,
+            detectH: 1,
+            smoothed: null,    // alias of displayPts for capture/lastGood
             lastGood: null,
             confidence: 0,
             stableSince: 0,
+            lostAt: 0,
             lastCaptureAt: 0,
             capturing: false,
             videoReady: false
@@ -2134,9 +2138,19 @@
             if (!next) return prev;
             if (!prev) return next.map(p => ({ x: p.x, y: p.y }));
             return next.map((p, i) => ({
-                x: prev[i].x * (1 - alpha) + p.x * alpha,
-                y: prev[i].y * (1 - alpha) + p.y * alpha
+                x: prev[i].x + (p.x - prev[i].x) * alpha,
+                y: prev[i].y + (p.y - prev[i].y) * alpha
             }));
+        }
+
+        function lerpDisplayCorners(display, target, dtMs) {
+            if (!target) return display;
+            if (!display) return target.map(p => ({ x: p.x, y: p.y }));
+            const motion = cornerMotion(display, target);
+            // Follow camera motion quickly; settle gently when nearly locked
+            const follow = motion > 28 ? 0.55 : (motion > 12 ? 0.38 : (motion > 4 ? 0.26 : 0.16));
+            const t = 1 - Math.pow(1 - follow, Math.max(0.5, dtMs) / 16.67);
+            return smoothCorners(display, target, Math.min(1, t));
         }
 
         function cornerMotion(a, b) {
@@ -2220,32 +2234,15 @@
             }
         }
 
-        function drawScannerOverlay(canvas, video, pts, confidence) {
+        function drawScannerOverlay(canvas, pts, confidence) {
             const w = canvas.width, h = canvas.height;
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, w, h);
-            // darken full frame
-            ctx.fillStyle = 'rgba(0,0,0,0.45)';
+            if (!pts) return; // no placement frame — live green outline only when edges are detected
+
+            // Darken outside the detected document
+            ctx.fillStyle = 'rgba(0,0,0,0.42)';
             ctx.fillRect(0, 0, w, h);
-            if (!pts) {
-                // soft guide rectangle (not a fake detection)
-                const gw = w * 0.78, gh = h * 0.52;
-                const gx = (w - gw) / 2, gy = (h - gh) / 2;
-                ctx.save();
-                ctx.globalCompositeOperation = 'destination-out';
-                ctx.fillStyle = '#000';
-                roundRectPath(ctx, gx, gy, gw, gh, 18);
-                ctx.fill();
-                ctx.restore();
-                ctx.strokeStyle = 'rgba(255,255,255,0.28)';
-                ctx.lineWidth = 2;
-                ctx.setLineDash([10, 8]);
-                roundRectPath(ctx, gx, gy, gw, gh, 18);
-                ctx.stroke();
-                ctx.setLineDash([]);
-                return;
-            }
-            // punch out document area
             ctx.save();
             ctx.globalCompositeOperation = 'destination-out';
             ctx.beginPath();
@@ -2265,13 +2262,12 @@
             ctx.shadowColor = glow;
             ctx.shadowBlur = ready ? 18 : 10;
             ctx.strokeStyle = stroke;
-            ctx.lineWidth = ready ? 4.5 : 3;
+            ctx.lineWidth = ready ? 4.5 : 3.25;
             ctx.beginPath();
             ctx.moveTo(pts[0].x, pts[0].y);
             for (let i = 1; i < 4; i++) ctx.lineTo(pts[i].x, pts[i].y);
             ctx.closePath();
             ctx.stroke();
-            // corner points
             for (const p of pts) {
                 ctx.beginPath();
                 ctx.fillStyle = stroke;
@@ -2285,16 +2281,6 @@
             ctx.restore();
         }
 
-        function roundRectPath(ctx, x, y, w, h, r) {
-            ctx.beginPath();
-            ctx.moveTo(x + r, y);
-            ctx.arcTo(x + w, y, x + w, y + h, r);
-            ctx.arcTo(x + w, y + h, x, y + h, r);
-            ctx.arcTo(x, y + h, x, y, r);
-            ctx.arcTo(x, y, x + w, y, r);
-            ctx.closePath();
-        }
-
         function mapPtsToDisplay(pts, srcW, srcH, canvasW, canvasH) {
             // object-fit: cover mapping from detection canvas space -> overlay canvas space
             // Detection canvas is drawn from video with cover-like letterbox? We draw video into detect canvas with cover.
@@ -2305,13 +2291,7 @@
             return pts.map(p => ({ x: ox + p.x * scale, y: oy + p.y * scale }));
         }
 
-        function setScannerHint(text, kind) {
-            const el = document.getElementById('docScannerHint');
-            if (!el) return;
-            el.textContent = text;
-            el.classList.toggle('ready', kind === 'ready');
-            el.classList.toggle('warn', kind === 'warn');
-        }
+        function setScannerHint() { /* placement hint removed */ }
 
         function setScannerStatus(text, show) {
             const el = document.getElementById('docScannerStatus');
@@ -2335,9 +2315,13 @@
             docScan.autoMode = true;
             docScan.flashOn = false;
             docScan.smoothed = null;
+            docScan.targetPts = null;
+            docScan.displayPts = null;
             docScan.lastGood = null;
             docScan.confidence = 0;
             docScan.stableSince = 0;
+            docScan.lostAt = 0;
+            docScan.lastDrawAt = 0;
             docScan.capturing = false;
             docScan.videoReady = false;
 
@@ -2351,7 +2335,6 @@
             if (modeBtn) { modeBtn.textContent = 'Auto'; modeBtn.classList.add('auto'); }
             if (flashBtn) flashBtn.classList.remove('flash-on');
             if (perm) perm.classList.remove('show');
-            setScannerHint('Position the document inside the frame', '');
             setScannerStatus('', false);
             lockBodyScroll();
             docScan.active = true;
@@ -2467,7 +2450,7 @@
                 const btn = document.getElementById('docScannerMode');
                 btn.textContent = docScan.autoMode ? 'Auto' : 'Manual';
                 btn.classList.toggle('auto', docScan.autoMode);
-                setScannerHint(docScan.autoMode ? 'Position the document inside the frame' : 'Manual mode — tap the shutter when ready', docScan.autoMode ? '' : 'warn');
+                setScannerStatus(docScan.autoMode ? '' : 'Manual', !docScan.autoMode);
             };
             document.getElementById('docScannerFlash').onclick = async () => {
                 docScan.flashOn = !docScan.flashOn;
@@ -2506,11 +2489,7 @@
             const detectCanvas = document.createElement('canvas');
             const detectCtx = detectCanvas.getContext('2d', { willReadFrequently: true });
 
-            const tick = async () => {
-                if (!docScan.active) return;
-                docScan.raf = requestAnimationFrame(tick);
-                if (!docScan.videoReady || !video.videoWidth) return;
-
+            const paintOverlay = (now) => {
                 const rect = overlay.parentElement.getBoundingClientRect();
                 const dpr = Math.min(window.devicePixelRatio || 1, 2);
                 const cw = Math.max(1, Math.round(rect.width * dpr));
@@ -2518,87 +2497,106 @@
                 if (overlay.width !== cw || overlay.height !== ch) {
                     overlay.width = cw; overlay.height = ch;
                 }
+                const dt = docScan.lastDrawAt ? Math.min(34, now - docScan.lastDrawAt) : 16.7;
+                docScan.lastDrawAt = now;
 
-                // throttle detection
-                const now = performance.now();
-                if (docScan.detectBusy || now - docScan.lastDetectAt < 90) {
-                    const drawPts = docScan.smoothed ? mapPtsToDisplay(docScan.smoothed, detectCanvas.width || DOC_DETECT_W, detectCanvas.height || 1, cw, ch) : null;
-                    drawScannerOverlay(overlay, video, drawPts, docScan.confidence);
-                    return;
+                // Smoothly chase the latest detection every animation frame
+                if (docScan.targetPts) {
+                    docScan.displayPts = lerpDisplayCorners(docScan.displayPts, docScan.targetPts, dt);
+                    docScan.smoothed = docScan.displayPts;
+                } else if (docScan.lostAt && (now - docScan.lostAt) > DOC_LOST_GRACE_MS) {
+                    docScan.displayPts = null;
+                    docScan.smoothed = null;
                 }
+
+                const drawPts = docScan.displayPts
+                    ? mapPtsToDisplay(docScan.displayPts, docScan.detectW || DOC_DETECT_W, docScan.detectH || 1, cw, ch)
+                    : null;
+                drawScannerOverlay(overlay, drawPts, docScan.confidence);
+            };
+
+            const tick = () => {
+                if (!docScan.active) return;
+                docScan.raf = requestAnimationFrame(tick);
+                if (!docScan.videoReady || !video.videoWidth) return;
+
+                const now = performance.now();
+                paintOverlay(now);
+
+                if (docScan.detectBusy || now - docScan.lastDetectAt < DOC_DETECT_INTERVAL_MS) return;
                 docScan.lastDetectAt = now;
                 docScan.detectBusy = true;
-                try {
-                    const vw = video.videoWidth, vh = video.videoHeight;
-                    const scale = DOC_DETECT_W / vw;
-                    detectCanvas.width = DOC_DETECT_W;
-                    detectCanvas.height = Math.max(1, Math.round(vh * scale));
-                    // cover-draw video into detect canvas (same aspect as video)
-                    detectCtx.drawImage(video, 0, 0, detectCanvas.width, detectCanvas.height);
 
-                    if (!window.__docScannerInst) {
-                        drawScannerOverlay(overlay, video, null, 0);
-                        return;
-                    }
+                // Run detection without blocking the rAF paint path
+                Promise.resolve().then(() => {
+                    try {
+                        if (!docScan.active || !window.__docScannerInst) return;
+                        const vw = video.videoWidth, vh = video.videoHeight;
+                        detectCanvas.width = DOC_DETECT_W;
+                        detectCanvas.height = Math.max(1, Math.round(vh * (DOC_DETECT_W / vw)));
+                        docScan.detectW = detectCanvas.width;
+                        docScan.detectH = detectCanvas.height;
+                        detectCtx.drawImage(video, 0, 0, detectCanvas.width, detectCanvas.height);
 
-                    const found = detectCornersFromCanvas(detectCanvas);
-                    let confidence = 0;
-                    if (found) {
-                        const bright = estimateBrightness(detectCtx, detectCanvas.width, detectCanvas.height);
-                        const sharp = estimateSharpness(detectCtx, detectCanvas.width, detectCanvas.height);
-                        const lightingOk = bright > 35 && bright < 245;
-                        const focusOk = sharp > 12;
-                        const prev = docScan.smoothed;
-                        docScan.smoothed = smoothCorners(prev, found.pts, DOC_CORNER_SMOOTH);
-                        const motion = cornerMotion(prev, docScan.smoothed);
-                        const steady = motion < DOC_READY_MOVE_PX;
-                        confidence = 0.35;
-                        if (lightingOk) confidence += 0.15;
-                        if (focusOk) confidence += 0.15;
-                        if (steady) confidence += 0.2;
-                        if (found.areaRatio > 0.15 && found.areaRatio < 0.85) confidence += 0.15;
-                        docScan.confidence = Math.min(1, confidence);
-                        docScan.lastGood = { pts: docScan.smoothed.map(p => ({ ...p })), detectW: detectCanvas.width, detectH: detectCanvas.height, corners: arrayToCorners(docScan.smoothed) };
+                        const found = detectCornersFromCanvas(detectCanvas);
+                        if (found) {
+                            const bright = estimateBrightness(detectCtx, detectCanvas.width, detectCanvas.height);
+                            const sharp = estimateSharpness(detectCtx, detectCanvas.width, detectCanvas.height);
+                            const lightingOk = bright > 35 && bright < 245;
+                            const focusOk = sharp > 12;
+                            // Light target smoothing so noisy detections don't yank the chase point
+                            const prevTarget = docScan.targetPts;
+                            const jump = cornerMotion(prevTarget, found.pts);
+                            const targetAlpha = jump > 40 ? 0.85 : (jump > 18 ? 0.65 : 0.5);
+                            docScan.targetPts = smoothCorners(prevTarget, found.pts, targetAlpha);
+                            docScan.lostAt = 0;
 
-                        if (docScan.confidence >= 0.85 && steady) {
-                            if (!docScan.stableSince) {
-                                docScan.stableSince = now;
-                                haptic(10);
-                            }
-                            const held = now - docScan.stableSince;
-                            setScannerHint('Document locked — hold still', 'ready');
-                            setScannerStatus('Hold still', held > 180);
-                            if (docScan.autoMode && !docScan.capturing && held >= DOC_STABLE_MS && (now - docScan.lastCaptureAt) > DOC_COOLDOWN_MS) {
-                                if (lightingOk && focusOk) {
-                                    captureFromScanner(false);
-                                } else if (!lightingOk) {
-                                    setScannerHint('Lighting too dark or bright — adjust and hold', 'warn');
-                                } else {
-                                    setScannerHint('Image looks blurry — hold steadier', 'warn');
+                            const displayMotion = cornerMotion(docScan.displayPts, docScan.targetPts);
+                            const steady = displayMotion < DOC_READY_MOVE_PX;
+                            let confidence = 0.4;
+                            if (lightingOk) confidence += 0.15;
+                            if (focusOk) confidence += 0.15;
+                            if (steady) confidence += 0.2;
+                            if (found.areaRatio > 0.15 && found.areaRatio < 0.85) confidence += 0.1;
+                            docScan.confidence = Math.min(1, confidence);
+                            docScan.lastGood = {
+                                pts: (docScan.displayPts || docScan.targetPts).map(p => ({ ...p })),
+                                detectW: detectCanvas.width,
+                                detectH: detectCanvas.height,
+                                corners: arrayToCorners(docScan.displayPts || docScan.targetPts)
+                            };
+
+                            if (docScan.confidence >= 0.85 && steady) {
+                                if (!docScan.stableSince) {
+                                    docScan.stableSince = now;
+                                    haptic(10);
                                 }
+                                const held = performance.now() - docScan.stableSince;
+                                setScannerStatus('Hold still', held > 180);
+                                if (docScan.autoMode && !docScan.capturing && held >= DOC_STABLE_MS && (performance.now() - docScan.lastCaptureAt) > DOC_COOLDOWN_MS) {
+                                    if (lightingOk && focusOk) captureFromScanner(false);
+                                    else setScannerStatus(lightingOk ? 'Hold steadier' : 'Need better light', true);
+                                }
+                            } else {
+                                docScan.stableSince = 0;
+                                if (docScan.autoMode) setScannerStatus('', false);
                             }
                         } else {
+                            if (!docScan.lostAt) docScan.lostAt = performance.now();
+                            docScan.confidence = Math.max(0, docScan.confidence - 0.08);
+                            // Keep chasing last target briefly so outline doesn't pop off while moving
+                            if (performance.now() - docScan.lostAt > DOC_LOST_GRACE_MS) {
+                                docScan.targetPts = null;
+                            }
                             docScan.stableSince = 0;
-                            setScannerStatus('', false);
-                            if (!lightingOk) setScannerHint('Improve lighting on the document', 'warn');
-                            else if (!focusOk) setScannerHint('Move closer and hold steady', 'warn');
-                            else setScannerHint('Align all four corners of the document', '');
+                            if (docScan.autoMode) setScannerStatus('', false);
                         }
-                    } else {
-                        docScan.confidence = Math.max(0, docScan.confidence - 0.15);
-                        if (docScan.confidence < 0.25) docScan.smoothed = null;
-                        docScan.stableSince = 0;
-                        setScannerStatus('', false);
-                        setScannerHint('Position the document inside the frame', docScan.smoothed ? 'warn' : '');
+                    } catch (err) {
+                        console.warn('[scan] detect tick error:', err);
+                    } finally {
+                        docScan.detectBusy = false;
                     }
-
-                    const drawPts = docScan.smoothed
-                        ? mapPtsToDisplay(docScan.smoothed, detectCanvas.width, detectCanvas.height, cw, ch)
-                        : null;
-                    drawScannerOverlay(overlay, video, drawPts, docScan.confidence);
-                } finally {
-                    docScan.detectBusy = false;
-                }
+                });
             };
             docScan.raf = requestAnimationFrame(tick);
         }
