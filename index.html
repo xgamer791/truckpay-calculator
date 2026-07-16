@@ -6,8 +6,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="driverpay-build" content="2.9.8">
-    <title>DriverPay Pro v2.9.8</title>
+    <meta name="driverpay-build" content="2.9.9">
+    <title>DriverPay Pro v2.9.9</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -327,7 +327,7 @@
     <header class="app-header">
         <div class="header-title">
             <h1>DriverPay <span>Pro</span></h1>
-            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v2.9.8</p>
+            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v2.9.9</p>
         </div>
         <div class="menu-container">
             <button class="menu-btn" onclick="toggleMenu(event)" aria-label="Menu">
@@ -421,7 +421,7 @@
             </div>
             <div class="footer-tagline">Built for the long haul</div>
             <div class="footer-meta">
-                <span class="footer-version">v2.9.8</span>
+                <span class="footer-version">v2.9.9</span>
                 <span class="footer-meta-dot"></span>
                 <span>© 2026</span>
                 <span class="footer-meta-dot"></span>
@@ -710,7 +710,7 @@
         <div class="scan-sublabel" id="scanSublabel">Locking onto edges and cleaning up</div>
     </div>
 
-    <!-- driverpay-scanner:2.9.8 -->
+    <!-- driverpay-scanner:2.9.9 -->
     <div class="doc-scanner" id="docScanner" aria-hidden="true" role="dialog" aria-label="Document scanner">
         <div class="doc-scanner-stage">
             <video id="docScannerVideo" class="doc-scanner-video" playsinline muted autoplay></video>
@@ -967,7 +967,7 @@
 
         function applySettingsToHeader() {
             const sub = document.getElementById('headerSubtitle');
-            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v2.9.8`;
+            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v2.9.9`;
         }
 
         let savedScrollY = 0;
@@ -2466,7 +2466,24 @@
 
                 if (!candidates.length) return null;
                 candidates.sort((a, b) => b.score - a.score);
-                return candidates[0];
+                const best = candidates[0];
+                try {
+                    const tightPts = tightenToBrightPaper(canvas, best.pts);
+                    if (tightPts && cornersLookTight(tightPts, imgW, imgH)) {
+                        const corners = arrayToCorners(tightPts);
+                        const scored = scoreDocumentCandidate(srcMat, corners, imgW, imgH);
+                        if (scored && scored.score >= best.score * 0.85) return scored;
+                        return {
+                            corners,
+                            pts: tightPts,
+                            areaRatio: quadArea(tightPts) / (imgW * imgH),
+                            sides: best.sides,
+                            score: best.score,
+                            brightness: best.brightness
+                        };
+                    }
+                } catch (_) {}
+                return best;
             } catch (err) {
                 console.error('[scan] detectCornersFromCanvas error:', err);
                 return null;
@@ -2906,9 +2923,10 @@
                 const corners = docScan.lastGood && docScan.lastGood.corners
                     ? scaleCorners(docScan.lastGood.corners, docScan.lastGood.detectW, docScan.lastGood.detectH, full.width, full.height)
                     : null;
-                // openDocReviewFromCanvas re-detects at full resolution and perspective-crops background
-                await openDocReviewFromCanvas(full, corners, full.toDataURL('image/jpeg', 0.92));
+                // Drop camera UI first so review feels snappy, then crop + B&W
+                const originalUrl = full.toDataURL('image/jpeg', 0.92);
                 closeDocScanner();
+                await openDocReviewFromCanvas(full, corners, originalUrl);
             } catch (err) {
                 console.error('[scan] capture failed:', err);
                 await appAlert('Capture failed. Try again or pick a photo from your gallery.');
@@ -2943,8 +2961,9 @@
                 } catch (err) {
                     console.warn('[scan] gallery detect failed:', err);
                 }
-                await openDocReviewFromCanvas(canvas, corners, canvas.toDataURL('image/jpeg', 0.92));
+                const originalUrl = canvas.toDataURL('image/jpeg', 0.92);
                 closeDocScanner();
+                await openDocReviewFromCanvas(canvas, corners, originalUrl);
             } catch (err) {
                 console.error('[scan] gallery ingest failed:', err);
                 await appAlert('Could not open that image. Try another photo.');
@@ -2957,6 +2976,104 @@
             if (!pts || pts.length !== 4) return false;
             const ratio = quadArea(pts) / (w * h);
             return ratio >= DOC_MIN_AREA_RATIO && ratio <= DOC_MAX_AREA_RATIO;
+        }
+
+        function insetCorners(pts, factor) {
+            if (!pts || pts.length !== 4) return pts;
+            const cx = (pts[0].x + pts[1].x + pts[2].x + pts[3].x) / 4;
+            const cy = (pts[0].y + pts[1].y + pts[2].y + pts[3].y) / 4;
+            return pts.map(p => ({
+                x: p.x + (cx - p.x) * factor,
+                y: p.y + (cy - p.y) * factor
+            }));
+        }
+
+        function tightenToBrightPaper(canvas, pts) {
+            // Snap a loose clipboard/cabin quad down to the bright white sheet inside it.
+            if (typeof cv === 'undefined' || !cv.Mat || !pts || pts.length !== 4) return pts;
+            let src = null, gray = null, mask = null, bright = null, masked = null;
+            let contours = null, hierarchy = null;
+            try {
+                src = cv.imread(canvas);
+                gray = new cv.Mat();
+                if (src.channels() === 4) cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+                else if (src.channels() === 3) cv.cvtColor(src, gray, cv.COLOR_RGB2GRAY);
+                else src.copyTo(gray);
+
+                mask = cv.Mat.zeros(gray.rows, gray.cols, cv.CV_8UC1);
+                const poly = cv.matFromArray(4, 1, cv.CV_32SC2, [
+                    Math.round(pts[0].x), Math.round(pts[0].y),
+                    Math.round(pts[1].x), Math.round(pts[1].y),
+                    Math.round(pts[2].x), Math.round(pts[2].y),
+                    Math.round(pts[3].x), Math.round(pts[3].y)
+                ]);
+                const mv = new cv.MatVector();
+                mv.push_back(poly);
+                cv.fillPoly(mask, mv, new cv.Scalar(255));
+                poly.delete(); mv.delete();
+
+                const mu = cv.mean(gray, mask)[0];
+                bright = new cv.Mat();
+                // Paper is brighter than blue clipboard / hands / cabin inside the rough quad
+                cv.threshold(gray, bright, Math.max(155, mu + 12), 255, cv.THRESH_BINARY);
+                masked = new cv.Mat();
+                cv.bitwise_and(bright, mask, masked);
+
+                contours = new cv.MatVector();
+                hierarchy = new cv.Mat();
+                cv.findContours(masked, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+                const outerArea = quadArea(pts);
+                let bestPts = null, bestArea = 0;
+                for (let i = 0; i < contours.size(); i++) {
+                    const cnt = contours.get(i);
+                    const area = cv.contourArea(cnt);
+                    // Must be a substantial sheet, but smaller than a clipboard-inclusive outer box
+                    if (area < outerArea * 0.35 || area > outerArea * 0.98) continue;
+                    const peri = cv.arcLength(cnt, true);
+                    const approx = new cv.Mat();
+                    cv.approxPolyDP(cnt, approx, 0.02 * peri, true);
+                    let cand = null;
+                    if (approx.rows === 4) {
+                        cand = [];
+                        for (let r = 0; r < 4; r++) cand.push({ x: approx.data32S[r * 2], y: approx.data32S[r * 2 + 1] });
+                    } else {
+                        try {
+                            const rect = cv.minAreaRect(cnt);
+                            const boxMat = new cv.Mat();
+                            cv.boxPoints(rect, boxMat);
+                            if (boxMat.rows === 4) {
+                                cand = [];
+                                for (let r = 0; r < 4; r++) cand.push({ x: boxMat.data32F[r * 2], y: boxMat.data32F[r * 2 + 1] });
+                            }
+                            boxMat.delete();
+                        } catch (_) {}
+                    }
+                    approx.delete();
+                    if (!cand) continue;
+                    const ordered = orderCornerPoints(cand);
+                    if (!ordered) continue;
+                    const arr = cornersToArray(ordered);
+                    if (!cornersLookTight(arr, canvas.width, canvas.height)) continue;
+                    if (area > bestArea) { bestArea = area; bestPts = arr; }
+                }
+                if (bestPts) {
+                    // Slight inset keeps blue clipboard lip out of the crop
+                    const tight = insetCorners(bestPts, 0.018);
+                    console.log('[scan] tightened to white paper (' + (bestArea / outerArea * 100).toFixed(0) + '% of outer quad)');
+                    return tight;
+                }
+            } catch (err) {
+                console.warn('[scan] tightenToBrightPaper failed:', err);
+            } finally {
+                if (src) src.delete();
+                if (gray) gray.delete();
+                if (mask) mask.delete();
+                if (bright) bright.delete();
+                if (masked) masked.delete();
+                if (contours) contours.delete();
+                if (hierarchy) hierarchy.delete();
+            }
+            return insetCorners(pts, 0.015);
         }
 
         function pickBestDocumentCorners(sourceCanvas, hintCorners) {
@@ -3003,6 +3120,9 @@
                 consider(hint, 10); // live outline is a useful prior
             }
 
+            if (!best) return null;
+            const tightened = tightenToBrightPaper(sourceCanvas, best);
+            if (tightened && cornersLookTight(tightened, w, h)) return tightened;
             return best;
         }
 
