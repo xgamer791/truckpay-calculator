@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="driverpay-build" content="2.9.4-edge-smooth">
+    <meta name="driverpay-build" content="2.9.5-autocrop">
     <title>DriverPay Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -421,7 +421,7 @@
             </div>
             <div class="footer-tagline">Built for the long haul</div>
             <div class="footer-meta">
-                <span class="footer-version">v2.9.4</span>
+                <span class="footer-version">v2.9.5</span>
                 <span class="footer-meta-dot"></span>
                 <span>© 2026</span>
                 <span class="footer-meta-dot"></span>
@@ -710,7 +710,7 @@
         <div class="scan-sublabel" id="scanSublabel">Locking onto edges and cleaning up</div>
     </div>
 
-    <!-- driverpay-scanner:2.9.4 -->
+    <!-- driverpay-scanner:2.9.5 -->
     <div class="doc-scanner" id="docScanner" aria-hidden="true" role="dialog" aria-label="Document scanner">
         <div class="doc-scanner-stage">
             <video id="docScannerVideo" class="doc-scanner-video" playsinline muted autoplay></video>
@@ -2840,6 +2840,7 @@
                 const corners = docScan.lastGood && docScan.lastGood.corners
                     ? scaleCorners(docScan.lastGood.corners, docScan.lastGood.detectW, docScan.lastGood.detectH, full.width, full.height)
                     : null;
+                // openDocReviewFromCanvas re-detects at full resolution and perspective-crops background
                 await openDocReviewFromCanvas(full, corners, full.toDataURL('image/jpeg', 0.92));
                 closeDocScanner();
             } catch (err) {
@@ -2886,12 +2887,64 @@
             }
         }
 
+        function cornersLookTight(pts, w, h) {
+            if (!pts || pts.length !== 4) return false;
+            const ratio = quadArea(pts) / (w * h);
+            return ratio >= DOC_MIN_AREA_RATIO && ratio <= DOC_MAX_AREA_RATIO;
+        }
+
+        function pickBestDocumentCorners(sourceCanvas, hintCorners) {
+            const w = sourceCanvas.width, h = sourceCanvas.height;
+            let best = null;
+            let bestScore = -1;
+
+            const consider = (pts, scoreBonus) => {
+                if (!pts || !cornersLookTight(pts, w, h)) return;
+                const corners = arrayToCorners(pts);
+                const validation = validateCorners(corners, w, h);
+                if (!validation.ok) return;
+                // Prefer brighter / mid-size quads when we only have geometry
+                const ratio = quadArea(pts) / (w * h);
+                let score = 40 + (scoreBonus || 0);
+                score += Math.max(0, 1 - Math.abs(ratio - 0.28) / 0.28) * 20;
+                if (ratio > 0.65) score -= 30;
+                if (score > bestScore) {
+                    bestScore = score;
+                    best = pts.map(p => ({ x: p.x, y: p.y }));
+                }
+            };
+
+            try {
+                const working = downsizeCanvas(sourceCanvas, 1400);
+                const found = detectCornersFromCanvas(working);
+                if (found && found.corners) {
+                    const scaled = cornersToArray(scaleCorners(found.corners, working.width, working.height, w, h));
+                    // Use detector score when available
+                    const bonus = (found.score || 0) + (found.brightness || 0) * 0.05;
+                    if (scaled && cornersLookTight(scaled, w, h)) {
+                        best = scaled;
+                        bestScore = bonus;
+                        console.log('[scan] full-res detect corners score=' + (found.score || 0).toFixed(1) +
+                            ' area=' + (found.areaRatio * 100).toFixed(1) + '%');
+                    }
+                }
+            } catch (err) {
+                console.warn('[scan] full-res detect failed:', err);
+            }
+
+            if (hintCorners) {
+                const hint = Array.isArray(hintCorners) ? hintCorners : cornersToArray(hintCorners);
+                consider(hint, 10); // live outline is a useful prior
+            }
+
+            return best;
+        }
+
         async function openDocReviewFromCanvas(sourceCanvas, corners, originalUrl) {
             docReview.active = true;
             docReview.sourceCanvas = cloneCanvas(sourceCanvas);
             docReview.originalCanvas = cloneCanvas(sourceCanvas);
             docReview.originalUrl = originalUrl || sourceCanvas.toDataURL('image/jpeg', 0.92);
-            docReview.corners = corners ? cornersToArray(corners) : defaultFullCorners(sourceCanvas.width, sourceCanvas.height);
             docReview.filter = 'auto';
             docReview.rotation = 0;
             docReview.cropMode = false;
@@ -2910,7 +2963,22 @@
             showScanOverlay();
             try {
                 await ensureScannerEngine();
-                await renderDocReview();
+                const sub = document.getElementById('scanSublabel');
+                if (sub) sub.textContent = 'Finding document edges…';
+                const best = pickBestDocumentCorners(docReview.sourceCanvas, corners);
+                if (best) {
+                    docReview.corners = best;
+                    docReview.cropMode = false;
+                    console.log('[scan] review auto-crop locked');
+                } else {
+                    // Do not fake a full-frame crop — let the driver adjust corners
+                    docReview.corners = defaultFullCorners(sourceCanvas.width, sourceCanvas.height);
+                    docReview.cropMode = true;
+                    document.getElementById('docReviewCropToggle').classList.add('active');
+                    console.warn('[scan] no tight document lock — Adjust Corners enabled');
+                }
+                if (sub) sub.textContent = 'Cropping background and enhancing…';
+                await renderDocReview(false);
             } finally {
                 hideScanOverlay();
             }
@@ -2986,19 +3054,16 @@
         }
 
         async function reprocessReviewGeometry() {
-            // rotate source + corners
             docReview.sourceCanvas = rotateCanvasDegrees(docReview.originalCanvas, docReview.rotation);
-            // For simplicity after rotate, redetect or reset corners
-            try {
-                const working = downsizeCanvas(docReview.sourceCanvas, 1000);
-                const found = detectCornersFromCanvas(working);
-                if (found) {
-                    docReview.corners = cornersToArray(scaleCorners(found.corners, working.width, working.height, docReview.sourceCanvas.width, docReview.sourceCanvas.height));
-                } else {
-                    docReview.corners = defaultFullCorners(docReview.sourceCanvas.width, docReview.sourceCanvas.height);
-                }
-            } catch (_) {
+            const best = pickBestDocumentCorners(docReview.sourceCanvas, null);
+            if (best) {
+                docReview.corners = best;
+                docReview.cropMode = false;
+                document.getElementById('docReviewCropToggle').classList.remove('active');
+            } else {
                 docReview.corners = defaultFullCorners(docReview.sourceCanvas.width, docReview.sourceCanvas.height);
+                docReview.cropMode = true;
+                document.getElementById('docReviewCropToggle').classList.add('active');
             }
             await renderDocReview();
         }
