@@ -6,8 +6,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="driverpay-build" content="2.9.7">
-    <title>DriverPay Pro v2.9.7</title>
+    <meta name="driverpay-build" content="2.9.8">
+    <title>DriverPay Pro v2.9.8</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -327,7 +327,7 @@
     <header class="app-header">
         <div class="header-title">
             <h1>DriverPay <span>Pro</span></h1>
-            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v2.9.7</p>
+            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v2.9.8</p>
         </div>
         <div class="menu-container">
             <button class="menu-btn" onclick="toggleMenu(event)" aria-label="Menu">
@@ -421,7 +421,7 @@
             </div>
             <div class="footer-tagline">Built for the long haul</div>
             <div class="footer-meta">
-                <span class="footer-version">v2.9.7</span>
+                <span class="footer-version">v2.9.8</span>
                 <span class="footer-meta-dot"></span>
                 <span>© 2026</span>
                 <span class="footer-meta-dot"></span>
@@ -710,7 +710,7 @@
         <div class="scan-sublabel" id="scanSublabel">Locking onto edges and cleaning up</div>
     </div>
 
-    <!-- driverpay-scanner:2.9.7 -->
+    <!-- driverpay-scanner:2.9.8 -->
     <div class="doc-scanner" id="docScanner" aria-hidden="true" role="dialog" aria-label="Document scanner">
         <div class="doc-scanner-stage">
             <video id="docScannerVideo" class="doc-scanner-video" playsinline muted autoplay></video>
@@ -768,11 +768,11 @@
             <div class="doc-loupe" id="docLoupe"><canvas id="docLoupeCanvas" width="192" height="192"></canvas></div>
         </div>
         <div class="doc-review-filters" id="docReviewFilters" role="tablist" aria-label="Enhancement filters">
+            <button type="button" class="doc-filter active" data-filter="bw">Black &amp; White</button>
             <button type="button" class="doc-filter" data-filter="auto">Auto Enhance</button>
-            <button type="button" class="doc-filter" data-filter="original">Original Color</button>
             <button type="button" class="doc-filter" data-filter="enhanced">Enhanced Color</button>
             <button type="button" class="doc-filter" data-filter="gray">Grayscale</button>
-            <button type="button" class="doc-filter active" data-filter="bw">Black &amp; White</button>
+            <button type="button" class="doc-filter" data-filter="original">Original Color</button>
         </div>
         <div class="doc-review-tools">
             <button type="button" class="doc-tool" id="docReviewCropToggle">Adjust Corners</button>
@@ -967,7 +967,7 @@
 
         function applySettingsToHeader() {
             const sub = document.getElementById('headerSubtitle');
-            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v2.9.7`;
+            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v2.9.8`;
         }
 
         let savedScrollY = 0;
@@ -1880,17 +1880,33 @@
                 console.warn('[scan] applyScannerLook skipped — OpenCV unavailable');
                 return false;
             }
-            let src, gray, blurred, bw, kernel;
+            let src, gray, blurred, eq, bw, kernel, opened;
             try {
                 src = cv.imread(canvas);
                 gray = new cv.Mat();
-                cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+                if (src.channels() === 4) cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+                else if (src.channels() === 3) cv.cvtColor(src, gray, cv.COLOR_RGB2GRAY);
+                else src.copyTo(gray);
+
+                // Gentle denoise — keep thin handwriting / ticket numbers
                 blurred = new cv.Mat();
                 cv.GaussianBlur(gray, blurred, new cv.Size(3, 3), 0);
+
+                // Boost local readability under uneven truck lighting
+                eq = new cv.Mat();
+                try { cv.equalizeHist(blurred, eq); }
+                catch (_) { blurred.copyTo(eq); }
+
                 bw = new cv.Mat();
-                cv.adaptiveThreshold(blurred, bw, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 41, 8);
+                // Smaller block + slightly higher C = cleaner pages, fewer crushed marks
+                cv.adaptiveThreshold(eq, bw, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 35, 11);
+
+                // Speckle cleanup without erasing light pencil/ink
                 kernel = cv.Mat.ones(2, 2, cv.CV_8U);
-                cv.morphologyEx(bw, bw, cv.MORPH_CLOSE, kernel);
+                opened = new cv.Mat();
+                cv.morphologyEx(bw, opened, cv.MORPH_OPEN, kernel);
+                cv.morphologyEx(opened, bw, cv.MORPH_CLOSE, kernel);
+
                 cv.imshow(canvas, bw);
                 return true;
             } catch (err) {
@@ -1900,9 +1916,59 @@
                 if (src) src.delete();
                 if (gray) gray.delete();
                 if (blurred) blurred.delete();
+                if (eq) eq.delete();
                 if (bw) bw.delete();
                 if (kernel) kernel.delete();
+                if (opened) opened.delete();
             }
+        }
+
+        function scoreTextOrientation(canvas) {
+            // Higher score => more likely upright text (strong horizontal ink structure)
+            const w = canvas.width, h = canvas.height;
+            if (!w || !h) return 0;
+            const sw = Math.min(220, w);
+            const sh = Math.max(1, Math.round(h * (sw / w)));
+            const c = document.createElement('canvas');
+            c.width = sw; c.height = sh;
+            const ctx = c.getContext('2d', { willReadFrequently: true });
+            ctx.drawImage(canvas, 0, 0, sw, sh);
+            const d = ctx.getImageData(0, 0, sw, sh).data;
+            const row = new Float32Array(sh);
+            for (let y = 0; y < sh; y++) {
+                let ink = 0;
+                for (let x = 0; x < sw; x++) {
+                    const i = (y * sw + x) * 4;
+                    if (d[i] < 140) ink++;
+                }
+                row[y] = ink;
+            }
+            let diffSum = 0, diffSum2 = 0, n = 0;
+            for (let y = 1; y < sh; y++) {
+                const v = row[y] - row[y - 1];
+                diffSum += v; diffSum2 += v * v; n++;
+            }
+            const mean = n ? diffSum / n : 0;
+            const varDiff = n ? (diffSum2 / n - mean * mean) : 0;
+            // Prefer a bit more content in the upper half (forms/headers)
+            let top = 0, bot = 0;
+            for (let y = 0; y < sh; y++) {
+                if (y < sh / 2) top += row[y]; else bot += row[y];
+            }
+            const topBias = (top + 1) / (bot + 1);
+            return varDiff * (0.85 + 0.15 * Math.min(2, topBias));
+        }
+
+        function estimateDocumentRotation(canvas) {
+            let bestDeg = 0, bestScore = -1;
+            let current = canvas;
+            for (const deg of [0, 90, 180, 270]) {
+                const scored = deg === 0 ? current : rotateCanvasDegrees(canvas, deg);
+                const score = scoreTextOrientation(scored);
+                if (score > bestScore) { bestScore = score; bestDeg = deg; }
+            }
+            console.log('[scan] local orientation pick=' + bestDeg + 'deg score=' + bestScore.toFixed(1));
+            return bestDeg;
         }
 
         async function scanTicket(file) {
@@ -2977,7 +3043,7 @@
                     document.getElementById('docReviewCropToggle').classList.add('active');
                     console.warn('[scan] no tight document lock — Adjust Corners enabled');
                 }
-                if (sub) sub.textContent = 'Cropping background and enhancing…';
+                if (sub) sub.textContent = docReview.filter === 'bw' ? 'Creating black & white scan…' : 'Cropping background and enhancing…';
                 await renderDocReview(false);
             } finally {
                 hideScanOverlay();
@@ -3180,7 +3246,10 @@
                 if (!docReview.compare) applyEnhanceFilter(out, docReview.filter);
                 if ((docReview.filter === 'auto' || docReview.filter === 'bw') && !docReview.compare) {
                     try {
-                        const deg = await requestHaikuRotation(out);
+                        let deg = 0;
+                        const key = (settings && typeof settings.anthropicApiKey === 'string') ? settings.anthropicApiKey.trim() : '';
+                        if (key) deg = await requestHaikuRotation(out);
+                        if (!deg) deg = estimateDocumentRotation(out);
                         if (deg) {
                             const rotated = rotateCanvasDegrees(out, deg);
                             out.width = rotated.width; out.height = rotated.height;
