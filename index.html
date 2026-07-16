@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="driverpay-build" content="2.9.3-smooth-outline">
+    <meta name="driverpay-build" content="2.9.4-edge-smooth">
     <title>DriverPay Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -421,7 +421,7 @@
             </div>
             <div class="footer-tagline">Built for the long haul</div>
             <div class="footer-meta">
-                <span class="footer-version">v2.9.3</span>
+                <span class="footer-version">v2.9.4</span>
                 <span class="footer-meta-dot"></span>
                 <span>© 2026</span>
                 <span class="footer-meta-dot"></span>
@@ -710,7 +710,7 @@
         <div class="scan-sublabel" id="scanSublabel">Locking onto edges and cleaning up</div>
     </div>
 
-    <!-- driverpay-scanner:2.9.3 -->
+    <!-- driverpay-scanner:2.9.4 -->
     <div class="doc-scanner" id="docScanner" aria-hidden="true" role="dialog" aria-label="Document scanner">
         <div class="doc-scanner-stage">
             <video id="docScannerVideo" class="doc-scanner-video" playsinline muted autoplay></video>
@@ -2022,14 +2022,16 @@
         }
 
         // ---- CamScanner-style live document scanner ---------------------------------
-        const DOC_DETECT_W = 420;
+        const DOC_DETECT_W = 480;
         const DOC_STABLE_MS = 900;
         const DOC_COOLDOWN_MS = 2500;
-        const DOC_DETECT_INTERVAL_MS = 45;
-        const DOC_READY_MOVE_PX = 12;
-        const DOC_LOST_GRACE_MS = 350;
-        const DOC_MIN_AREA_RATIO = 0.08;
-        const DOC_MAX_AREA_RATIO = 0.92;
+        const DOC_DETECT_INTERVAL_MS = 55;
+        const DOC_READY_MOVE_PX = 14;
+        const DOC_LOST_GRACE_MS = 700;
+        const DOC_MIN_AREA_RATIO = 0.06;
+        const DOC_MAX_AREA_RATIO = 0.72;
+        const DOC_OUTLIER_PX = 55;
+        const DOC_LOCK_HITS = 2;
         const processingLoads = new Set(); // `${sId}|${lId}` while processing
 
         let docScan = {
@@ -2055,6 +2057,9 @@
             confidence: 0,
             stableSince: 0,
             lostAt: 0,
+            hitStreak: 0,
+            pendingPts: null,
+            pendingHits: 0,
             lastCaptureAt: 0,
             capturing: false,
             videoReady: false
@@ -2152,8 +2157,8 @@
             if (!target) return display;
             if (!display) return target.map(p => ({ x: p.x, y: p.y }));
             const motion = cornerMotion(display, target);
-            // Follow camera motion quickly; settle gently when nearly locked
-            const follow = motion > 28 ? 0.55 : (motion > 12 ? 0.38 : (motion > 4 ? 0.26 : 0.16));
+            // Soft chase: follow real camera motion, heavily damp tiny jitter
+            const follow = motion > 40 ? 0.42 : (motion > 18 ? 0.28 : (motion > 8 ? 0.16 : (motion > 3 ? 0.09 : 0.045)));
             const t = 1 - Math.pow(1 - follow, Math.max(0.5, dtMs) / 16.67);
             return smoothCorners(display, target, Math.min(1, t));
         }
@@ -2213,29 +2218,200 @@
             return sum2 / n - mean * mean;
         }
 
+        function orderCornerPoints(pts) {
+            if (!pts || pts.length !== 4) return null;
+            const copy = pts.map(p => ({ x: p.x, y: p.y }));
+            const sum = copy.map(p => p.x + p.y);
+            const diff = copy.map(p => p.y - p.x);
+            const tl = copy[sum.indexOf(Math.min.apply(null, sum))];
+            const br = copy[sum.indexOf(Math.max.apply(null, sum))];
+            const tr = copy[diff.indexOf(Math.min.apply(null, diff))];
+            const bl = copy[diff.indexOf(Math.max.apply(null, diff))];
+            if (!tl || !tr || !br || !bl) return null;
+            const key = [tl, tr, br, bl].map(p => Math.round(p.x) + ',' + Math.round(p.y));
+            if (new Set(key).size < 4) return null;
+            return { topLeftCorner: tl, topRightCorner: tr, bottomRightCorner: br, bottomLeftCorner: bl };
+        }
+
+        function meanBrightnessInQuad(srcMat, corners) {
+            let mask = null;
+            try {
+                mask = cv.Mat.zeros(srcMat.rows, srcMat.cols, cv.CV_8UC1);
+                const pts = cv.matFromArray(4, 1, cv.CV_32SC2, [
+                    Math.round(corners.topLeftCorner.x), Math.round(corners.topLeftCorner.y),
+                    Math.round(corners.topRightCorner.x), Math.round(corners.topRightCorner.y),
+                    Math.round(corners.bottomRightCorner.x), Math.round(corners.bottomRightCorner.y),
+                    Math.round(corners.bottomLeftCorner.x), Math.round(corners.bottomLeftCorner.y)
+                ]);
+                const mv = new cv.MatVector();
+                mv.push_back(pts);
+                cv.fillPoly(mask, mv, new cv.Scalar(255));
+                pts.delete(); mv.delete();
+                const mean = cv.mean(srcMat, mask);
+                return 0.299 * mean[0] + 0.587 * mean[1] + 0.114 * mean[2];
+            } catch (_) {
+                return 0;
+            } finally {
+                if (mask) mask.delete();
+            }
+        }
+
+        function scoreDocumentCandidate(srcMat, corners, imgW, imgH) {
+            const validation = validateCorners(corners, imgW, imgH);
+            if (!validation.ok) return null;
+            const pts = cornersToArray(corners);
+            const ratio = quadArea(pts) / (imgW * imgH);
+            if (ratio < DOC_MIN_AREA_RATIO || ratio > DOC_MAX_AREA_RATIO) return null;
+            const sides = validation.sides;
+            const avgW = (sides.top + sides.bottom) / 2;
+            const avgH = (sides.left + sides.right) / 2;
+            const aspect = avgW / Math.max(1, avgH);
+            if (aspect < 0.35 || aspect > 3.2) return null;
+            const balW = Math.min(sides.top, sides.bottom) / Math.max(sides.top, sides.bottom);
+            const balH = Math.min(sides.left, sides.right) / Math.max(sides.left, sides.right);
+            const rectScore = (balW + balH) / 2;
+            const brightness = meanBrightnessInQuad(srcMat, corners);
+            const pad = Math.max(3, Math.min(imgW, imgH) * 0.015);
+            let touches = 0;
+            for (const p of pts) {
+                if (p.x <= pad || p.y <= pad || p.x >= imgW - pad || p.y >= imgH - pad) touches++;
+            }
+            let score = 0;
+            score += Math.min(1, brightness / 230) * 50; // prefer white paper
+            score += rectScore * 22;
+            score += Math.max(0, 1 - Math.abs(ratio - 0.26) / 0.26) * 14;
+            score += (4 - touches) * 3.5;
+            if (ratio > 0.62) score -= 28;
+            if (brightness < 110) score -= 24;
+            if (score < 35) return null;
+            return { corners, pts, areaRatio: ratio, sides, score, brightness };
+        }
+
+        function candidatesFromBinary(srcMat, binary) {
+            const out = [];
+            const contours = new cv.MatVector();
+            const hierarchy = new cv.Mat();
+            try {
+                cv.findContours(binary, contours, hierarchy, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE);
+                const frameArea = srcMat.rows * srcMat.cols;
+                for (let i = 0; i < contours.size(); i++) {
+                    const cnt = contours.get(i);
+                    const area = cv.contourArea(cnt);
+                    if (area < frameArea * DOC_MIN_AREA_RATIO || area > frameArea * DOC_MAX_AREA_RATIO) continue;
+                    const peri = cv.arcLength(cnt, true);
+                    const approx = new cv.Mat();
+                    cv.approxPolyDP(cnt, approx, 0.025 * peri, true);
+                    let pts = null;
+                    if (approx.rows === 4) {
+                        pts = [];
+                        for (let r = 0; r < 4; r++) pts.push({ x: approx.data32S[r * 2], y: approx.data32S[r * 2 + 1] });
+                    } else {
+                        try {
+                            const rect = cv.minAreaRect(cnt);
+                            const boxMat = new cv.Mat();
+                            cv.boxPoints(rect, boxMat);
+                            if (boxMat.rows === 4) {
+                                pts = [];
+                                for (let r = 0; r < 4; r++) pts.push({ x: boxMat.data32F[r * 2], y: boxMat.data32F[r * 2 + 1] });
+                            }
+                            boxMat.delete();
+                        } catch (_) {}
+                    }
+                    approx.delete();
+                    if (!pts) continue;
+                    const corners = orderCornerPoints(pts);
+                    if (!corners) continue;
+                    const scored = scoreDocumentCandidate(srcMat, corners, srcMat.cols, srcMat.rows);
+                    if (scored) out.push(scored);
+                }
+            } finally {
+                contours.delete(); hierarchy.delete();
+            }
+            return out;
+        }
+
         function detectCornersFromCanvas(canvas) {
             if (typeof cv === 'undefined' || !cv.Mat) return null;
-            let srcMat = null, contour = null;
+            const mats = [];
+            const track = (m) => { if (m) mats.push(m); return m; };
             try {
-                const scanner = window.__docScannerInst;
-                if (!scanner) return null;
-                srcMat = cv.imread(canvas);
-                contour = scanner.findPaperContour(srcMat);
-                if (!contour) return null;
-                const corners = scanner.getCornerPoints(contour, srcMat);
-                const validation = validateCorners(corners, canvas.width, canvas.height);
-                if (!validation.ok) return null;
-                const pts = cornersToArray(corners);
-                const area = quadArea(pts);
-                const ratio = area / (canvas.width * canvas.height);
-                if (ratio < DOC_MIN_AREA_RATIO || ratio > DOC_MAX_AREA_RATIO) return null;
-                if (!cornersInsideFrame(pts, canvas.width, canvas.height, 4)) return null;
-                return { corners, pts, areaRatio: ratio, sides: validation.sides };
-            } catch (_) {
+                const srcMat = track(cv.imread(canvas));
+                const imgW = srcMat.cols, imgH = srcMat.rows;
+                let gray = track(new cv.Mat());
+                if (srcMat.channels() === 4) cv.cvtColor(srcMat, gray, cv.COLOR_RGBA2GRAY);
+                else if (srcMat.channels() === 3) cv.cvtColor(srcMat, gray, cv.COLOR_RGB2GRAY);
+                else { gray = srcMat; }
+
+                const candidates = [];
+                const blur = track(new cv.Mat());
+                cv.GaussianBlur(gray, blur, new cv.Size(5, 5), 0);
+                const mu = cv.mean(blur)[0];
+
+                // Bright paper (white form on clipboard / dark cabin)
+                try {
+                    const bright = track(new cv.Mat());
+                    cv.threshold(blur, bright, Math.max(145, mu + 20), 255, cv.THRESH_BINARY);
+                    const k = track(cv.Mat.ones(5, 5, cv.CV_8U));
+                    const closed = track(new cv.Mat());
+                    cv.morphologyEx(bright, closed, cv.MORPH_CLOSE, k);
+                    const opened = track(new cv.Mat());
+                    cv.morphologyEx(closed, opened, cv.MORPH_OPEN, k);
+                    candidates.push.apply(candidates, candidatesFromBinary(srcMat, opened));
+                    const otsu = track(new cv.Mat());
+                    cv.threshold(blur, otsu, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU);
+                    candidates.push.apply(candidates, candidatesFromBinary(srcMat, otsu));
+                } catch (err) { console.warn('[scan] bright detect failed:', err); }
+
+                // Edges
+                try {
+                    const edges = track(new cv.Mat());
+                    cv.Canny(blur, edges, 35, 120);
+                    const k2 = track(cv.Mat.ones(3, 3, cv.CV_8U));
+                    const dil = track(new cv.Mat());
+                    cv.dilate(edges, dil, k2);
+                    candidates.push.apply(candidates, candidatesFromBinary(srcMat, dil));
+                } catch (err) { console.warn('[scan] canny detect failed:', err); }
+
+                // Adaptive
+                try {
+                    const adapt = track(new cv.Mat());
+                    cv.adaptiveThreshold(gray, adapt, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 35, 6);
+                    candidates.push.apply(candidates, candidatesFromBinary(srcMat, adapt));
+                } catch (err) { console.warn('[scan] adaptive detect failed:', err); }
+
+                // jscanify largest contour only if it scores like a document
+                try {
+                    const scanner = window.__docScannerInst;
+                    if (scanner) {
+                        const contour = scanner.findPaperContour(srcMat);
+                        if (contour) {
+                            try {
+                                const raw = scanner.getCornerPoints(contour, srcMat);
+                                const arr = cornersToArray(raw);
+                                const ordered = arr ? orderCornerPoints(arr) : null;
+                                const scored = scoreDocumentCandidate(srcMat, ordered || raw, imgW, imgH);
+                                if (scored) candidates.push(scored);
+                            } finally {
+                                if (typeof contour.delete === 'function') contour.delete();
+                            }
+                        }
+                    }
+                } catch (err) { console.warn('[scan] jscanify detect failed:', err); }
+
+                if (!candidates.length) return null;
+                candidates.sort((a, b) => b.score - a.score);
+                return candidates[0];
+            } catch (err) {
+                console.error('[scan] detectCornersFromCanvas error:', err);
                 return null;
             } finally {
-                if (contour && typeof contour.delete === 'function') { try { contour.delete(); } catch (_) {} }
-                if (srcMat) { try { srcMat.delete(); } catch (_) {} }
+                const seen = new Set();
+                for (let i = mats.length - 1; i >= 0; i--) {
+                    const m = mats[i];
+                    if (!m || seen.has(m)) continue;
+                    seen.add(m);
+                    try { m.delete(); } catch (_) {}
+                }
             }
         }
 
@@ -2326,6 +2502,9 @@
             docScan.confidence = 0;
             docScan.stableSince = 0;
             docScan.lostAt = 0;
+            docScan.hitStreak = 0;
+            docScan.pendingPts = null;
+            docScan.pendingHits = 0;
             docScan.lastDrawAt = 0;
             docScan.capturing = false;
             docScan.videoReady = false;
@@ -2549,47 +2728,82 @@
                             const sharp = estimateSharpness(detectCtx, detectCanvas.width, detectCanvas.height);
                             const lightingOk = bright > 35 && bright < 245;
                             const focusOk = sharp > 12;
-                            // Light target smoothing so noisy detections don't yank the chase point
+
+                            // Anti-jitter lock: ignore one-off jumps unless they persist
                             const prevTarget = docScan.targetPts;
                             const jump = cornerMotion(prevTarget, found.pts);
-                            const targetAlpha = jump > 40 ? 0.85 : (jump > 18 ? 0.65 : 0.5);
-                            docScan.targetPts = smoothCorners(prevTarget, found.pts, targetAlpha);
-                            docScan.lostAt = 0;
-
-                            const displayMotion = cornerMotion(docScan.displayPts, docScan.targetPts);
-                            const steady = displayMotion < DOC_READY_MOVE_PX;
-                            let confidence = 0.4;
-                            if (lightingOk) confidence += 0.15;
-                            if (focusOk) confidence += 0.15;
-                            if (steady) confidence += 0.2;
-                            if (found.areaRatio > 0.15 && found.areaRatio < 0.85) confidence += 0.1;
-                            docScan.confidence = Math.min(1, confidence);
-                            docScan.lastGood = {
-                                pts: (docScan.displayPts || docScan.targetPts).map(p => ({ ...p })),
-                                detectW: detectCanvas.width,
-                                detectH: detectCanvas.height,
-                                corners: arrayToCorners(docScan.displayPts || docScan.targetPts)
-                            };
-
-                            if (docScan.confidence >= 0.85 && steady) {
-                                if (!docScan.stableSince) {
-                                    docScan.stableSince = now;
-                                    haptic(10);
+                            let accept = found.pts;
+                            if (prevTarget && jump > DOC_OUTLIER_PX) {
+                                const pendJump = cornerMotion(docScan.pendingPts, found.pts);
+                                if (docScan.pendingPts && pendJump < DOC_OUTLIER_PX * 0.7) {
+                                    docScan.pendingHits++;
+                                } else {
+                                    docScan.pendingPts = found.pts.map(p => ({ x: p.x, y: p.y }));
+                                    docScan.pendingHits = 1;
                                 }
-                                const held = performance.now() - docScan.stableSince;
-                                setScannerStatus('Hold still', held > 180);
-                                if (docScan.autoMode && !docScan.capturing && held >= DOC_STABLE_MS && (performance.now() - docScan.lastCaptureAt) > DOC_COOLDOWN_MS) {
-                                    if (lightingOk && focusOk) captureFromScanner(false);
-                                    else setScannerStatus(lightingOk ? 'Hold steadier' : 'Need better light', true);
+                                if (docScan.pendingHits < DOC_LOCK_HITS) {
+                                    accept = null; // keep previous target this frame
+                                } else {
+                                    docScan.pendingPts = null;
+                                    docScan.pendingHits = 0;
                                 }
                             } else {
-                                docScan.stableSince = 0;
-                                if (docScan.autoMode) setScannerStatus('', false);
+                                docScan.pendingPts = null;
+                                docScan.pendingHits = 0;
+                            }
+
+                            if (accept) {
+                                docScan.hitStreak = Math.min(8, docScan.hitStreak + 1);
+                                // Heavy target damping — display layer adds a second smooth pass
+                                const targetAlpha = jump > 40 ? 0.35 : (jump > 18 ? 0.22 : 0.14);
+                                docScan.targetPts = smoothCorners(prevTarget, accept, prevTarget ? targetAlpha : 1);
+                                docScan.lostAt = 0;
+                            }
+
+                            // Don't show outline until we have a short lock streak (kills flicker)
+                            if (docScan.hitStreak < DOC_LOCK_HITS && !docScan.displayPts) {
+                                docScan.confidence = Math.max(docScan.confidence, 0.3);
+                            } else {
+                                const displayMotion = cornerMotion(docScan.displayPts, docScan.targetPts);
+                                const steady = displayMotion < DOC_READY_MOVE_PX;
+                                let confidence = 0.45;
+                                if (lightingOk) confidence += 0.15;
+                                if (focusOk) confidence += 0.1;
+                                if (steady) confidence += 0.2;
+                                if (found.areaRatio > 0.12 && found.areaRatio < 0.7) confidence += 0.1;
+                                docScan.confidence = Math.min(1, confidence);
+                                if (docScan.targetPts) {
+                                    docScan.lastGood = {
+                                        pts: (docScan.displayPts || docScan.targetPts).map(p => ({ ...p })),
+                                        detectW: detectCanvas.width,
+                                        detectH: detectCanvas.height,
+                                        corners: arrayToCorners(docScan.displayPts || docScan.targetPts)
+                                    };
+                                }
+
+                                if (docScan.confidence >= 0.85 && steady) {
+                                    if (!docScan.stableSince) {
+                                        docScan.stableSince = now;
+                                        haptic(10);
+                                    }
+                                    const held = performance.now() - docScan.stableSince;
+                                    setScannerStatus('Hold still', held > 180);
+                                    if (docScan.autoMode && !docScan.capturing && held >= DOC_STABLE_MS && (performance.now() - docScan.lastCaptureAt) > DOC_COOLDOWN_MS) {
+                                        if (lightingOk && focusOk) captureFromScanner(false);
+                                        else setScannerStatus(lightingOk ? 'Hold steadier' : 'Need better light', true);
+                                    }
+                                } else {
+                                    docScan.stableSince = 0;
+                                    if (docScan.autoMode) setScannerStatus('', false);
+                                }
                             }
                         } else {
+                            docScan.hitStreak = Math.max(0, docScan.hitStreak - 1);
+                            docScan.pendingPts = null;
+                            docScan.pendingHits = 0;
                             if (!docScan.lostAt) docScan.lostAt = performance.now();
-                            docScan.confidence = Math.max(0, docScan.confidence - 0.08);
-                            // Keep chasing last target briefly so outline doesn't pop off while moving
+                            docScan.confidence = Math.max(0, docScan.confidence - 0.05);
+                            // Keep last outline while moving / brief miss — don't snap off
                             if (performance.now() - docScan.lostAt > DOC_LOST_GRACE_MS) {
                                 docScan.targetPts = null;
                             }
