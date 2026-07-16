@@ -193,6 +193,90 @@
         .scan-label { font-size: 12px; font-weight: 900; color: #60a5fa; letter-spacing: 0.28em; text-transform: uppercase; }
         .scan-sublabel { font-size: 11px; font-weight: 700; color: #475569; letter-spacing: 0.08em; max-width: 280px; text-align: center; line-height: 1.5; }
 
+        /* ---- Live document scanner (CamScanner-style) ---- */
+        .doc-scanner { position: fixed; inset: 0; z-index: 10020; background: #000; display: none; flex-direction: column; color: white; }
+        .doc-scanner.active { display: flex; }
+        .doc-scanner-stage { position: relative; flex: 1; min-height: 0; background: #000; overflow: hidden; }
+        .doc-scanner-video, .doc-scanner-overlay-canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+        .doc-scanner-overlay-canvas { pointer-events: none; z-index: 2; }
+        .doc-scanner-top { position: absolute; top: 0; left: 0; right: 0; z-index: 4; display: flex; justify-content: space-between; align-items: flex-start; padding: calc(12px + env(safe-area-inset-top, 0px)) 16px 12px; pointer-events: none; }
+        .doc-scanner-top > * { pointer-events: auto; }
+        .doc-scanner-hint { position: absolute; left: 50%; top: calc(72px + env(safe-area-inset-top, 0px)); transform: translateX(-50%); z-index: 4; max-width: min(88vw, 360px); text-align: center; font-size: 13px; font-weight: 800; letter-spacing: 0.02em; color: white; text-shadow: 0 2px 10px rgba(0,0,0,0.7); background: rgba(15,23,42,0.55); border: 1px solid rgba(255,255,255,0.12); padding: 10px 14px; border-radius: 12px; pointer-events: none; }
+        .doc-scanner-hint.ready { color: #86efac; border-color: rgba(34,197,94,0.45); }
+        .doc-scanner-hint.warn { color: #fde68a; border-color: rgba(251,191,36,0.4); }
+        .doc-scanner-status { position: absolute; left: 50%; bottom: calc(148px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 4; font-size: 12px; font-weight: 900; letter-spacing: 0.16em; text-transform: uppercase; color: #86efac; text-shadow: 0 2px 8px rgba(0,0,0,0.8); pointer-events: none; opacity: 0; transition: opacity 0.2s; }
+        .doc-scanner-status.show { opacity: 1; }
+        .doc-scanner-bottom { position: absolute; left: 0; right: 0; bottom: 0; z-index: 4; padding: 18px 22px calc(22px + env(safe-area-inset-bottom, 0px)); display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.72) 45%, rgba(0,0,0,0.92) 100%); }
+        .doc-scanner-side { display: flex; gap: 10px; align-items: center; }
+        .doc-scanner-side.right { justify-content: flex-end; }
+        .doc-btn { width: 48px; height: 48px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.16); background: rgba(15,23,42,0.72); color: white; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        .doc-btn:active { transform: scale(0.94); background: rgba(30,41,59,0.9); }
+        .doc-btn.active { border-color: rgba(59,130,246,0.55); color: #93c5fd; background: rgba(37,99,235,0.28); }
+        .doc-btn.flash-on { border-color: rgba(251,191,36,0.55); color: #fde68a; background: rgba(251,191,36,0.18); }
+        .doc-capture { width: 78px; height: 78px; border-radius: 50%; border: 4px solid rgba(255,255,255,0.92); background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 0 0 1px rgba(0,0,0,0.35); }
+        .doc-capture::after { content: ''; width: 62px; height: 62px; border-radius: 50%; background: white; transition: transform 0.12s ease; }
+        .doc-capture:active::after { transform: scale(0.9); }
+        .doc-capture:disabled { opacity: 0.45; }
+        .doc-mode-chip { min-width: 72px; height: 34px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.18); background: rgba(15,23,42,0.7); color: #e2e8f0; font-size: 11px; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; padding: 0 12px; cursor: pointer; font-family: inherit; }
+        .doc-mode-chip.auto { color: #86efac; border-color: rgba(34,197,94,0.45); }
+        .doc-gallery-thumb { width: 48px; height: 48px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.18); background: rgba(15,23,42,0.72); overflow: hidden; display: inline-flex; align-items: center; justify-content: center; color: #cbd5e1; cursor: pointer; }
+        .doc-gallery-thumb img { width: 100%; height: 100%; object-fit: cover; }
+        .doc-perm { position: absolute; inset: 0; z-index: 6; display: none; align-items: center; justify-content: center; padding: 28px; background: rgba(15,23,42,0.96); text-align: center; }
+        .doc-perm.show { display: flex; }
+        .doc-perm-card { max-width: 360px; }
+        .doc-perm-title { font-size: 20px; font-weight: 900; margin-bottom: 10px; }
+        .doc-perm-msg { font-size: 14px; font-weight: 600; color: #94a3b8; line-height: 1.55; margin-bottom: 20px; }
+        .doc-perm-actions { display: flex; flex-direction: column; gap: 10px; }
+        .doc-perm-actions button { width: 100%; padding: 15px; border-radius: 14px; border: none; font-weight: 900; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: white; cursor: pointer; font-family: inherit; }
+        .doc-perm-primary { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+        .doc-perm-secondary { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12) !important; }
+
+        .doc-review { position: fixed; inset: 0; z-index: 10030; background: #0f172a; display: none; flex-direction: column; }
+        .doc-review.active { display: flex; }
+        .doc-review-header { display: flex; justify-content: space-between; align-items: center; padding: calc(12px + env(safe-area-inset-top, 0px)) 16px 10px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+        .doc-review-title { font-size: 15px; font-weight: 900; letter-spacing: -0.01em; }
+        .doc-review-stage { position: relative; flex: 1; min-height: 0; background: #020617; overflow: hidden; touch-action: none; }
+        .doc-review-canvas-wrap { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; transform-origin: center center; }
+        .doc-review-canvas-wrap canvas, .doc-review-canvas-wrap img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        .doc-review-crop { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+        .doc-review-crop.active { pointer-events: auto; }
+        .doc-loupe { position: absolute; width: 96px; height: 96px; border-radius: 50%; border: 3px solid #60a5fa; overflow: hidden; pointer-events: none; z-index: 5; display: none; box-shadow: 0 8px 24px rgba(0,0,0,0.5); background: #000; }
+        .doc-loupe.show { display: block; }
+        .doc-loupe canvas { width: 100%; height: 100%; }
+        .doc-review-filters { display: flex; gap: 8px; overflow-x: auto; padding: 12px 16px; border-top: 1px solid rgba(255,255,255,0.06); -webkit-overflow-scrolling: touch; }
+        .doc-filter { flex: 0 0 auto; padding: 10px 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.04); color: #94a3b8; font-size: 11px; font-weight: 900; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; font-family: inherit; white-space: nowrap; }
+        .doc-filter.active { background: rgba(59,130,246,0.2); border-color: rgba(59,130,246,0.5); color: #93c5fd; }
+        .doc-review-tools { display: flex; gap: 8px; padding: 0 16px 12px; }
+        .doc-tool { flex: 1; padding: 12px 8px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); color: white; font-size: 11px; font-weight: 900; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; font-family: inherit; }
+        .doc-tool.active { border-color: rgba(59,130,246,0.45); color: #93c5fd; }
+        .doc-review-actions { display: grid; grid-template-columns: 1fr 1.4fr 1fr; gap: 10px; padding: 0 16px calc(18px + env(safe-area-inset-bottom, 0px)); }
+        .doc-review-actions button { padding: 16px 8px; border: none; border-radius: 14px; font-weight: 900; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: white; cursor: pointer; font-family: inherit; }
+        .doc-btn-muted { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1) !important; }
+        .doc-btn-danger { background: rgba(239,68,68,0.18); color: #fca5a5 !important; }
+        .doc-btn-primary { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+
+        .doc-viewer { position: fixed; inset: 0; z-index: 10025; background: rgba(2,6,23,0.98); display: none; flex-direction: column; }
+        .doc-viewer.active { display: flex; }
+        .doc-viewer-header { padding: calc(12px + env(safe-area-inset-top, 0px)) 16px 12px; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+        .doc-viewer-meta { min-width: 0; }
+        .doc-viewer-eyebrow { font-size: 10px; font-weight: 900; color: #3b82f6; letter-spacing: 0.18em; margin-bottom: 4px; }
+        .doc-viewer-title { font-size: 16px; font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .doc-viewer-sub { font-size: 12px; font-weight: 700; color: #64748b; margin-top: 4px; }
+        .doc-viewer-stage { flex: 1; min-height: 0; overflow: auto; display: flex; align-items: center; justify-content: center; padding: 16px; touch-action: pan-x pan-y pinch-zoom; }
+        .doc-viewer-stage img { max-width: 100%; max-height: 100%; border-radius: 12px; box-shadow: 0 12px 40px rgba(0,0,0,0.45); background: #111; }
+        .doc-viewer-thumbs { display: none; gap: 8px; overflow-x: auto; padding: 10px 16px; border-top: 1px solid rgba(255,255,255,0.06); }
+        .doc-viewer-thumbs.show { display: flex; }
+        .doc-viewer-thumb { width: 56px; height: 72px; border-radius: 8px; object-fit: cover; border: 2px solid transparent; cursor: pointer; flex: 0 0 auto; opacity: 0.7; }
+        .doc-viewer-thumb.active { border-color: #3b82f6; opacity: 1; }
+        .doc-viewer-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 12px 16px calc(18px + env(safe-area-inset-bottom, 0px)); }
+        .doc-viewer-actions button { padding: 14px 6px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); color: white; font-size: 10px; font-weight: 900; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; font-family: inherit; }
+        .doc-viewer-actions .danger { color: #fca5a5; border-color: rgba(239,68,68,0.3); }
+        .ticket-icon.processing { color: #60a5fa; position: relative; }
+        .ticket-icon.processing::after { content: ''; position: absolute; inset: -2px; border: 2px solid rgba(96,165,250,0.35); border-top-color: #60a5fa; border-radius: 50%; animation: scan-spin 0.8s linear infinite; }
+        .ticket-icon .ticket-count { position: absolute; top: -4px; right: -6px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 999px; background: #22c55e; color: #052e16; font-size: 9px; font-weight: 900; display: inline-flex; align-items: center; justify-content: center; }
+        .ticket-icon.pending-sync { color: #fbbf24; }
+        .ticket-icon { position: relative; }
+
         .debug-log { background: rgba(0,0,0,0.55); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 14px; font-family: 'SF Mono', Menlo, Consolas, ui-monospace, monospace; font-size: 11px; line-height: 1.5; color: #cbd5e1; max-height: 55vh; overflow-y: auto; white-space: pre-wrap; word-break: break-word; margin: 12px 0 18px; }
         .debug-meta { font-size: 10px; font-weight: 800; color: #64748b; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 4px; }
 
@@ -335,7 +419,7 @@
             </div>
             <div class="footer-tagline">Built for the long haul</div>
             <div class="footer-meta">
-                <span class="footer-version">v2.8.0</span>
+                <span class="footer-version">v2.9.0</span>
                 <span class="footer-meta-dot"></span>
                 <span>© 2026</span>
                 <span class="footer-meta-dot"></span>
@@ -506,8 +590,8 @@
                         <span class="help-section-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span>
                         Load Tickets
                     </div>
-                    <p>Every load has a camera icon. <strong style="color:#64748b;">Grey</strong> = no ticket yet. <strong style="color:#22c55e;">Green</strong> = ticket saved to the load. Tap grey to scan; tap green to view, replace, or delete. Scanning inside a load's Edit screen shows a <strong style="color:#3b82f6;">blue ticket icon</strong> next to the camera — the shot is captured but not saved until you tap Save.</p>
-                    <div class="help-tip"><strong>Tip:</strong> The scanner auto-crops and enhances tickets so they read like a clean copy, even shot quickly with one hand.</div>
+                    <p>Every load has a camera icon. <strong style="color:#64748b;">Grey</strong> = no ticket yet. <strong style="color:#22c55e;">Green</strong> = document saved to the load. Tap grey to open the live document scanner; tap green to view, share, replace, add another, or delete. The scanner draws a live green outline around the paper, auto-captures when steady, then lets you review filters and corners before saving.</p>
+                    <div class="help-tip"><strong>Tip:</strong> Scans are saved on your phone first so they work offline. Scanning inside Edit shows a <strong style="color:#3b82f6;">blue ticket icon</strong> until you tap Save.</div>
                 </div>
                 <div class="help-section">
                     <div class="help-section-title">
@@ -622,6 +706,105 @@
         <div class="scan-spinner"></div>
         <div class="scan-label">Scanning Ticket…</div>
         <div class="scan-sublabel" id="scanSublabel">Locking onto edges and cleaning up</div>
+    </div>
+
+    <div class="doc-scanner" id="docScanner" aria-hidden="true" role="dialog" aria-label="Document scanner">
+        <div class="doc-scanner-stage">
+            <video id="docScannerVideo" class="doc-scanner-video" playsinline muted autoplay></video>
+            <canvas id="docScannerOverlay" class="doc-scanner-overlay-canvas"></canvas>
+            <div class="doc-scanner-top">
+                <button type="button" class="doc-btn" id="docScannerClose" aria-label="Close scanner">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+                <button type="button" class="doc-btn" id="docScannerFlash" aria-label="Toggle flash">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg>
+                </button>
+            </div>
+            <div class="doc-scanner-hint" id="docScannerHint">Position the document inside the frame</div>
+            <div class="doc-scanner-status" id="docScannerStatus">Hold still</div>
+            <div class="doc-scanner-bottom">
+                <div class="doc-scanner-side">
+                    <button type="button" class="doc-gallery-thumb" id="docScannerGallery" aria-label="Choose photo from gallery">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                    </button>
+                </div>
+                <button type="button" class="doc-capture" id="docScannerCapture" aria-label="Capture document"></button>
+                <div class="doc-scanner-side right">
+                    <button type="button" class="doc-mode-chip auto" id="docScannerMode" aria-label="Toggle automatic capture">Auto</button>
+                </div>
+            </div>
+            <div class="doc-perm" id="docScannerPerm">
+                <div class="doc-perm-card">
+                    <div class="doc-perm-title" id="docScannerPermTitle">Camera access needed</div>
+                    <div class="doc-perm-msg" id="docScannerPermMsg">Allow camera access to scan load tickets and paperwork. You can also pick a photo from your gallery.</div>
+                    <div class="doc-perm-actions">
+                        <button type="button" class="doc-perm-primary" id="docScannerRetryCam">Try Again</button>
+                        <button type="button" class="doc-perm-secondary" id="docScannerOpenGallery">Choose from Gallery</button>
+                        <button type="button" class="doc-perm-secondary" id="docScannerPermClose">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <input type="file" id="docScannerFile" accept="image/*" style="display:none" aria-hidden="true">
+    </div>
+
+    <div class="doc-review" id="docReview" aria-hidden="true" role="dialog" aria-label="Review scan">
+        <div class="doc-review-header">
+            <button type="button" class="doc-btn" id="docReviewClose" aria-label="Cancel review">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+            <div class="doc-review-title">Review Scan</div>
+            <button type="button" class="doc-btn" id="docReviewCompare" aria-label="Compare with original">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="18" rx="1"/><rect x="14" y="3" width="7" height="18" rx="1"/></svg>
+            </button>
+        </div>
+        <div class="doc-review-stage" id="docReviewStage">
+            <div class="doc-review-canvas-wrap" id="docReviewWrap">
+                <canvas id="docReviewCanvas"></canvas>
+                <canvas id="docReviewCrop" class="doc-review-crop"></canvas>
+            </div>
+            <div class="doc-loupe" id="docLoupe"><canvas id="docLoupeCanvas" width="192" height="192"></canvas></div>
+        </div>
+        <div class="doc-review-filters" id="docReviewFilters" role="tablist" aria-label="Enhancement filters">
+            <button type="button" class="doc-filter active" data-filter="auto">Auto Enhance</button>
+            <button type="button" class="doc-filter" data-filter="original">Original Color</button>
+            <button type="button" class="doc-filter" data-filter="enhanced">Enhanced Color</button>
+            <button type="button" class="doc-filter" data-filter="gray">Grayscale</button>
+            <button type="button" class="doc-filter" data-filter="bw">Black &amp; White</button>
+        </div>
+        <div class="doc-review-tools">
+            <button type="button" class="doc-tool" id="docReviewCropToggle">Adjust Corners</button>
+            <button type="button" class="doc-tool" id="docReviewRotateL" aria-label="Rotate left">Rotate Left</button>
+            <button type="button" class="doc-tool" id="docReviewRotateR" aria-label="Rotate right">Rotate Right</button>
+        </div>
+        <div class="doc-review-actions">
+            <button type="button" class="doc-btn-muted" id="docReviewRetake">Retake</button>
+            <button type="button" class="doc-btn-primary" id="docReviewSave">Save to Load</button>
+            <button type="button" class="doc-btn-danger" id="docReviewCancel">Cancel</button>
+        </div>
+    </div>
+
+    <div class="doc-viewer" id="docViewer" aria-hidden="true" role="dialog" aria-label="Saved document">
+        <div class="doc-viewer-header">
+            <div class="doc-viewer-meta">
+                <div class="doc-viewer-eyebrow">LOAD DOCUMENT</div>
+                <div class="doc-viewer-title" id="docViewerTitle">Ticket</div>
+                <div class="doc-viewer-sub" id="docViewerSub"></div>
+            </div>
+            <button type="button" class="doc-btn" id="docViewerClose" aria-label="Close viewer">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <div class="doc-viewer-stage" id="docViewerStage">
+            <img id="docViewerImg" alt="Saved load document">
+        </div>
+        <div class="doc-viewer-thumbs" id="docViewerThumbs"></div>
+        <div class="doc-viewer-actions">
+            <button type="button" id="docViewerShare">Share</button>
+            <button type="button" id="docViewerAdd">Add</button>
+            <button type="button" id="docViewerReplace">Replace</button>
+            <button type="button" class="danger" id="docViewerDelete">Delete</button>
+        </div>
     </div>
 
     <script>
@@ -749,19 +932,33 @@
         const initializedEntries = new Set();
         const rateData = [[2,3.84],[3,3.97],[6,4.38],[8,4.65],[11,5.06],[13,5.46],[14,5.43],[16,6.03],[17,6.00],[21,6.75],[25,7.32],[27,7.36],[30,8.01],[39,10.26],[45,11.24],[49,10.15],[61,14.40],[62,14.72],[65,15.42],[92,16.07]];
         const SETTINGS_KEY = 'driverpay_settings';
-        const DEFAULT_SETTINGS = { avgTons: 25, anthropicApiKey: '' };
+        const DOC_SYNC_KEY = 'driverpay_doc_sync_queue';
+        const DEFAULT_SETTINGS = { avgTons: 25, anthropicApiKey: '', localUserId: '' };
 
         function loadSettings() {
             try {
                 const raw = localStorage.getItem(SETTINGS_KEY);
-                if (!raw) return { ...DEFAULT_SETTINGS };
+                if (!raw) {
+                    const fresh = { ...DEFAULT_SETTINGS, localUserId: genLocalUserId() };
+                    try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(fresh)); } catch (_) {}
+                    return fresh;
+                }
                 const parsed = JSON.parse(raw);
                 let avg = parseFloat(parsed.avgTons);
                 if (isNaN(avg) || avg < 17) avg = 17;
                 if (avg > 30) avg = 30;
                 const key = (typeof parsed.anthropicApiKey === 'string') ? parsed.anthropicApiKey : '';
-                return { avgTons: avg, anthropicApiKey: key };
-            } catch (e) { return { ...DEFAULT_SETTINGS }; }
+                let localUserId = (typeof parsed.localUserId === 'string' && parsed.localUserId) ? parsed.localUserId : genLocalUserId();
+                const out = { avgTons: avg, anthropicApiKey: key, localUserId };
+                if (!parsed.localUserId) {
+                    try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(out)); } catch (_) {}
+                }
+                return out;
+            } catch (e) { return { ...DEFAULT_SETTINGS, localUserId: genLocalUserId() }; }
+        }
+
+        function genLocalUserId() {
+            return 'u_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 10);
         }
         function saveSettingsObj(s) { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); }
         let settings = loadSettings();
@@ -896,6 +1093,13 @@
                             changed = true;
                         }
                         if (!l.id) { l.id = Math.random().toString(36).substr(2, 9); changed = true; }
+                        if (Array.isArray(l.documents)) {
+                            const docs = l.documents.filter(d => d && typeof d === 'object' && (d.processed || d.original));
+                            if (docs.length !== l.documents.length) changed = true;
+                            l.documents = docs;
+                            if (docs.length && !l.ticket) { l.ticket = docs[docs.length - 1].processed || docs[docs.length - 1].original; changed = true; }
+                            if (!docs.length) { delete l.documents; if (!l.ticket) { /* keep */ } }
+                        }
                         goodLoads.push({ ...l, miles, tons, day });
                     });
                     if (goodLoads.length === 0) { changed = true; return; }
@@ -1111,7 +1315,14 @@
             if (!s || !Array.isArray(s.loads)) return;
             const l = s.loads.find(l => l && l.id == lId);
             if (!l) return;
-            editingLoad = { sId, lId, miles: l.miles, savedTicket: l.ticket || null, stagedTicket: null, removeTicket: false };
+            editingLoad = {
+                sId, lId, miles: l.miles,
+                savedTicket: primaryDocImage(l) || l.ticket || null,
+                savedDocuments: getLoadDocs(l),
+                stagedTicket: null,
+                stagedDocument: null,
+                removeTicket: false
+            };
             document.getElementById('editLoadInfo').textContent = `${l.miles} miles`;
             const autoPay = (getRate(l.miles) * l.tons * 0.30).toFixed(2);
             document.getElementById('editAutoPreview').textContent = `Auto rate: $${getRate(l.miles).toFixed(2)}/ton truck · pays $${autoPay} at ${l.tons} tons`;
@@ -1200,16 +1411,38 @@
                 // Ticket image only ever attaches to the one edited load — never copied onto
                 // multi-apply siblings (that would duplicate the image). No Batch Mode exists here.
                 if (isEdited && ticketChanged) {
-                    if (editingLoad.stagedTicket) merged.ticket = editingLoad.stagedTicket;
-                    else if (editingLoad.removeTicket) merged.ticket = null;
+                    if (editingLoad.stagedTicket) {
+                        merged.ticket = editingLoad.stagedTicket;
+                        const doc = editingLoad.stagedDocument || {
+                            id: 'doc_' + Date.now().toString(36),
+                            userId: settings.localUserId,
+                            loadId: editingLoad.lId,
+                            type: 'ticket',
+                            processed: editingLoad.stagedTicket,
+                            original: null,
+                            createdAt: new Date().toISOString(),
+                            modifiedAt: new Date().toISOString(),
+                            syncStatus: 'local',
+                            filter: 'auto'
+                        };
+                        doc.loadId = editingLoad.lId;
+                        merged.documents = [doc];
+                    } else if (editingLoad.removeTicket) {
+                        merged.ticket = null;
+                        delete merged.documents;
+                    }
                 }
                 if (merged.customTotal === null) delete merged.customTotal;
                 if (merged.customRate === null) delete merged.customRate;
-                if (!merged.ticket) delete merged.ticket;
+                if (!merged.ticket) { delete merged.ticket; delete merged.documents; }
                 if (!merged.note) delete merged.note;
                 return merged;
             });
-            localStorage.setItem('driver_history', JSON.stringify(h));
+            try { localStorage.setItem('driver_history', JSON.stringify(h)); }
+            catch (err) { appAlert('Storage full. Delete some older settlements or photos to free up space.'); return; }
+            if (editingLoad.stagedDocument && editingLoad.stagedDocument.id) {
+                enqueueDocSync(editingLoad.sId, editingLoad.lId, editingLoad.stagedDocument.id);
+            }
             closeEditModal();
             renderHistory();
         }
@@ -1236,40 +1469,6 @@
             viewBtn.style.display = (staged || saved) ? 'inline-flex' : 'none';
         }
 
-        function captureEditTicket() {
-            if (!editingLoad) return;
-            const hasSaved = !!editingLoad.savedTicket && !editingLoad.removeTicket;
-            const run = () => {
-                const input = document.createElement('input');
-                input.type = 'file'; input.accept = 'image/*'; input.capture = 'environment'; input.style.display = 'none';
-                document.body.appendChild(input);
-                input.onchange = async (e) => {
-                    const file = e.target.files && e.target.files[0];
-                    if (!file) { input.remove(); return; }
-                    showScanOverlay();
-                    try {
-                        const dataUrl = await scanTicket(file);
-                        editingLoad.stagedTicket = dataUrl;   // pending — persisted only when Save is tapped
-                        editingLoad.removeTicket = false;
-                        updateEditTicketUI();
-                    } catch (err) {
-                        console.error('[scan] unrecoverable:', err);
-                    } finally {
-                        hideScanOverlay();
-                        input.remove();
-                    }
-                };
-                input.click();
-            };
-            // Replacing an already-saved image asks first — never a silent overwrite, never a duplicate.
-            if (hasSaved && !editingLoad.stagedTicket) {
-                appConfirm('This load already has a saved ticket. Replace it with a new capture?', { title: 'Replace Ticket', variant: 'warn', confirmText: 'Replace' })
-                    .then(ok => { if (ok) run(); });
-            } else {
-                run();
-            }
-        }
-
         function viewEditTicket() {
             if (!editingLoad) return;
             const img = editingLoad.stagedTicket || (editingLoad.removeTicket ? null : editingLoad.savedTicket);
@@ -1287,8 +1486,12 @@
             };
             overlay.querySelector('.vt-close').onclick = close;
             overlay.querySelector('.vt-remove').onclick = () => {
-                if (isStaged) editingLoad.stagedTicket = null;   // drop the pending capture
-                else editingLoad.removeTicket = true;            // mark saved image for removal on Save
+                if (isStaged) {
+                    editingLoad.stagedTicket = null;
+                    editingLoad.stagedDocument = null;
+                } else {
+                    editingLoad.removeTicket = true;
+                }
                 updateEditTicketUI();
                 close();
             };
@@ -1816,48 +2019,1267 @@
             return dataUrl;
         }
 
-        function uploadTicket(sId, lId) {
-            document.querySelectorAll('.swipe-container').forEach(c => c.classList.remove('swiped', 'swiped-right'));
-            const input = document.createElement('input');
-            input.type = 'file'; input.accept = 'image/*'; input.capture = 'environment'; input.style.display = 'none';
-            document.body.appendChild(input);
-            input.onchange = async (e) => {
-                const file = e.target.files && e.target.files[0];
-                if (!file) { input.remove(); return; }
+        // ---- CamScanner-style live document scanner ---------------------------------
+        const DOC_DETECT_W = 360;
+        const DOC_STABLE_MS = 900;
+        const DOC_COOLDOWN_MS = 2500;
+        const DOC_CORNER_SMOOTH = 0.35;
+        const DOC_READY_MOVE_PX = 10;
+        const DOC_MIN_AREA_RATIO = 0.08;
+        const DOC_MAX_AREA_RATIO = 0.92;
+        const processingLoads = new Set(); // `${sId}|${lId}` while processing
+
+        let docScan = {
+            active: false,
+            mode: 'direct', // direct | edit | replace | add
+            sId: null,
+            lId: null,
+            docId: null,
+            autoMode: true,
+            flashOn: false,
+            stream: null,
+            track: null,
+            raf: 0,
+            detectBusy: false,
+            lastDetectAt: 0,
+            smoothed: null,
+            lastGood: null,
+            confidence: 0,
+            stableSince: 0,
+            lastCaptureAt: 0,
+            capturing: false,
+            videoReady: false
+        };
+
+        let docReview = {
+            active: false,
+            originalCanvas: null,
+            sourceCanvas: null,
+            corners: null,
+            filter: 'auto',
+            rotation: 0,
+            cropMode: false,
+            compare: false,
+            dragging: null,
+            scale: 1,
+            panX: 0,
+            panY: 0,
+            pinch: null,
+            processedUrl: null,
+            originalUrl: null
+        };
+
+        let docViewer = {
+            active: false,
+            sId: null,
+            lId: null,
+            docs: [],
+            index: 0
+        };
+
+        function loadKey(sId, lId) { return String(sId) + '|' + String(lId); }
+
+        function getLoadDocs(load) {
+            if (!load) return [];
+            if (Array.isArray(load.documents) && load.documents.length) {
+                return load.documents.filter(d => d && (d.processed || d.original || d.ticket));
+            }
+            if (load.ticket) {
+                return [{
+                    id: 'legacy_' + (load.id || 'x'),
+                    type: 'ticket',
+                    processed: load.ticket,
+                    original: null,
+                    createdAt: null,
+                    modifiedAt: null,
+                    syncStatus: 'local',
+                    filter: 'auto'
+                }];
+            }
+            return [];
+        }
+
+        function primaryDocImage(load) {
+            const docs = getLoadDocs(load);
+            if (!docs.length) return null;
+            const d = docs[docs.length - 1];
+            return d.processed || d.original || null;
+        }
+
+        function haptic(ms) {
+            try { if (navigator.vibrate) navigator.vibrate(ms || 18); } catch (_) {}
+        }
+
+        function cornersToArray(c) {
+            if (!c) return null;
+            return [
+                { x: c.topLeftCorner.x, y: c.topLeftCorner.y },
+                { x: c.topRightCorner.x, y: c.topRightCorner.y },
+                { x: c.bottomRightCorner.x, y: c.bottomRightCorner.y },
+                { x: c.bottomLeftCorner.x, y: c.bottomLeftCorner.y }
+            ];
+        }
+
+        function arrayToCorners(arr) {
+            if (!arr || arr.length !== 4) return null;
+            return {
+                topLeftCorner: { x: arr[0].x, y: arr[0].y },
+                topRightCorner: { x: arr[1].x, y: arr[1].y },
+                bottomRightCorner: { x: arr[2].x, y: arr[2].y },
+                bottomLeftCorner: { x: arr[3].x, y: arr[3].y }
+            };
+        }
+
+        function smoothCorners(prev, next, alpha) {
+            if (!next) return prev;
+            if (!prev) return next.map(p => ({ x: p.x, y: p.y }));
+            return next.map((p, i) => ({
+                x: prev[i].x * (1 - alpha) + p.x * alpha,
+                y: prev[i].y * (1 - alpha) + p.y * alpha
+            }));
+        }
+
+        function cornerMotion(a, b) {
+            if (!a || !b) return 999;
+            let max = 0;
+            for (let i = 0; i < 4; i++) max = Math.max(max, Math.hypot(a[i].x - b[i].x, a[i].y - b[i].y));
+            return max;
+        }
+
+        function quadArea(pts) {
+            if (!pts || pts.length !== 4) return 0;
+            let a = 0;
+            for (let i = 0; i < 4; i++) {
+                const j = (i + 1) % 4;
+                a += pts[i].x * pts[j].y - pts[j].x * pts[i].y;
+            }
+            return Math.abs(a) / 2;
+        }
+
+        function cornersInsideFrame(pts, w, h, pad) {
+            pad = pad || 8;
+            return pts.every(p => p.x >= pad && p.y >= pad && p.x <= w - pad && p.y <= h - pad);
+        }
+
+        function estimateBrightness(ctx, w, h) {
+            const sample = ctx.getImageData(0, 0, w, h).data;
+            let sum = 0, n = 0;
+            for (let i = 0; i < sample.length; i += 32) {
+                sum += 0.299 * sample[i] + 0.587 * sample[i + 1] + 0.114 * sample[i + 2];
+                n++;
+            }
+            return n ? sum / n : 0;
+        }
+
+        function estimateSharpness(ctx, w, h) {
+            // Laplacian-ish variance on a tiny grayscale sampling
+            const sw = Math.min(80, w), sh = Math.max(1, Math.round(sw * h / w));
+            const c = document.createElement('canvas');
+            c.width = sw; c.height = sh;
+            const g = c.getContext('2d', { willReadFrequently: true });
+            g.drawImage(ctx.canvas, 0, 0, sw, sh);
+            const d = g.getImageData(0, 0, sw, sh).data;
+            const gray = new Float32Array(sw * sh);
+            for (let i = 0, p = 0; i < d.length; i += 4, p++) gray[p] = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+            let sum = 0, sum2 = 0, n = 0;
+            for (let y = 1; y < sh - 1; y++) {
+                for (let x = 1; x < sw - 1; x++) {
+                    const i = y * sw + x;
+                    const lap = -4 * gray[i] + gray[i - 1] + gray[i + 1] + gray[i - sw] + gray[i + sw];
+                    sum += lap; sum2 += lap * lap; n++;
+                }
+            }
+            if (!n) return 0;
+            const mean = sum / n;
+            return sum2 / n - mean * mean;
+        }
+
+        function detectCornersFromCanvas(canvas) {
+            if (typeof cv === 'undefined' || !cv.Mat) return null;
+            let srcMat = null, contour = null;
+            try {
+                const scanner = window.__docScannerInst;
+                if (!scanner) return null;
+                srcMat = cv.imread(canvas);
+                contour = scanner.findPaperContour(srcMat);
+                if (!contour) return null;
+                const corners = scanner.getCornerPoints(contour, srcMat);
+                const validation = validateCorners(corners, canvas.width, canvas.height);
+                if (!validation.ok) return null;
+                const pts = cornersToArray(corners);
+                const area = quadArea(pts);
+                const ratio = area / (canvas.width * canvas.height);
+                if (ratio < DOC_MIN_AREA_RATIO || ratio > DOC_MAX_AREA_RATIO) return null;
+                if (!cornersInsideFrame(pts, canvas.width, canvas.height, 4)) return null;
+                return { corners, pts, areaRatio: ratio, sides: validation.sides };
+            } catch (_) {
+                return null;
+            } finally {
+                if (contour && typeof contour.delete === 'function') { try { contour.delete(); } catch (_) {} }
+                if (srcMat) { try { srcMat.delete(); } catch (_) {} }
+            }
+        }
+
+        function drawScannerOverlay(canvas, video, pts, confidence) {
+            const w = canvas.width, h = canvas.height;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, w, h);
+            // darken full frame
+            ctx.fillStyle = 'rgba(0,0,0,0.45)';
+            ctx.fillRect(0, 0, w, h);
+            if (!pts) {
+                // soft guide rectangle (not a fake detection)
+                const gw = w * 0.78, gh = h * 0.52;
+                const gx = (w - gw) / 2, gy = (h - gh) / 2;
+                ctx.save();
+                ctx.globalCompositeOperation = 'destination-out';
+                ctx.fillStyle = '#000';
+                roundRectPath(ctx, gx, gy, gw, gh, 18);
+                ctx.fill();
+                ctx.restore();
+                ctx.strokeStyle = 'rgba(255,255,255,0.28)';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([10, 8]);
+                roundRectPath(ctx, gx, gy, gw, gh, 18);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                return;
+            }
+            // punch out document area
+            ctx.save();
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.beginPath();
+            ctx.moveTo(pts[0].x, pts[0].y);
+            for (let i = 1; i < 4; i++) ctx.lineTo(pts[i].x, pts[i].y);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+
+            const ready = confidence >= 0.85;
+            const warn = confidence < 0.45;
+            const stroke = ready ? '#22c55e' : (warn ? '#fbbf24' : '#4ade80');
+            const glow = ready ? 'rgba(34,197,94,0.55)' : (warn ? 'rgba(251,191,36,0.35)' : 'rgba(74,222,128,0.35)');
+            ctx.save();
+            ctx.lineJoin = 'round';
+            ctx.lineCap = 'round';
+            ctx.shadowColor = glow;
+            ctx.shadowBlur = ready ? 18 : 10;
+            ctx.strokeStyle = stroke;
+            ctx.lineWidth = ready ? 4.5 : 3;
+            ctx.beginPath();
+            ctx.moveTo(pts[0].x, pts[0].y);
+            for (let i = 1; i < 4; i++) ctx.lineTo(pts[i].x, pts[i].y);
+            ctx.closePath();
+            ctx.stroke();
+            // corner points
+            for (const p of pts) {
+                ctx.beginPath();
+                ctx.fillStyle = stroke;
+                ctx.arc(p.x, p.y, ready ? 7 : 5.5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.fillStyle = '#fff';
+                ctx.arc(p.x, p.y, ready ? 2.8 : 2.2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.restore();
+        }
+
+        function roundRectPath(ctx, x, y, w, h, r) {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.arcTo(x + w, y, x + w, y + h, r);
+            ctx.arcTo(x + w, y + h, x, y + h, r);
+            ctx.arcTo(x, y + h, x, y, r);
+            ctx.arcTo(x, y, x + w, y, r);
+            ctx.closePath();
+        }
+
+        function mapPtsToDisplay(pts, srcW, srcH, canvasW, canvasH) {
+            // object-fit: cover mapping from detection canvas space -> overlay canvas space
+            // Detection canvas is drawn from video with cover-like letterbox? We draw video into detect canvas with cover.
+            // Overlay matches video element CSS cover. Map normalized coords.
+            const scale = Math.max(canvasW / srcW, canvasH / srcH);
+            const dw = srcW * scale, dh = srcH * scale;
+            const ox = (canvasW - dw) / 2, oy = (canvasH - dh) / 2;
+            return pts.map(p => ({ x: ox + p.x * scale, y: oy + p.y * scale }));
+        }
+
+        function setScannerHint(text, kind) {
+            const el = document.getElementById('docScannerHint');
+            if (!el) return;
+            el.textContent = text;
+            el.classList.toggle('ready', kind === 'ready');
+            el.classList.toggle('warn', kind === 'warn');
+        }
+
+        function setScannerStatus(text, show) {
+            const el = document.getElementById('docScannerStatus');
+            if (!el) return;
+            if (text) el.textContent = text;
+            el.classList.toggle('show', !!show);
+        }
+
+        async function ensureScannerEngine() {
+            const scanner = await loadScanner();
+            window.__docScannerInst = scanner;
+            return scanner;
+        }
+
+        async function openDocScanner(opts) {
+            opts = opts || {};
+            docScan.mode = opts.mode || 'direct';
+            docScan.sId = opts.sId != null ? opts.sId : (editingLoad && editingLoad.sId);
+            docScan.lId = opts.lId != null ? opts.lId : (editingLoad && editingLoad.lId);
+            docScan.docId = opts.docId || null;
+            docScan.autoMode = true;
+            docScan.flashOn = false;
+            docScan.smoothed = null;
+            docScan.lastGood = null;
+            docScan.confidence = 0;
+            docScan.stableSince = 0;
+            docScan.capturing = false;
+            docScan.videoReady = false;
+
+            const root = document.getElementById('docScanner');
+            const modeBtn = document.getElementById('docScannerMode');
+            const flashBtn = document.getElementById('docScannerFlash');
+            const perm = document.getElementById('docScannerPerm');
+            if (!root) return;
+            root.classList.add('active');
+            root.setAttribute('aria-hidden', 'false');
+            if (modeBtn) { modeBtn.textContent = 'Auto'; modeBtn.classList.add('auto'); }
+            if (flashBtn) flashBtn.classList.remove('flash-on');
+            if (perm) perm.classList.remove('show');
+            setScannerHint('Position the document inside the frame', '');
+            setScannerStatus('', false);
+            lockBodyScroll();
+            docScan.active = true;
+
+            try {
                 showScanOverlay();
-                try {
-                    const dataUrl = await scanTicket(file);
-                    saveTicket(sId, lId, dataUrl);
-                } catch (err) {
-                    console.error('[scan] unrecoverable:', err);
-                } finally {
-                    hideScanOverlay();
-                    input.remove();
+                const sub = document.getElementById('scanSublabel');
+                if (sub) sub.textContent = 'Starting camera…';
+                await ensureScannerEngine();
+            } catch (err) {
+                console.error('[scan] engine preload failed:', err);
+            } finally {
+                hideScanOverlay();
+            }
+
+            bindScannerControlsOnce();
+            const ok = await startScannerCamera();
+            if (!ok) return; // permission UI shown; gallery still available via bound controls
+            startDetectLoop();
+        }
+
+        async function startScannerCamera() {
+            const video = document.getElementById('docScannerVideo');
+            const perm = document.getElementById('docScannerPerm');
+            stopScannerCamera();
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                showCameraPermission('Camera unavailable', 'This device or browser cannot open the camera. You can still choose a photo from your gallery.');
+                return false;
+            }
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    audio: false,
+                    video: {
+                        facingMode: { ideal: 'environment' },
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
+                    }
+                });
+                docScan.stream = stream;
+                docScan.track = stream.getVideoTracks()[0] || null;
+                video.srcObject = stream;
+                await video.play().catch(() => {});
+                docScan.videoReady = true;
+                if (perm) perm.classList.remove('show');
+                return true;
+            } catch (err) {
+                console.error('[scan] getUserMedia failed:', err);
+                const name = err && err.name ? err.name : '';
+                if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
+                    showCameraPermission(
+                        'Camera permission denied',
+                        'Allow camera access in your browser or device settings to scan documents. You can also choose an existing photo.'
+                    );
+                } else if (name === 'NotFoundError' || name === 'DevicesNotFoundError') {
+                    showCameraPermission('No camera found', 'No rear camera is available. Choose a photo from your gallery instead.');
+                } else {
+                    showCameraPermission('Camera unavailable', 'Could not open the camera. Try again or choose a photo from your gallery.');
+                }
+                return false;
+            }
+        }
+
+        function showCameraPermission(title, msg) {
+            const perm = document.getElementById('docScannerPerm');
+            const t = document.getElementById('docScannerPermTitle');
+            const m = document.getElementById('docScannerPermMsg');
+            if (t) t.textContent = title;
+            if (m) m.textContent = msg;
+            if (perm) perm.classList.add('show');
+        }
+
+        function stopScannerCamera() {
+            if (docScan.raf) { cancelAnimationFrame(docScan.raf); docScan.raf = 0; }
+            if (docScan.stream) {
+                try { docScan.stream.getTracks().forEach(t => t.stop()); } catch (_) {}
+            }
+            docScan.stream = null;
+            docScan.track = null;
+            docScan.videoReady = false;
+            const video = document.getElementById('docScannerVideo');
+            if (video) video.srcObject = null;
+        }
+
+        function closeDocScanner() {
+            docScan.active = false;
+            stopScannerCamera();
+            const root = document.getElementById('docScanner');
+            if (root) {
+                root.classList.remove('active');
+                root.setAttribute('aria-hidden', 'true');
+            }
+            const perm = document.getElementById('docScannerPerm');
+            if (perm) perm.classList.remove('show');
+            unlockBodyScroll();
+            if (document.getElementById('editOverlay') && document.getElementById('editOverlay').classList.contains('active')) lockBodyScroll();
+        }
+
+        let scannerControlsBound = false;
+        function bindScannerControlsOnce() {
+            if (scannerControlsBound) return;
+            scannerControlsBound = true;
+            document.getElementById('docScannerClose').onclick = () => closeDocScanner();
+            document.getElementById('docScannerPermClose').onclick = () => closeDocScanner();
+            document.getElementById('docScannerRetryCam').onclick = async () => {
+                const ok = await startScannerCamera();
+                if (ok) startDetectLoop();
+            };
+            document.getElementById('docScannerOpenGallery').onclick = () => pickGalleryImage();
+            document.getElementById('docScannerGallery').onclick = () => pickGalleryImage();
+            document.getElementById('docScannerCapture').onclick = () => captureFromScanner(true);
+            document.getElementById('docScannerMode').onclick = () => {
+                docScan.autoMode = !docScan.autoMode;
+                const btn = document.getElementById('docScannerMode');
+                btn.textContent = docScan.autoMode ? 'Auto' : 'Manual';
+                btn.classList.toggle('auto', docScan.autoMode);
+                setScannerHint(docScan.autoMode ? 'Position the document inside the frame' : 'Manual mode — tap the shutter when ready', docScan.autoMode ? '' : 'warn');
+            };
+            document.getElementById('docScannerFlash').onclick = async () => {
+                docScan.flashOn = !docScan.flashOn;
+                const btn = document.getElementById('docScannerFlash');
+                btn.classList.toggle('flash-on', docScan.flashOn);
+                if (docScan.track) {
+                    try {
+                        const caps = docScan.track.getCapabilities ? docScan.track.getCapabilities() : {};
+                        if (caps.torch) await docScan.track.applyConstraints({ advanced: [{ torch: docScan.flashOn }] });
+                        else if (docScan.flashOn) await appAlert('Flash/torch is not supported on this camera.');
+                    } catch (err) {
+                        console.warn('[scan] torch failed:', err);
+                        if (docScan.flashOn) await appAlert('Could not toggle flash on this device.');
+                    }
                 }
             };
+            document.getElementById('docScannerFile').onchange = async (e) => {
+                const file = e.target.files && e.target.files[0];
+                e.target.value = '';
+                if (!file) return;
+                await ingestScannerFile(file);
+            };
+        }
+
+        function pickGalleryImage() {
+            const input = document.getElementById('docScannerFile');
+            if (!input) return;
+            input.removeAttribute('capture');
             input.click();
         }
 
-        function saveTicket(sId, lId, dataUrl) {
-            let h = JSON.parse(localStorage.getItem('driver_history') || '[]');
-            const sIdx = h.findIndex(s => s && s.id == sId);
-            if (sIdx === -1) return;
-            if (!Array.isArray(h[sIdx].loads)) return;
-            const lIdx = h[sIdx].loads.findIndex(l => l && l.id == lId);
-            if (lIdx === -1) return;
-            h[sIdx].loads[lIdx].ticket = dataUrl;
-            try { localStorage.setItem('driver_history', JSON.stringify(h)); renderHistory(); }
-            catch (err) { appAlert('Storage full. Delete some older settlements or photos to free up space.'); }
+        function startDetectLoop() {
+            if (docScan.raf) cancelAnimationFrame(docScan.raf);
+            const video = document.getElementById('docScannerVideo');
+            const overlay = document.getElementById('docScannerOverlay');
+            const detectCanvas = document.createElement('canvas');
+            const detectCtx = detectCanvas.getContext('2d', { willReadFrequently: true });
+
+            const tick = async () => {
+                if (!docScan.active) return;
+                docScan.raf = requestAnimationFrame(tick);
+                if (!docScan.videoReady || !video.videoWidth) return;
+
+                const rect = overlay.parentElement.getBoundingClientRect();
+                const dpr = Math.min(window.devicePixelRatio || 1, 2);
+                const cw = Math.max(1, Math.round(rect.width * dpr));
+                const ch = Math.max(1, Math.round(rect.height * dpr));
+                if (overlay.width !== cw || overlay.height !== ch) {
+                    overlay.width = cw; overlay.height = ch;
+                }
+
+                // throttle detection
+                const now = performance.now();
+                if (docScan.detectBusy || now - docScan.lastDetectAt < 90) {
+                    const drawPts = docScan.smoothed ? mapPtsToDisplay(docScan.smoothed, detectCanvas.width || DOC_DETECT_W, detectCanvas.height || 1, cw, ch) : null;
+                    drawScannerOverlay(overlay, video, drawPts, docScan.confidence);
+                    return;
+                }
+                docScan.lastDetectAt = now;
+                docScan.detectBusy = true;
+                try {
+                    const vw = video.videoWidth, vh = video.videoHeight;
+                    const scale = DOC_DETECT_W / vw;
+                    detectCanvas.width = DOC_DETECT_W;
+                    detectCanvas.height = Math.max(1, Math.round(vh * scale));
+                    // cover-draw video into detect canvas (same aspect as video)
+                    detectCtx.drawImage(video, 0, 0, detectCanvas.width, detectCanvas.height);
+
+                    if (!window.__docScannerInst) {
+                        drawScannerOverlay(overlay, video, null, 0);
+                        return;
+                    }
+
+                    const found = detectCornersFromCanvas(detectCanvas);
+                    let confidence = 0;
+                    if (found) {
+                        const bright = estimateBrightness(detectCtx, detectCanvas.width, detectCanvas.height);
+                        const sharp = estimateSharpness(detectCtx, detectCanvas.width, detectCanvas.height);
+                        const lightingOk = bright > 35 && bright < 245;
+                        const focusOk = sharp > 12;
+                        const prev = docScan.smoothed;
+                        docScan.smoothed = smoothCorners(prev, found.pts, DOC_CORNER_SMOOTH);
+                        const motion = cornerMotion(prev, docScan.smoothed);
+                        const steady = motion < DOC_READY_MOVE_PX;
+                        confidence = 0.35;
+                        if (lightingOk) confidence += 0.15;
+                        if (focusOk) confidence += 0.15;
+                        if (steady) confidence += 0.2;
+                        if (found.areaRatio > 0.15 && found.areaRatio < 0.85) confidence += 0.15;
+                        docScan.confidence = Math.min(1, confidence);
+                        docScan.lastGood = { pts: docScan.smoothed.map(p => ({ ...p })), detectW: detectCanvas.width, detectH: detectCanvas.height, corners: arrayToCorners(docScan.smoothed) };
+
+                        if (docScan.confidence >= 0.85 && steady) {
+                            if (!docScan.stableSince) {
+                                docScan.stableSince = now;
+                                haptic(10);
+                            }
+                            const held = now - docScan.stableSince;
+                            setScannerHint('Document locked — hold still', 'ready');
+                            setScannerStatus('Hold still', held > 180);
+                            if (docScan.autoMode && !docScan.capturing && held >= DOC_STABLE_MS && (now - docScan.lastCaptureAt) > DOC_COOLDOWN_MS) {
+                                if (lightingOk && focusOk) {
+                                    captureFromScanner(false);
+                                } else if (!lightingOk) {
+                                    setScannerHint('Lighting too dark or bright — adjust and hold', 'warn');
+                                } else {
+                                    setScannerHint('Image looks blurry — hold steadier', 'warn');
+                                }
+                            }
+                        } else {
+                            docScan.stableSince = 0;
+                            setScannerStatus('', false);
+                            if (!lightingOk) setScannerHint('Improve lighting on the document', 'warn');
+                            else if (!focusOk) setScannerHint('Move closer and hold steady', 'warn');
+                            else setScannerHint('Align all four corners of the document', '');
+                        }
+                    } else {
+                        docScan.confidence = Math.max(0, docScan.confidence - 0.15);
+                        if (docScan.confidence < 0.25) docScan.smoothed = null;
+                        docScan.stableSince = 0;
+                        setScannerStatus('', false);
+                        setScannerHint('Position the document inside the frame', docScan.smoothed ? 'warn' : '');
+                    }
+
+                    const drawPts = docScan.smoothed
+                        ? mapPtsToDisplay(docScan.smoothed, detectCanvas.width, detectCanvas.height, cw, ch)
+                        : null;
+                    drawScannerOverlay(overlay, video, drawPts, docScan.confidence);
+                } finally {
+                    docScan.detectBusy = false;
+                }
+            };
+            docScan.raf = requestAnimationFrame(tick);
         }
 
-        function removeTicket(sId, lId) {
+        async function captureFromScanner(manual) {
+            if (!docScan.active || docScan.capturing) return;
+            if (!manual && (performance.now() - docScan.lastCaptureAt) < DOC_COOLDOWN_MS) return;
+            const video = document.getElementById('docScannerVideo');
+            if (!video || !video.videoWidth) {
+                if (manual) await appAlert('Camera is not ready yet.');
+                return;
+            }
+            docScan.capturing = true;
+            docScan.lastCaptureAt = performance.now();
+            setScannerStatus('Capturing…', true);
+            haptic(25);
+            try {
+                const full = document.createElement('canvas');
+                full.width = video.videoWidth;
+                full.height = video.videoHeight;
+                full.getContext('2d').drawImage(video, 0, 0);
+                const corners = docScan.lastGood && docScan.lastGood.corners
+                    ? scaleCorners(docScan.lastGood.corners, docScan.lastGood.detectW, docScan.lastGood.detectH, full.width, full.height)
+                    : null;
+                await openDocReviewFromCanvas(full, corners, full.toDataURL('image/jpeg', 0.92));
+                closeDocScanner();
+            } catch (err) {
+                console.error('[scan] capture failed:', err);
+                await appAlert('Capture failed. Try again or pick a photo from your gallery.');
+            } finally {
+                docScan.capturing = false;
+                setScannerStatus('', false);
+            }
+        }
+
+        function scaleCorners(corners, fromW, fromH, toW, toH) {
+            const sx = toW / fromW, sy = toH / fromH;
+            const map = p => ({ x: p.x * sx, y: p.y * sy });
+            return {
+                topLeftCorner: map(corners.topLeftCorner),
+                topRightCorner: map(corners.topRightCorner),
+                bottomRightCorner: map(corners.bottomRightCorner),
+                bottomLeftCorner: map(corners.bottomLeftCorner)
+            };
+        }
+
+        async function ingestScannerFile(file) {
+            showScanOverlay();
+            try {
+                const oriented = await loadOrientedCanvas(file);
+                const canvas = oriented.canvas;
+                let corners = null;
+                try {
+                    await ensureScannerEngine();
+                    const working = downsizeCanvas(canvas, 1200);
+                    const found = detectCornersFromCanvas(working);
+                    if (found) corners = scaleCorners(found.corners, working.width, working.height, canvas.width, canvas.height);
+                } catch (err) {
+                    console.warn('[scan] gallery detect failed:', err);
+                }
+                await openDocReviewFromCanvas(canvas, corners, canvas.toDataURL('image/jpeg', 0.92));
+                closeDocScanner();
+            } catch (err) {
+                console.error('[scan] gallery ingest failed:', err);
+                await appAlert('Could not open that image. Try another photo.');
+            } finally {
+                hideScanOverlay();
+            }
+        }
+
+        async function openDocReviewFromCanvas(sourceCanvas, corners, originalUrl) {
+            docReview.active = true;
+            docReview.sourceCanvas = cloneCanvas(sourceCanvas);
+            docReview.originalCanvas = cloneCanvas(sourceCanvas);
+            docReview.originalUrl = originalUrl || sourceCanvas.toDataURL('image/jpeg', 0.92);
+            docReview.corners = corners ? cornersToArray(corners) : defaultFullCorners(sourceCanvas.width, sourceCanvas.height);
+            docReview.filter = 'auto';
+            docReview.rotation = 0;
+            docReview.cropMode = false;
+            docReview.compare = false;
+            docReview.scale = 1;
+            docReview.panX = 0;
+            docReview.panY = 0;
+
+            const root = document.getElementById('docReview');
+            root.classList.add('active');
+            root.setAttribute('aria-hidden', 'false');
+            lockBodyScroll();
+            document.querySelectorAll('.doc-filter').forEach(b => b.classList.toggle('active', b.dataset.filter === 'auto'));
+            document.getElementById('docReviewCropToggle').classList.remove('active');
+            bindReviewControlsOnce();
+            showScanOverlay();
+            try {
+                await ensureScannerEngine();
+                await renderDocReview();
+            } finally {
+                hideScanOverlay();
+            }
+        }
+
+        function defaultFullCorners(w, h) {
+            const p = Math.min(w, h) * 0.04;
+            return [
+                { x: p, y: p },
+                { x: w - p, y: p },
+                { x: w - p, y: h - p },
+                { x: p, y: h - p }
+            ];
+        }
+
+        function cloneCanvas(src) {
+            const c = document.createElement('canvas');
+            c.width = src.width; c.height = src.height;
+            c.getContext('2d').drawImage(src, 0, 0);
+            return c;
+        }
+
+        function closeDocReview() {
+            docReview.active = false;
+            const root = document.getElementById('docReview');
+            if (root) {
+                root.classList.remove('active');
+                root.setAttribute('aria-hidden', 'true');
+            }
+            unlockBodyScroll();
+            if (document.getElementById('editOverlay') && document.getElementById('editOverlay').classList.contains('active')) lockBodyScroll();
+        }
+
+        let reviewControlsBound = false;
+        function bindReviewControlsOnce() {
+            if (reviewControlsBound) return;
+            reviewControlsBound = true;
+            document.getElementById('docReviewClose').onclick = () => closeDocReview();
+            document.getElementById('docReviewCancel').onclick = () => closeDocReview();
+            document.getElementById('docReviewRetake').onclick = async () => {
+                closeDocReview();
+                openDocScanner({ mode: docScan.mode, sId: docScan.sId, lId: docScan.lId, docId: docScan.docId });
+            };
+            document.getElementById('docReviewSave').onclick = () => saveDocReview();
+            document.getElementById('docReviewRotateL').onclick = async () => { docReview.rotation = (docReview.rotation + 270) % 360; await reprocessReviewGeometry(); };
+            document.getElementById('docReviewRotateR').onclick = async () => { docReview.rotation = (docReview.rotation + 90) % 360; await reprocessReviewGeometry(); };
+            document.getElementById('docReviewCropToggle').onclick = async () => {
+                docReview.cropMode = !docReview.cropMode;
+                document.getElementById('docReviewCropToggle').classList.toggle('active', docReview.cropMode);
+                await renderDocReview(false);
+            };
+            document.getElementById('docReviewCompare').onclick = async () => {
+                docReview.compare = !docReview.compare;
+                document.getElementById('docReviewCompare').classList.toggle('active', docReview.compare);
+                await renderDocReview(false);
+            };
+            document.querySelectorAll('.doc-filter').forEach(btn => {
+                btn.onclick = async () => {
+                    docReview.filter = btn.dataset.filter;
+                    document.querySelectorAll('.doc-filter').forEach(b => b.classList.toggle('active', b === btn));
+                    await renderDocReview(false);
+                };
+            });
+
+            const stage = document.getElementById('docReviewStage');
+            const crop = document.getElementById('docReviewCrop');
+            stage.addEventListener('touchstart', onReviewTouchStart, { passive: false });
+            stage.addEventListener('touchmove', onReviewTouchMove, { passive: false });
+            stage.addEventListener('touchend', onReviewTouchEnd, { passive: false });
+            crop.addEventListener('pointerdown', onCropPointerDown);
+            window.addEventListener('pointermove', onCropPointerMove);
+            window.addEventListener('pointerup', onCropPointerUp);
+        }
+
+        async function reprocessReviewGeometry() {
+            // rotate source + corners
+            docReview.sourceCanvas = rotateCanvasDegrees(docReview.originalCanvas, docReview.rotation);
+            // For simplicity after rotate, redetect or reset corners
+            try {
+                const working = downsizeCanvas(docReview.sourceCanvas, 1000);
+                const found = detectCornersFromCanvas(working);
+                if (found) {
+                    docReview.corners = cornersToArray(scaleCorners(found.corners, working.width, working.height, docReview.sourceCanvas.width, docReview.sourceCanvas.height));
+                } else {
+                    docReview.corners = defaultFullCorners(docReview.sourceCanvas.width, docReview.sourceCanvas.height);
+                }
+            } catch (_) {
+                docReview.corners = defaultFullCorners(docReview.sourceCanvas.width, docReview.sourceCanvas.height);
+            }
+            await renderDocReview();
+        }
+
+        async function extractWithCorners(sourceCanvas, cornersArr) {
+            const corners = arrayToCorners(cornersArr);
+            const validation = validateCorners(corners, sourceCanvas.width, sourceCanvas.height);
+            let extracted = null;
+            if (validation.ok) {
+                try {
+                    const scanner = window.__docScannerInst || await ensureScannerEngine();
+                    const { w, h } = targetDimsFromCorners(corners);
+                    extracted = scanner.extractPaper(sourceCanvas, w, h, corners);
+                } catch (err) {
+                    console.warn('[scan] extractPaper failed in review:', err);
+                }
+            }
+            if (!extracted || !extracted.width) {
+                // manual crop bounding box fallback
+                const xs = cornersArr.map(p => p.x), ys = cornersArr.map(p => p.y);
+                const minX = Math.max(0, Math.floor(Math.min(...xs)));
+                const minY = Math.max(0, Math.floor(Math.min(...ys)));
+                const maxX = Math.min(sourceCanvas.width, Math.ceil(Math.max(...xs)));
+                const maxY = Math.min(sourceCanvas.height, Math.ceil(Math.max(...ys)));
+                const c = document.createElement('canvas');
+                c.width = Math.max(1, maxX - minX);
+                c.height = Math.max(1, maxY - minY);
+                c.getContext('2d').drawImage(sourceCanvas, minX, minY, c.width, c.height, 0, 0, c.width, c.height);
+                extracted = c;
+            }
+            return extracted;
+        }
+
+        function applyEnhanceFilter(canvas, filter) {
+            if (filter === 'original') return canvas;
+            if (filter === 'bw') {
+                applyScannerLook(canvas);
+                return canvas;
+            }
+            const ctx = canvas.getContext('2d');
+            const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const d = img.data;
+            if (filter === 'gray') {
+                for (let i = 0; i < d.length; i += 4) {
+                    const g = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+                    d[i] = d[i + 1] = d[i + 2] = g;
+                }
+                ctx.putImageData(img, 0, 0);
+                unsharpMask(canvas, 0.45, 1.1);
+                return canvas;
+            }
+            // auto / enhanced color: white-balance-ish + local contrast + mild sharpen
+            let rSum = 0, gSum = 0, bSum = 0, n = 0;
+            for (let i = 0; i < d.length; i += 32) {
+                rSum += d[i]; gSum += d[i + 1]; bSum += d[i + 2]; n++;
+            }
+            const rAvg = rSum / n || 1, gAvg = gSum / n || 1, bAvg = bSum / n || 1;
+            const avg = (rAvg + gAvg + bAvg) / 3;
+            const rGain = avg / rAvg, gGain = avg / gAvg, bGain = avg / bAvg;
+            const contrast = filter === 'enhanced' ? 1.18 : 1.12;
+            const bright = filter === 'auto' ? 8 : 4;
+            for (let i = 0; i < d.length; i += 4) {
+                let r = d[i] * rGain, g = d[i + 1] * gGain, b = d[i + 2] * bGain;
+                r = (r - 128) * contrast + 128 + bright;
+                g = (g - 128) * contrast + 128 + bright;
+                b = (b - 128) * contrast + 128 + bright;
+                d[i] = Math.max(0, Math.min(255, r));
+                d[i + 1] = Math.max(0, Math.min(255, g));
+                d[i + 2] = Math.max(0, Math.min(255, b));
+            }
+            ctx.putImageData(img, 0, 0);
+            unsharpMask(canvas, filter === 'enhanced' ? 0.55 : 0.4, 1.0);
+            return canvas;
+        }
+
+        function unsharpMask(canvas, amount, radius) {
+            // simple high-pass sharpen via canvas filter blur difference approximation
+            const w = canvas.width, h = canvas.height;
+            const ctx = canvas.getContext('2d');
+            const src = ctx.getImageData(0, 0, w, h);
+            const blurC = document.createElement('canvas');
+            blurC.width = w; blurC.height = h;
+            const bctx = blurC.getContext('2d');
+            bctx.filter = 'blur(' + (radius || 1) + 'px)';
+            bctx.drawImage(canvas, 0, 0);
+            const blurred = bctx.getImageData(0, 0, w, h).data;
+            const d = src.data;
+            for (let i = 0; i < d.length; i += 4) {
+                d[i] = Math.max(0, Math.min(255, d[i] + (d[i] - blurred[i]) * amount));
+                d[i + 1] = Math.max(0, Math.min(255, d[i + 1] + (d[i + 1] - blurred[i + 1]) * amount));
+                d[i + 2] = Math.max(0, Math.min(255, d[i + 2] + (d[i + 2] - blurred[i + 2]) * amount));
+            }
+            ctx.putImageData(src, 0, 0);
+        }
+
+        async function renderDocReview(showBusy) {
+            if (showBusy !== false) showScanOverlay();
+            try {
+                const view = document.getElementById('docReviewCanvas');
+                // Crop mode previews the full source so corner handles match the image.
+                if (docReview.cropMode) {
+                    view.width = docReview.sourceCanvas.width;
+                    view.height = docReview.sourceCanvas.height;
+                    view.getContext('2d').drawImage(docReview.sourceCanvas, 0, 0);
+                    fitReviewTransform();
+                    drawReviewCropOverlay();
+                    return;
+                }
+                let extracted = await extractWithCorners(docReview.sourceCanvas, docReview.corners);
+                if (SCAN_AUTO_PORTRAIT && extracted.width > extracted.height) {
+                    extracted = rotateCanvas90CW(extracted);
+                }
+                const out = cloneCanvas(extracted);
+                if (!docReview.compare) applyEnhanceFilter(out, docReview.filter);
+                if ((docReview.filter === 'auto' || docReview.filter === 'bw') && !docReview.compare) {
+                    try {
+                        const deg = await requestHaikuRotation(out);
+                        if (deg) {
+                            const rotated = rotateCanvasDegrees(out, deg);
+                            out.width = rotated.width; out.height = rotated.height;
+                            out.getContext('2d').drawImage(rotated, 0, 0);
+                        }
+                    } catch (_) {}
+                }
+                view.width = out.width; view.height = out.height;
+                view.getContext('2d').drawImage(out, 0, 0);
+                docReview.processedUrl = out.toDataURL('image/jpeg', SCAN_JPEG_QUALITY);
+                fitReviewTransform();
+                drawReviewCropOverlay();
+            } finally {
+                if (showBusy !== false) hideScanOverlay();
+            }
+        }
+
+        function fitReviewTransform() {
+            const wrap = document.getElementById('docReviewWrap');
+            wrap.style.transform = 'translate(' + docReview.panX + 'px,' + docReview.panY + 'px) scale(' + docReview.scale + ')';
+        }
+
+        function drawReviewCropOverlay() {
+            const crop = document.getElementById('docReviewCrop');
+            const stage = document.getElementById('docReviewStage');
+            const canvas = document.getElementById('docReviewCanvas');
+            if (!crop || !stage || !canvas) return;
+            const rect = stage.getBoundingClientRect();
+            crop.width = Math.max(1, Math.round(rect.width));
+            crop.height = Math.max(1, Math.round(rect.height));
+            const ctx = crop.getContext('2d');
+            ctx.clearRect(0, 0, crop.width, crop.height);
+            crop.classList.toggle('active', !!docReview.cropMode);
+            if (!docReview.cropMode) {
+                document.getElementById('docLoupe').classList.remove('show');
+                return;
+            }
+            // Map source corners into stage space approximating the displayed canvas box
+            const disp = getReviewImageBox();
+            if (!disp) return;
+            const pts = docReview.corners.map(p => ({
+                x: disp.left + (p.x / docReview.sourceCanvas.width) * disp.width,
+                y: disp.top + (p.y / docReview.sourceCanvas.height) * disp.height
+            }));
+            ctx.fillStyle = 'rgba(0,0,0,0.35)';
+            ctx.fillRect(0, 0, crop.width, crop.height);
+            ctx.save();
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.beginPath();
+            ctx.moveTo(pts[0].x, pts[0].y);
+            for (let i = 1; i < 4; i++) ctx.lineTo(pts[i].x, pts[i].y);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+            ctx.strokeStyle = '#22c55e';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(pts[0].x, pts[0].y);
+            for (let i = 1; i < 4; i++) ctx.lineTo(pts[i].x, pts[i].y);
+            ctx.closePath();
+            ctx.stroke();
+            pts.forEach((p, idx) => {
+                ctx.beginPath();
+                ctx.fillStyle = docReview.dragging === idx ? '#60a5fa' : '#22c55e';
+                ctx.arc(p.x, p.y, 12, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.fillStyle = '#fff';
+                ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+
+        function getReviewImageBox() {
+            const stage = document.getElementById('docReviewStage');
+            const src = docReview.sourceCanvas;
+            if (!stage || !src) return null;
+            const sw = stage.clientWidth, sh = stage.clientHeight;
+            const scale = Math.min(sw / src.width, sh / src.height);
+            const width = src.width * scale * docReview.scale;
+            const height = src.height * scale * docReview.scale;
+            const left = (sw - width) / 2 + docReview.panX;
+            const top = (sh - height) / 2 + docReview.panY;
+            return { left, top, width, height, scale: scale * docReview.scale };
+        }
+
+        function onCropPointerDown(e) {
+            if (!docReview.cropMode) return;
+            const box = getReviewImageBox();
+            if (!box) return;
+            const rect = e.target.getBoundingClientRect();
+            const x = e.clientX - rect.left, y = e.clientY - rect.top;
+            const pts = docReview.corners.map(p => ({
+                x: box.left + (p.x / docReview.sourceCanvas.width) * box.width,
+                y: box.top + (p.y / docReview.sourceCanvas.height) * box.height
+            }));
+            let hit = -1;
+            for (let i = 0; i < 4; i++) if (Math.hypot(pts[i].x - x, pts[i].y - y) < 28) hit = i;
+            if (hit < 0) return;
+            docReview.dragging = hit;
+            e.target.setPointerCapture(e.pointerId);
+            showLoupe(e.clientX, e.clientY, hit);
+            drawReviewCropOverlay();
+        }
+
+        function onCropPointerMove(e) {
+            if (docReview.dragging == null || !docReview.cropMode) return;
+            const crop = document.getElementById('docReviewCrop');
+            const rect = crop.getBoundingClientRect();
+            const box = getReviewImageBox();
+            if (!box) return;
+            const x = e.clientX - rect.left, y = e.clientY - rect.top;
+            const nx = ((x - box.left) / box.width) * docReview.sourceCanvas.width;
+            const ny = ((y - box.top) / box.height) * docReview.sourceCanvas.height;
+            docReview.corners[docReview.dragging] = {
+                x: Math.max(0, Math.min(docReview.sourceCanvas.width, nx)),
+                y: Math.max(0, Math.min(docReview.sourceCanvas.height, ny))
+            };
+            showLoupe(e.clientX, e.clientY, docReview.dragging);
+            drawReviewCropOverlay();
+        }
+
+        async function onCropPointerUp() {
+            if (docReview.dragging == null) return;
+            docReview.dragging = null;
+            document.getElementById('docLoupe').classList.remove('show');
+            await renderDocReview(false);
+        }
+
+        function showLoupe(clientX, clientY, idx) {
+            const loupe = document.getElementById('docLoupe');
+            const lc = document.getElementById('docLoupeCanvas');
+            const stage = document.getElementById('docReviewStage');
+            const srect = stage.getBoundingClientRect();
+            const p = docReview.corners[idx];
+            const zoom = 2.5;
+            const srcSize = 80;
+            const ctx = lc.getContext('2d');
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, lc.width, lc.height);
+            ctx.drawImage(
+                docReview.sourceCanvas,
+                p.x - srcSize / 2, p.y - srcSize / 2, srcSize, srcSize,
+                0, 0, lc.width, lc.height
+            );
+            ctx.strokeStyle = '#60a5fa';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(lc.width / 2, 0); ctx.lineTo(lc.width / 2, lc.height);
+            ctx.moveTo(0, lc.height / 2); ctx.lineTo(lc.width, lc.height / 2);
+            ctx.stroke();
+            loupe.classList.add('show');
+            let lx = clientX - srect.left - 48;
+            let ly = clientY - srect.top - 110;
+            lx = Math.max(8, Math.min(srect.width - 104, lx));
+            ly = Math.max(8, Math.min(srect.height - 104, ly));
+            loupe.style.left = lx + 'px';
+            loupe.style.top = ly + 'px';
+        }
+
+        function onReviewTouchStart(e) {
+            if (docReview.cropMode) return;
+            if (e.touches.length === 1) {
+                docReview._pan = { x: e.touches[0].clientX, y: e.touches[0].clientY, panX: docReview.panX, panY: docReview.panY };
+            } else if (e.touches.length === 2) {
+                const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+                docReview.pinch = { dist: d, scale: docReview.scale };
+                docReview._pan = null;
+            }
+        }
+        function onReviewTouchMove(e) {
+            if (docReview.cropMode) return;
+            if (e.touches.length === 2 && docReview.pinch) {
+                e.preventDefault();
+                const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+                docReview.scale = Math.max(1, Math.min(4, docReview.pinch.scale * (d / docReview.pinch.dist)));
+                fitReviewTransform();
+                drawReviewCropOverlay();
+            } else if (e.touches.length === 1 && docReview._pan && docReview.scale > 1) {
+                e.preventDefault();
+                docReview.panX = docReview._pan.panX + (e.touches[0].clientX - docReview._pan.x);
+                docReview.panY = docReview._pan.panY + (e.touches[0].clientY - docReview._pan.y);
+                fitReviewTransform();
+                drawReviewCropOverlay();
+            }
+        }
+        function onReviewTouchEnd() { docReview._pan = null; docReview.pinch = null; }
+
+        async function saveDocReview() {
+            if (!docReview.processedUrl) await renderDocReview();
+            const processed = docReview.processedUrl;
+            const original = docReview.originalUrl;
+            if (!processed) {
+                await appAlert('Nothing to save — processing failed.');
+                return;
+            }
+            const now = new Date().toISOString();
+            const doc = {
+                id: 'doc_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+                userId: settings.localUserId || genLocalUserId(),
+                loadId: docScan.lId,
+                type: 'ticket',
+                original,
+                processed,
+                filter: docReview.filter,
+                createdAt: now,
+                modifiedAt: now,
+                syncStatus: 'local',
+                corners: docReview.corners,
+                rotation: docReview.rotation
+            };
+
+            if (docScan.mode === 'edit') {
+                if (!editingLoad) { await appAlert('Load form is no longer open.'); return; }
+                editingLoad.stagedTicket = processed;
+                editingLoad.stagedDocument = doc;
+                editingLoad.removeTicket = false;
+                updateEditTicketUI();
+                closeDocReview();
+                haptic(20);
+                return;
+            }
+
+            if (docScan.sId == null || docScan.lId == null) {
+                await appAlert('Could not determine which load to attach this scan to.');
+                return;
+            }
+
+            const key = loadKey(docScan.sId, docScan.lId);
+            processingLoads.add(key);
+            renderHistory();
+            try {
+                const ok = persistLoadDocument(docScan.sId, docScan.lId, doc, docScan.mode, docScan.docId);
+                if (!ok) {
+                    await appAlert('Could not save the scan locally. Free up storage and try again.');
+                    return;
+                }
+                enqueueDocSync(docScan.sId, docScan.lId, doc.id);
+                closeDocReview();
+                haptic([12, 40, 12]);
+            } finally {
+                processingLoads.delete(key);
+                renderHistory();
+            }
+        }
+
+        function persistLoadDocument(sId, lId, doc, mode, replaceId) {
+            let h = JSON.parse(localStorage.getItem('driver_history') || '[]');
+            const sIdx = h.findIndex(s => s && s.id == sId);
+            if (sIdx === -1) return false;
+            if (!Array.isArray(h[sIdx].loads)) return false;
+            const lIdx = h[sIdx].loads.findIndex(l => l && l.id == lId);
+            if (lIdx === -1) return false;
+            const load = h[sIdx].loads[lIdx];
+            let docs = Array.isArray(load.documents) ? load.documents.slice() : [];
+            // migrate legacy ticket
+            if (!docs.length && load.ticket) {
+                docs.push({
+                    id: 'legacy_' + load.id,
+                    userId: settings.localUserId,
+                    loadId: load.id,
+                    type: 'ticket',
+                    processed: load.ticket,
+                    original: null,
+                    createdAt: null,
+                    modifiedAt: null,
+                    syncStatus: 'local',
+                    filter: 'auto'
+                });
+            }
+            if (mode === 'replace') {
+                if (replaceId) {
+                    const i = docs.findIndex(d => d && d.id === replaceId);
+                    if (i >= 0) docs[i] = doc;
+                    else docs = [doc];
+                } else {
+                    docs = [doc];
+                }
+            } else if (mode === 'add') {
+                docs.push(doc);
+            } else {
+                // direct capture: replace primary / single-doc default, keep extras
+                if (docs.length <= 1) docs = [doc];
+                else docs[docs.length - 1] = doc;
+            }
+            load.documents = docs;
+            load.ticket = doc.processed; // primary preview + green icon source of truth
+            h[sIdx].loads[lIdx] = load;
+            try {
+                localStorage.setItem('driver_history', JSON.stringify(h));
+                return true;
+            } catch (err) {
+                console.error('[scan] local save failed:', err);
+                return false;
+            }
+        }
+
+        function enqueueDocSync(sId, lId, docId) {
+            // Offline-first queue. No cloud backend yet — mark local and keep queue for future sync.
+            let q = [];
+            try { q = JSON.parse(localStorage.getItem(DOC_SYNC_KEY) || '[]'); } catch (_) { q = []; }
+            if (!Array.isArray(q)) q = [];
+            const exists = q.some(item => item && item.sId == sId && item.lId == lId && item.docId === docId);
+            if (!exists) {
+                q.push({ sId, lId, docId, userId: settings.localUserId, queuedAt: Date.now(), attempts: 0, status: 'local' });
+                try { localStorage.setItem(DOC_SYNC_KEY, JSON.stringify(q.slice(-200))); } catch (_) {}
+            }
+            // When online, we currently confirm local persistence as success (no remote endpoint).
+            flushDocSyncQueue();
+        }
+
+        function flushDocSyncQueue() {
+            if (!navigator.onLine) return;
+            let q = [];
+            try { q = JSON.parse(localStorage.getItem(DOC_SYNC_KEY) || '[]'); } catch (_) { return; }
+            if (!Array.isArray(q) || !q.length) return;
+            // No remote API in this app — keep entries marked local/synced-local without deleting images.
+            const next = q.map(item => item ? { ...item, status: 'local', lastTriedAt: Date.now() } : item);
+            try { localStorage.setItem(DOC_SYNC_KEY, JSON.stringify(next)); } catch (_) {}
+        }
+        window.addEventListener('online', flushDocSyncQueue);
+
+        function captureEditTicket() {
+            if (!editingLoad) return;
+            const hasSaved = !!editingLoad.savedTicket && !editingLoad.removeTicket;
+            const run = () => openDocScanner({ mode: 'edit', sId: editingLoad.sId, lId: editingLoad.lId });
+            if (hasSaved && !editingLoad.stagedTicket) {
+                appConfirm('This load already has a saved ticket. Replace it with a new capture?', { title: 'Replace Ticket', variant: 'warn', confirmText: 'Replace' })
+                    .then(ok => { if (ok) run(); });
+            } else {
+                run();
+            }
+        }
+
+        function uploadTicket(sId, lId) {
+            document.querySelectorAll('.swipe-container').forEach(c => c.classList.remove('swiped', 'swiped-right'));
+            openDocScanner({ mode: 'direct', sId, lId });
+        }
+
+        function saveTicket(sId, lId, dataUrl) {
+            const now = new Date().toISOString();
+            const doc = {
+                id: 'doc_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+                userId: settings.localUserId || genLocalUserId(),
+                loadId: lId,
+                type: 'ticket',
+                original: null,
+                processed: dataUrl,
+                filter: 'auto',
+                createdAt: now,
+                modifiedAt: now,
+                syncStatus: 'local'
+            };
+            if (!persistLoadDocument(sId, lId, doc, 'replace', null)) {
+                appAlert('Storage full. Delete some older settlements or photos to free up space.');
+                return;
+            }
+            enqueueDocSync(sId, lId, doc.id);
+            renderHistory();
+        }
+
+        function removeTicket(sId, lId, docId) {
             let h = JSON.parse(localStorage.getItem('driver_history') || '[]');
             const sIdx = h.findIndex(s => s && s.id == sId);
             if (sIdx === -1) return;
             if (!Array.isArray(h[sIdx].loads)) return;
             const lIdx = h[sIdx].loads.findIndex(l => l && l.id == lId);
             if (lIdx === -1) return;
-            delete h[sIdx].loads[lIdx].ticket;
+            const load = h[sIdx].loads[lIdx];
+            let docs = getLoadDocs(load).filter(d => d.id !== (docId || (docViewer.docs[docViewer.index] && docViewer.docs[docViewer.index].id)));
+            if (!docId && docViewer.active) {
+                // already filtered above using current viewer doc
+            }
+            if (!docs.length) {
+                delete load.ticket;
+                delete load.documents;
+            } else {
+                load.documents = docs;
+                load.ticket = docs[docs.length - 1].processed || docs[docs.length - 1].original;
+            }
+            h[sIdx].loads[lIdx] = load;
             localStorage.setItem('driver_history', JSON.stringify(h));
             renderHistory();
         }
@@ -1867,21 +3289,113 @@
             const s = h.find(s => s && s.id == sId);
             if (!s || !Array.isArray(s.loads)) return;
             const l = s.loads.find(l => l && l.id == lId);
-            if (!l || !l.ticket) return;
-            const overlay = document.createElement('div');
-            overlay.className = 'ticket-overlay';
-            overlay.innerHTML = `<img src="${l.ticket}" alt="Load ticket"><div class="ticket-overlay-actions"><button class="vt-close" style="background:#1e293b;">CLOSE</button><button class="vt-retake" style="background:#3b82f6;">RETAKE</button><button class="vt-delete" style="background:#ef4444;">DELETE</button></div>`;
-            document.body.appendChild(overlay);
+            if (!l) return;
+            const docs = getLoadDocs(l);
+            if (!docs.length) { uploadTicket(sId, lId); return; }
+            openDocViewer(sId, lId, docs, docs.length - 1, l);
+        }
+
+        function openDocViewer(sId, lId, docs, index, load) {
+            docViewer.active = true;
+            docViewer.sId = sId;
+            docViewer.lId = lId;
+            docViewer.docs = docs;
+            docViewer.index = Math.max(0, Math.min(docs.length - 1, index || 0));
+            const root = document.getElementById('docViewer');
+            root.classList.add('active');
+            root.setAttribute('aria-hidden', 'false');
             lockBodyScroll();
-            const close = () => { overlay.remove(); unlockBodyScroll(); };
-            overlay.querySelector('.vt-close').onclick = close;
-            overlay.querySelector('.vt-retake').onclick = async () => {
-                const ok = await appConfirm('Replace this saved ticket with a new capture?', { title: 'Replace Ticket', variant: 'warn', confirmText: 'Replace' });
+            bindViewerControlsOnce();
+            renderDocViewer(load);
+        }
+
+        function closeDocViewer() {
+            docViewer.active = false;
+            const root = document.getElementById('docViewer');
+            if (root) {
+                root.classList.remove('active');
+                root.setAttribute('aria-hidden', 'true');
+            }
+            unlockBodyScroll();
+        }
+
+        let viewerControlsBound = false;
+        function bindViewerControlsOnce() {
+            if (viewerControlsBound) return;
+            viewerControlsBound = true;
+            document.getElementById('docViewerClose').onclick = () => closeDocViewer();
+            document.getElementById('docViewerReplace').onclick = async () => {
+                const ok = await appConfirm('Replace this saved document with a new scan?', { title: 'Replace Document', variant: 'warn', confirmText: 'Replace' });
                 if (!ok) return;
-                close();
-                uploadTicket(sId, lId);   // overwrites the same load's ticket — no duplicate
+                const docId = docViewer.docs[docViewer.index] && docViewer.docs[docViewer.index].id;
+                closeDocViewer();
+                openDocScanner({ mode: 'replace', sId: docViewer.sId, lId: docViewer.lId, docId });
             };
-            overlay.querySelector('.vt-delete').onclick = () => { removeTicket(sId, lId); close(); };
+            document.getElementById('docViewerAdd').onclick = () => {
+                closeDocViewer();
+                openDocScanner({ mode: 'add', sId: docViewer.sId, lId: docViewer.lId });
+            };
+            document.getElementById('docViewerDelete').onclick = async () => {
+                const ok = await appConfirm('Delete this document from the load?', { title: 'Delete Document', variant: 'danger', confirmText: 'Delete' });
+                if (!ok) return;
+                const docId = docViewer.docs[docViewer.index] && docViewer.docs[docViewer.index].id;
+                removeTicket(docViewer.sId, docViewer.lId, docId);
+                closeDocViewer();
+            };
+            document.getElementById('docViewerShare').onclick = () => shareCurrentDoc();
+        }
+
+        function renderDocViewer(load) {
+            const doc = docViewer.docs[docViewer.index];
+            if (!doc) return;
+            const img = document.getElementById('docViewerImg');
+            img.src = doc.processed || doc.original || '';
+            const title = document.getElementById('docViewerTitle');
+            const sub = document.getElementById('docViewerSub');
+            const miles = load && load.miles != null ? load.miles + ' miles' : 'Load document';
+            title.textContent = miles + (load && load.day ? ' · ' + load.day : '');
+            const when = doc.createdAt ? new Date(doc.createdAt).toLocaleString() : 'Saved on device';
+            const sync = doc.syncStatus === 'failed' ? ' · Upload failed' : (doc.syncStatus === 'pending' ? ' · Pending sync' : ' · Saved locally');
+            sub.textContent = when + sync;
+            const thumbs = document.getElementById('docViewerThumbs');
+            if (docViewer.docs.length > 1) {
+                thumbs.classList.add('show');
+                thumbs.innerHTML = docViewer.docs.map((d, i) =>
+                    `<img class="doc-viewer-thumb ${i === docViewer.index ? 'active' : ''}" src="${d.processed || d.original}" alt="Document ${i + 1}" data-idx="${i}">`
+                ).join('');
+                thumbs.querySelectorAll('.doc-viewer-thumb').forEach(el => {
+                    el.onclick = () => {
+                        docViewer.index = parseInt(el.dataset.idx, 10) || 0;
+                        renderDocViewer(load);
+                    };
+                });
+            } else {
+                thumbs.classList.remove('show');
+                thumbs.innerHTML = '';
+            }
+        }
+
+        async function shareCurrentDoc() {
+            const doc = docViewer.docs[docViewer.index];
+            if (!doc) return;
+            const url = doc.processed || doc.original;
+            try {
+                const res = await fetch(url);
+                const blob = await res.blob();
+                const file = new File([blob], 'load-document.jpg', { type: 'image/jpeg' });
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share({ files: [file], title: 'Load document' });
+                    return;
+                }
+            } catch (err) {
+                console.warn('[scan] share failed, falling back to download:', err);
+            }
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'load-document.jpg';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
         }
 
         function renderHistory(){
@@ -1923,7 +3437,14 @@
                     const dayTotal = grouped[day].reduce((sum, item) => sum + item.pay, 0);
                     breakdownHtml += `<div class="day-section" data-day="${day}"><div class="flex justify-between items-center mb-3 px-1 day-header" onclick="toggleDay(this, event)"><span class="day-header-text">${day}</span><span class="day-total-text">$${dayTotal.toFixed(2)}</span></div><div class="day-loads">${grouped[day].map(l => {
                         const isCustom = l.pricingMode === 'fixed' || l.pricingMode === 'perton';
-                        return `<div class="swipe-container" id="container-${l.id}" ontouchstart="ts(event, '${l.id}')" ontouchmove="tm(event, '${l.id}')" ontouchend="te(event, '${l.id}')"><div class="edit-box-flat" onclick="openEditModal('${entry.id}','${l.id}')">EDIT</div><div class="delete-box-flat" onclick="removeLoad('${entry.id}', '${l.id}')">DELETE</div><div class="swipe-content"><div class="flex flex-col"><div class="flex items-center"><span class="text-lg font-bold text-gray-100">${l.miles} miles</span><span class="ticket-icon ${l.ticket ? 'saved' : 'no-ticket'}" onclick="event.stopPropagation();${l.ticket ? `viewTicket('${entry.id}','${l.id}')` : `uploadTicket('${entry.id}','${l.id}')`}">${cameraSvg}</span>${l.note ? `<span class="note-icon" onclick="event.stopPropagation();viewNote('${entry.id}','${l.id}')">${noteSvg}</span>` : ''}</div><div class="flex items-center text-[10px] text-gray-500 font-bold uppercase"><span>${l.tons} TONS</span>${isCustom ? '<span class="custom-badge">· CUSTOM</span>' : ''}</div></div><span class="mileage-pay-text">$${l.pay.toFixed(2)}</span></div></div>`;
+                        const docs = getLoadDocs(l);
+                        const hasTicket = docs.length > 0 || !!l.ticket;
+                        const pKey = loadKey(entry.id, l.id);
+                        const isProcessing = processingLoads.has(pKey);
+                        const iconClass = isProcessing ? 'processing' : (hasTicket ? 'saved' : 'no-ticket');
+                        const countBadge = (!isProcessing && docs.length > 1) ? `<span class="ticket-count" aria-label="${docs.length} documents">${docs.length}</span>` : '';
+                        const tapAction = hasTicket ? `viewTicket('${entry.id}','${l.id}')` : `uploadTicket('${entry.id}','${l.id}')`;
+                        return `<div class="swipe-container" id="container-${l.id}" ontouchstart="ts(event, '${l.id}')" ontouchmove="tm(event, '${l.id}')" ontouchend="te(event, '${l.id}')"><div class="edit-box-flat" onclick="openEditModal('${entry.id}','${l.id}')">EDIT</div><div class="delete-box-flat" onclick="removeLoad('${entry.id}', '${l.id}')">DELETE</div><div class="swipe-content"><div class="flex flex-col"><div class="flex items-center"><span class="text-lg font-bold text-gray-100">${l.miles} miles</span><span class="ticket-icon ${iconClass}" role="button" aria-label="${hasTicket ? 'View saved document' : 'Scan document'}" onclick="event.stopPropagation();${tapAction}">${cameraSvg}${countBadge}</span>${l.note ? `<span class="note-icon" onclick="event.stopPropagation();viewNote('${entry.id}','${l.id}')">${noteSvg}</span>` : ''}</div><div class="flex items-center text-[10px] text-gray-500 font-bold uppercase"><span>${l.tons} TONS</span>${isCustom ? '<span class="custom-badge">· CUSTOM</span>' : ''}</div></div><span class="mileage-pay-text">$${l.pay.toFixed(2)}</span></div></div>`;
                     }).join('')}</div></div>`;
                 }
                 const card = document.createElement('div');
