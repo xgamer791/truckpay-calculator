@@ -6,8 +6,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="driverpay-build" content="2.9.6">
-    <title>DriverPay Pro v2.9.6</title>
+    <meta name="driverpay-build" content="2.9.7">
+    <title>DriverPay Pro v2.9.7</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -327,7 +327,7 @@
     <header class="app-header">
         <div class="header-title">
             <h1>DriverPay <span>Pro</span></h1>
-            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v2.9.6</p>
+            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v2.9.7</p>
         </div>
         <div class="menu-container">
             <button class="menu-btn" onclick="toggleMenu(event)" aria-label="Menu">
@@ -421,7 +421,7 @@
             </div>
             <div class="footer-tagline">Built for the long haul</div>
             <div class="footer-meta">
-                <span class="footer-version">v2.9.6</span>
+                <span class="footer-version">v2.9.7</span>
                 <span class="footer-meta-dot"></span>
                 <span>© 2026</span>
                 <span class="footer-meta-dot"></span>
@@ -710,7 +710,7 @@
         <div class="scan-sublabel" id="scanSublabel">Locking onto edges and cleaning up</div>
     </div>
 
-    <!-- driverpay-scanner:2.9.6 -->
+    <!-- driverpay-scanner:2.9.7 -->
     <div class="doc-scanner" id="docScanner" aria-hidden="true" role="dialog" aria-label="Document scanner">
         <div class="doc-scanner-stage">
             <video id="docScannerVideo" class="doc-scanner-video" playsinline muted autoplay></video>
@@ -768,11 +768,11 @@
             <div class="doc-loupe" id="docLoupe"><canvas id="docLoupeCanvas" width="192" height="192"></canvas></div>
         </div>
         <div class="doc-review-filters" id="docReviewFilters" role="tablist" aria-label="Enhancement filters">
-            <button type="button" class="doc-filter active" data-filter="auto">Auto Enhance</button>
+            <button type="button" class="doc-filter" data-filter="auto">Auto Enhance</button>
             <button type="button" class="doc-filter" data-filter="original">Original Color</button>
             <button type="button" class="doc-filter" data-filter="enhanced">Enhanced Color</button>
             <button type="button" class="doc-filter" data-filter="gray">Grayscale</button>
-            <button type="button" class="doc-filter" data-filter="bw">Black &amp; White</button>
+            <button type="button" class="doc-filter active" data-filter="bw">Black &amp; White</button>
         </div>
         <div class="doc-review-tools">
             <button type="button" class="doc-tool" id="docReviewCropToggle">Adjust Corners</button>
@@ -967,7 +967,7 @@
 
         function applySettingsToHeader() {
             const sub = document.getElementById('headerSubtitle');
-            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v2.9.6`;
+            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v2.9.7`;
         }
 
         let savedScrollY = 0;
@@ -2945,7 +2945,7 @@
             docReview.sourceCanvas = cloneCanvas(sourceCanvas);
             docReview.originalCanvas = cloneCanvas(sourceCanvas);
             docReview.originalUrl = originalUrl || sourceCanvas.toDataURL('image/jpeg', 0.92);
-            docReview.filter = 'auto';
+            docReview.filter = 'bw';
             docReview.rotation = 0;
             docReview.cropMode = false;
             docReview.compare = false;
@@ -2957,7 +2957,7 @@
             root.classList.add('active');
             root.setAttribute('aria-hidden', 'false');
             lockBodyScroll();
-            document.querySelectorAll('.doc-filter').forEach(b => b.classList.toggle('active', b.dataset.filter === 'auto'));
+            document.querySelectorAll('.doc-filter').forEach(b => b.classList.toggle('active', b.dataset.filter === 'bw'));
             document.getElementById('docReviewCropToggle').classList.remove('active');
             bindReviewControlsOnce();
             showScanOverlay();
