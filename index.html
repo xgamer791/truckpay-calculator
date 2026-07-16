@@ -419,7 +419,7 @@
             </div>
             <div class="footer-tagline">Built for the long haul</div>
             <div class="footer-meta">
-                <span class="footer-version">v2.9.0</span>
+                <span class="footer-version">v2.9.1</span>
                 <span class="footer-meta-dot"></span>
                 <span>© 2026</span>
                 <span class="footer-meta-dot"></span>
@@ -2025,8 +2025,8 @@
         const DOC_COOLDOWN_MS = 2500;
         const DOC_CORNER_SMOOTH = 0.35;
         const DOC_READY_MOVE_PX = 10;
-        const DOC_MIN_AREA_RATIO = 0.08;
-        const DOC_MAX_AREA_RATIO = 0.92;
+        const DOC_MIN_AREA_RATIO = 0.05;
+        const DOC_MAX_AREA_RATIO = 0.78;
         const processingLoads = new Set(); // `${sId}|${lId}` while processing
 
         let docScan = {
@@ -2194,30 +2194,279 @@
             return sum2 / n - mean * mean;
         }
 
+        function orderCornerPoints(pts) {
+            if (!pts || pts.length !== 4) return null;
+            const copy = pts.map(p => ({ x: p.x, y: p.y }));
+            const sum = copy.map(p => p.x + p.y);
+            const diff = copy.map(p => p.y - p.x);
+            const tl = copy[sum.indexOf(Math.min.apply(null, sum))];
+            const br = copy[sum.indexOf(Math.max.apply(null, sum))];
+            const tr = copy[diff.indexOf(Math.min.apply(null, diff))];
+            const bl = copy[diff.indexOf(Math.max.apply(null, diff))];
+            if (!tl || !tr || !br || !bl) return null;
+            // Reject degenerate ordering (duplicate points)
+            const uniq = [tl, tr, br, bl].map(p => Math.round(p.x) + ',' + Math.round(p.y));
+            if (new Set(uniq).size < 4) return null;
+            return {
+                topLeftCorner: tl,
+                topRightCorner: tr,
+                bottomRightCorner: br,
+                bottomLeftCorner: bl
+            };
+        }
+
+        function meanBrightnessInQuad(srcMat, corners) {
+            let mask = null, mean = null;
+            try {
+                mask = new cv.Mat.zeros(srcMat.rows, srcMat.cols, cv.CV_8UC1);
+                const pts = cv.matFromArray(4, 1, cv.CV_32SC2, [
+                    Math.round(corners.topLeftCorner.x), Math.round(corners.topLeftCorner.y),
+                    Math.round(corners.topRightCorner.x), Math.round(corners.topRightCorner.y),
+                    Math.round(corners.bottomRightCorner.x), Math.round(corners.bottomRightCorner.y),
+                    Math.round(corners.bottomLeftCorner.x), Math.round(corners.bottomLeftCorner.y)
+                ]);
+                const mv = new cv.MatVector();
+                mv.push_back(pts);
+                cv.fillPoly(mask, mv, new cv.Scalar(255));
+                pts.delete();
+                mv.delete();
+                mean = cv.mean(srcMat, mask);
+                // grayscale-ish luminance from BGR/RGBA mean
+                const b = mean[0], g = mean[1], r = mean[2];
+                return 0.299 * r + 0.587 * g + 0.114 * b;
+            } catch (_) {
+                return 0;
+            } finally {
+                if (mask) mask.delete();
+            }
+        }
+
+        function borderTouchScore(pts, w, h) {
+            const pad = Math.max(4, Math.min(w, h) * 0.02);
+            let touches = 0;
+            for (const p of pts) {
+                if (p.x <= pad || p.y <= pad || p.x >= w - pad || p.y >= h - pad) touches++;
+            }
+            return touches; // 0 best, 4 worst
+        }
+
+        function scoreDocumentCandidate(srcMat, corners, imgW, imgH) {
+            const validation = validateCorners(corners, imgW, imgH);
+            if (!validation.ok) return null;
+            const pts = cornersToArray(corners);
+            const area = quadArea(pts);
+            const frameArea = imgW * imgH;
+            const ratio = area / frameArea;
+            if (ratio < DOC_MIN_AREA_RATIO || ratio > DOC_MAX_AREA_RATIO) return null;
+
+            // Rectangularity via minAreaRect comparison
+            let rectScore = 0.5;
+            try {
+                const mat = cv.matFromArray(4, 1, cv.CV_32FC2, [
+                    pts[0].x, pts[0].y, pts[1].x, pts[1].y, pts[2].x, pts[2].y, pts[3].x, pts[3].y
+                ]);
+                // approximate with side balance
+                const sides = validation.sides;
+                const avgW = (sides.top + sides.bottom) / 2;
+                const avgH = (sides.left + sides.right) / 2;
+                const aspect = avgW / Math.max(1, avgH);
+                if (aspect < 0.35 || aspect > 3.2) { mat.delete(); return null; }
+                const balW = Math.min(sides.top, sides.bottom) / Math.max(sides.top, sides.bottom);
+                const balH = Math.min(sides.left, sides.right) / Math.max(sides.left, sides.right);
+                rectScore = (balW + balH) / 2;
+                mat.delete();
+            } catch (_) {}
+
+            const brightness = meanBrightnessInQuad(srcMat, corners);
+            const touches = borderTouchScore(pts, imgW, imgH);
+            // Prefer bright paper, mid-size quads, few border touches, balanced sides
+            let score = 0;
+            score += Math.min(1, brightness / 220) * 45;          // white paper
+            score += rectScore * 25;
+            score += (1 - Math.abs(ratio - 0.28) / 0.28) * 15;  // prefer ~28% of frame
+            score += (4 - touches) * 4;
+            if (ratio > 0.7) score -= 25;                         // reject near-full-frame
+            if (brightness < 90) score -= 20;                     // dark regions unlikely to be paper
+            return { corners, pts, areaRatio: ratio, sides: validation.sides, score, brightness };
+        }
+
+        function candidatesFromBinary(srcMat, binary) {
+            const out = [];
+            let contours = new cv.MatVector();
+            let hierarchy = new cv.Mat();
+            try {
+                cv.findContours(binary, contours, hierarchy, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE);
+                const frameArea = srcMat.rows * srcMat.cols;
+                for (let i = 0; i < contours.size(); i++) {
+                    const cnt = contours.get(i);
+                    const area = cv.contourArea(cnt);
+                    if (area < frameArea * DOC_MIN_AREA_RATIO || area > frameArea * DOC_MAX_AREA_RATIO) continue;
+                    const peri = cv.arcLength(cnt, true);
+                    let approx = new cv.Mat();
+                    cv.approxPolyDP(cnt, approx, 0.02 * peri, true);
+                    let pts = null;
+                    if (approx.rows === 4) {
+                        pts = [];
+                        for (let r = 0; r < 4; r++) {
+                            pts.push({ x: approx.data32S[r * 2], y: approx.data32S[r * 2 + 1] });
+                        }
+                    } else {
+                        // fallback: minAreaRect / boxPoints
+                        try {
+                            const rect = cv.minAreaRect(cnt);
+                            const boxMat = new cv.Mat();
+                            cv.boxPoints(rect, boxMat);
+                            if (boxMat.rows === 4) {
+                                pts = [];
+                                for (let r = 0; r < 4; r++) {
+                                    pts.push({ x: boxMat.data32F[r * 2], y: boxMat.data32F[r * 2 + 1] });
+                                }
+                            }
+                            boxMat.delete();
+                        } catch (_) {}
+                    }
+                    approx.delete();
+                    if (!pts || pts.length !== 4) continue;
+                    const corners = orderCornerPoints(pts);
+                    if (!corners) continue;
+                    const scored = scoreDocumentCandidate(srcMat, corners, srcMat.cols, srcMat.rows);
+                    if (scored) out.push(scored);
+                }
+            } finally {
+                contours.delete();
+                hierarchy.delete();
+            }
+            return out;
+        }
+
         function detectCornersFromCanvas(canvas) {
             if (typeof cv === 'undefined' || !cv.Mat) return null;
-            let srcMat = null, contour = null;
+            let srcMat = null;
+            const mats = [];
+            const track = (m) => { if (m) mats.push(m); return m; };
             try {
-                const scanner = window.__docScannerInst;
-                if (!scanner) return null;
-                srcMat = cv.imread(canvas);
-                contour = scanner.findPaperContour(srcMat);
-                if (!contour) return null;
-                const corners = scanner.getCornerPoints(contour, srcMat);
-                const validation = validateCorners(corners, canvas.width, canvas.height);
-                if (!validation.ok) return null;
-                const pts = cornersToArray(corners);
-                const area = quadArea(pts);
-                const ratio = area / (canvas.width * canvas.height);
-                if (ratio < DOC_MIN_AREA_RATIO || ratio > DOC_MAX_AREA_RATIO) return null;
-                if (!cornersInsideFrame(pts, canvas.width, canvas.height, 4)) return null;
-                return { corners, pts, areaRatio: ratio, sides: validation.sides };
-            } catch (_) {
+                srcMat = track(cv.imread(canvas));
+                const imgW = srcMat.cols, imgH = srcMat.rows;
+                let gray = track(new cv.Mat());
+                if (srcMat.channels() === 4) cv.cvtColor(srcMat, gray, cv.COLOR_RGBA2GRAY);
+                else if (srcMat.channels() === 3) cv.cvtColor(srcMat, gray, cv.COLOR_RGB2GRAY);
+                else gray = srcMat;
+
+                const candidates = [];
+
+                // Strategy A: bright-paper threshold (handles white form on blue clipboard)
+                try {
+                    const blur = track(new cv.Mat());
+                    cv.GaussianBlur(gray, blur, new cv.Size(5, 5), 0);
+                    // Use high percentile-ish threshold via Otsu on inverted? Prefer THRESH_BINARY of bright regions
+                    const bright = track(new cv.Mat());
+                    cv.threshold(blur, bright, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU);
+                    // If Otsu picked dark paper as 0, ensure paper is white by checking mean
+                    const mu = cv.mean(blur)[0];
+                    // Also try a fixed high threshold for white paper
+                    const bright2 = track(new cv.Mat());
+                    cv.threshold(blur, bright2, Math.max(150, mu + 25), 255, cv.THRESH_BINARY);
+                    const kernel = track(cv.Mat.ones(5, 5, cv.CV_8U));
+                    const closed = track(new cv.Mat());
+                    cv.morphologyEx(bright2, closed, cv.MORPH_CLOSE, kernel);
+                    const opened = track(new cv.Mat());
+                    cv.morphologyEx(closed, opened, cv.MORPH_OPEN, kernel);
+                    candidates.push.apply(candidates, candidatesFromBinary(srcMat, opened));
+                    candidates.push.apply(candidates, candidatesFromBinary(srcMat, bright));
+                } catch (err) {
+                    console.warn('[scan] bright detect failed:', err);
+                }
+
+                // Strategy B: Canny edges + approx poly
+                try {
+                    const blurred = track(new cv.Mat());
+                    cv.GaussianBlur(gray, blurred, new cv.Size(3, 3), 0);
+                    const edges = track(new cv.Mat());
+                    cv.Canny(blurred, edges, 40, 140);
+                    const k2 = track(cv.Mat.ones(3, 3, cv.CV_8U));
+                    const dil = track(new cv.Mat());
+                    cv.dilate(edges, dil, k2);
+                    candidates.push.apply(candidates, candidatesFromBinary(srcMat, dil));
+                } catch (err) {
+                    console.warn('[scan] canny detect failed:', err);
+                }
+
+                // Strategy C: adaptive threshold
+                try {
+                    const adapt = track(new cv.Mat());
+                    cv.adaptiveThreshold(gray, adapt, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 31, 8);
+                    candidates.push.apply(candidates, candidatesFromBinary(srcMat, adapt));
+                } catch (err) {
+                    console.warn('[scan] adaptive detect failed:', err);
+                }
+
+                // Strategy D: jscanify largest contour, but only if it scores well (reject full-frame)
+                try {
+                    const scanner = window.__docScannerInst;
+                    if (scanner) {
+                        const contour = scanner.findPaperContour(srcMat);
+                        if (contour) {
+                            try {
+                                const raw = scanner.getCornerPoints(contour, srcMat);
+                                const corners = orderCornerPoints(cornersToArray(raw) || []);
+                                const ordered = corners || raw;
+                                const scored = scoreDocumentCandidate(srcMat, ordered, imgW, imgH);
+                                if (scored) candidates.push(scored);
+                            } finally {
+                                if (typeof contour.delete === 'function') contour.delete();
+                            }
+                        }
+                    }
+                } catch (err) {
+                    console.warn('[scan] jscanify detect failed:', err);
+                }
+
+                if (!candidates.length) {
+                    console.log('[scan] detect: no document candidates');
+                    return null;
+                }
+                candidates.sort((a, b) => b.score - a.score);
+                const best = candidates[0];
+                console.log('[scan] detect best score=' + best.score.toFixed(1) +
+                    ' area=' + (best.areaRatio * 100).toFixed(1) + '%' +
+                    ' bright=' + best.brightness.toFixed(0) +
+                    ' corners=' + describeCorners(best.corners) +
+                    ' from ' + candidates.length + ' candidates');
+                return best;
+            } catch (err) {
+                console.error('[scan] detectCornersFromCanvas error:', err);
                 return null;
             } finally {
-                if (contour && typeof contour.delete === 'function') { try { contour.delete(); } catch (_) {} }
-                if (srcMat) { try { srcMat.delete(); } catch (_) {} }
+                // delete tracked mats except careful with gray alias
+                const seen = new Set();
+                for (let i = mats.length - 1; i >= 0; i--) {
+                    const m = mats[i];
+                    if (!m || seen.has(m)) continue;
+                    seen.add(m);
+                    try { m.delete(); } catch (_) {}
+                }
             }
+        }
+
+        function refineDocumentCorners(sourceCanvas, hintCorners) {
+            try {
+                const working = downsizeCanvas(sourceCanvas, 1400);
+                const found = detectCornersFromCanvas(working);
+                if (found && found.corners) {
+                    return cornersToArray(scaleCorners(found.corners, working.width, working.height, sourceCanvas.width, sourceCanvas.height));
+                }
+            } catch (err) {
+                console.warn('[scan] refine detect failed:', err);
+            }
+            if (hintCorners) {
+                const arr = Array.isArray(hintCorners) ? hintCorners : cornersToArray(hintCorners);
+                if (arr) {
+                    const ratio = quadArea(arr) / (sourceCanvas.width * sourceCanvas.height);
+                    if (ratio >= DOC_MIN_AREA_RATIO && ratio <= DOC_MAX_AREA_RATIO) return arr;
+                    console.log('[scan] reject hint corners — area ratio ' + (ratio * 100).toFixed(1) + '%');
+                }
+            }
+            return null;
         }
 
         function drawScannerOverlay(canvas, video, pts, confidence) {
@@ -2620,9 +2869,11 @@
                 full.width = video.videoWidth;
                 full.height = video.videoHeight;
                 full.getContext('2d').drawImage(video, 0, 0);
-                const corners = docScan.lastGood && docScan.lastGood.corners
-                    ? scaleCorners(docScan.lastGood.corners, docScan.lastGood.detectW, docScan.lastGood.detectH, full.width, full.height)
-                    : null;
+                let corners = null;
+                if (docScan.lastGood && docScan.lastGood.corners) {
+                    corners = scaleCorners(docScan.lastGood.corners, docScan.lastGood.detectW, docScan.lastGood.detectH, full.width, full.height);
+                }
+                // Full-resolution redetect happens inside openDocReviewFromCanvas (refineDocumentCorners)
                 await openDocReviewFromCanvas(full, corners, full.toDataURL('image/jpeg', 0.92));
                 closeDocScanner();
             } catch (err) {
@@ -2674,7 +2925,6 @@
             docReview.sourceCanvas = cloneCanvas(sourceCanvas);
             docReview.originalCanvas = cloneCanvas(sourceCanvas);
             docReview.originalUrl = originalUrl || sourceCanvas.toDataURL('image/jpeg', 0.92);
-            docReview.corners = corners ? cornersToArray(corners) : defaultFullCorners(sourceCanvas.width, sourceCanvas.height);
             docReview.filter = 'auto';
             docReview.rotation = 0;
             docReview.cropMode = false;
@@ -2693,7 +2943,32 @@
             showScanOverlay();
             try {
                 await ensureScannerEngine();
-                await renderDocReview();
+                const sub = document.getElementById('scanSublabel');
+                if (sub) sub.textContent = 'Detecting document edges…';
+                const refined = refineDocumentCorners(docReview.sourceCanvas, corners);
+                if (refined) {
+                    docReview.corners = refined;
+                    console.log('[scan] review using auto-detected corners');
+                } else if (corners) {
+                    const hint = cornersToArray(corners);
+                    const ratio = hint ? quadArea(hint) / (sourceCanvas.width * sourceCanvas.height) : 1;
+                    if (hint && ratio <= DOC_MAX_AREA_RATIO) {
+                        docReview.corners = hint;
+                        console.warn('[scan] review falling back to capture corners');
+                    } else {
+                        docReview.corners = defaultFullCorners(sourceCanvas.width, sourceCanvas.height);
+                        docReview.cropMode = true;
+                        document.getElementById('docReviewCropToggle').classList.add('active');
+                        console.warn('[scan] detection weak — opening Adjust Corners');
+                    }
+                } else {
+                    docReview.corners = defaultFullCorners(sourceCanvas.width, sourceCanvas.height);
+                    docReview.cropMode = true;
+                    document.getElementById('docReviewCropToggle').classList.add('active');
+                    console.warn('[scan] review falling back to full-frame corners — adjust manually');
+                }
+                if (sub) sub.textContent = 'Cropping and enhancing…';
+                await renderDocReview(false);
             } finally {
                 hideScanOverlay();
             }
@@ -2773,13 +3048,8 @@
             docReview.sourceCanvas = rotateCanvasDegrees(docReview.originalCanvas, docReview.rotation);
             // For simplicity after rotate, redetect or reset corners
             try {
-                const working = downsizeCanvas(docReview.sourceCanvas, 1000);
-                const found = detectCornersFromCanvas(working);
-                if (found) {
-                    docReview.corners = cornersToArray(scaleCorners(found.corners, working.width, working.height, docReview.sourceCanvas.width, docReview.sourceCanvas.height));
-                } else {
-                    docReview.corners = defaultFullCorners(docReview.sourceCanvas.width, docReview.sourceCanvas.height);
-                }
+                const refined = refineDocumentCorners(docReview.sourceCanvas, null);
+                docReview.corners = refined || defaultFullCorners(docReview.sourceCanvas.width, docReview.sourceCanvas.height);
             } catch (_) {
                 docReview.corners = defaultFullCorners(docReview.sourceCanvas.width, docReview.sourceCanvas.height);
             }
