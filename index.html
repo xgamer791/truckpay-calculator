@@ -6,8 +6,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="driverpay-build" content="2.12.1">
-    <title>DriverPay Pro v2.12.1</title>
+    <meta name="driverpay-build" content="2.12.2">
+    <title>DriverPay Pro v2.12.2</title>
     <script>
     (function () {
         var meta = document.querySelector('meta[name="driverpay-build"]');
@@ -355,7 +355,7 @@
     <header class="app-header">
         <div class="header-title">
             <h1>DriverPay <span>Pro</span></h1>
-            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v2.12.1</p>
+            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v2.12.2</p>
         </div>
         <div class="menu-container">
             <button class="menu-btn" onclick="toggleMenu(event)" aria-label="Menu">
@@ -449,7 +449,7 @@
             </div>
             <div class="footer-tagline">Built for the long haul</div>
             <div class="footer-meta">
-                <span class="footer-version">v2.12.1</span>
+                <span class="footer-version">v2.12.2</span>
                 <span class="footer-meta-dot"></span>
                 <span>© 2026</span>
                 <span class="footer-meta-dot"></span>
@@ -583,7 +583,7 @@
             <div style="margin-top: 28px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.06);">
                 <div class="edit-eyebrow">SCANNER · OPTIONAL</div>
                 <div class="edit-title" style="font-size: 18px; margin: 6px 0 4px;">Grok API Key</div>
-                <div class="edit-subtitle" style="margin-bottom: 14px;">xAI Grok key used to clean tickets (background removal, B&amp;W, clarity, upright orientation) and read miles/tons text. Stored locally on this device only. Images are sent only to api.x.ai when you scan. Enable <strong style="color:#cbd5e1;">Chat</strong> (e.g. grok-4.3) and <strong style="color:#cbd5e1;">Image</strong> (grok-imagine-image) on the key. Get a key at <a href="https://console.x.ai/team/default/api-keys" class="settings-ext-link" data-ext-title="Get a Grok API key">console.x.ai</a>.</div>
+                <div class="edit-subtitle" style="margin-bottom: 14px;">xAI Grok key used to clean tickets (background removal, B&amp;W, clarity, upright orientation) and read ticket text. Stored locally on this device only. Images are sent only to api.x.ai when you scan. Defaults use the cheapest models that get the job done: <strong style="color:#cbd5e1;">Chat</strong> <code style="color:#93c5fd;">grok-build-0.1</code> and <strong style="color:#cbd5e1;">Image</strong> <code style="color:#93c5fd;">grok-imagine-image</code> ($0.02/image — not the quality variant). Enable both on the key. Get a key at <a href="https://console.x.ai/team/default/api-keys" class="settings-ext-link" data-ext-title="Get a Grok API key">console.x.ai</a>.</div>
                 <input type="password" id="grokKeyInput" class="edit-input" placeholder="xai-..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
                 <div class="grok-key-actions">
                     <button type="button" class="grok-test-btn" id="grokKeyTestBtn" onclick="testGrokApiKey()">Test Key</button>
@@ -751,7 +751,7 @@
         <div class="scan-sublabel" id="scanSublabel">Cleaning ticket and reading text</div>
     </div>
 
-    <!-- driverpay-scanner:2.12.1 -->
+    <!-- driverpay-scanner:2.12.2 -->
     <div class="doc-scanner" id="docScanner" aria-hidden="true" role="dialog" aria-label="Grok ticket scanner">
         <div class="doc-scanner-stage">
             <video id="docScannerVideo" class="doc-scanner-video" playsinline muted autoplay></video>
@@ -1015,7 +1015,7 @@
 
         function applySettingsToHeader() {
             const sub = document.getElementById('headerSubtitle');
-            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v2.12.1`;
+            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v2.12.2`;
         }
 
         let savedScrollY = 0;
@@ -1842,8 +1842,8 @@
             overlay.onclick = (e) => { if (e.target === overlay) close(); };
         }
 
-        const GROK_CHAT_MODEL = 'grok-4.3';
-        const GROK_IMAGINE_MODEL = 'grok-imagine-image';
+        const GROK_CHAT_MODEL = 'grok-build-0.1'; // cheapest Text+Image chat model that can OCR tickets
+        const GROK_IMAGINE_MODEL = 'grok-imagine-image'; // cheapest Imagine edit model ($0.02) — not -quality ($0.05)
         const SCAN_UPLOAD_EDGE = 1600;
         const SCAN_JPEG_QUALITY = 0.72;
 
@@ -2188,7 +2188,7 @@
                 let body = '';
                 try { body = await res.text(); } catch (_) {}
                 console.error('[scan] OCR error', res.status, body.slice(0, 400));
-                throw new Error('Grok text read failed (HTTP ' + res.status + '). Enable Chat models (e.g. grok-4.3) on your API key.');
+                throw new Error('Grok text read failed (HTTP ' + res.status + '). Enable Chat models (e.g. grok-build-0.1) on your API key.');
             }
             const json = await res.json();
             const text = (json && json.choices && json.choices[0] && json.choices[0].message && json.choices[0].message.content)

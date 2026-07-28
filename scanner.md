@@ -4,6 +4,23 @@
 
 ---
 
+## Default Grok models (cheapest that get the job done)
+
+DriverPay Pro defaults to the lowest-cost xAI models that still handle ticket cleanup + OCR. Do **not** switch to premium variants unless quality fails in the field.
+
+| Job | Model ID | Why |
+|---|---|---|
+| **Image cleanup** (background remove, B&W, upright, sharpen) | `grok-imagine-image` | Cheapest Imagine edit model at **$0.02 / image**. Do **not** use `grok-imagine-image-quality` ($0.05) or pro aliases unless standard cleanup is unreadable. |
+| **Ticket OCR / field extract** (Chat with image input) | `grok-build-0.1` | Cheapest Text+Image chat model (~$1.00 / $2.00 per 1M tokens). Alias: `grok-code-fast`. Next step up if OCR quality slips: `grok-4.3`. |
+
+**ACL on the API key:** enable **Chat** (for `grok-build-0.1`) and **Image** (for `grok-imagine-image`). The Settings **Test Key** button checks both.
+
+**Cost ballpark per scan:** ~$0.02 for Imagine cleanup + a fraction of a cent for Chat OCR → roughly **$0.02–$0.03 per ticket**.
+
+These IDs are hardcoded in `index.html` as `GROK_IMAGINE_MODEL` and `GROK_CHAT_MODEL`. Keep this section in sync when changing defaults.
+
+---
+
 ## Mission
 
 For each photographed load ticket:
