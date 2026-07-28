@@ -141,3 +141,4 @@ When the driver (or Cursor agent) supplies a sample ticket for a plant, update t
 - Loaded by the live app from `./scanner.md` (same origin / GitHub Pages root).
 - Injected into Grok OCR prompts as system context.
 - Cached in memory after first successful fetch when a Grok API key is present.
+- Default models (see section above): `GROK_CHAT_MODEL = grok-build-0.1`, `GROK_IMAGINE_MODEL = grok-imagine-image`.
