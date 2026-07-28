@@ -6,8 +6,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="driverpay-build" content="2.12.16">
-    <title>DriverPay Pro v2.12.16</title>
+    <meta name="driverpay-build" content="2.12.17">
+    <title>DriverPay Pro v2.12.17</title>
     <script>
     (function () {
         var meta = document.querySelector('meta[name="driverpay-build"]');
@@ -373,13 +373,27 @@
         .export-row-info { flex: 1; min-width: 0; }
         .export-row-title { font-size: 15px; font-weight: 700; color: white; }
         .export-row-sub { font-size: 11px; color: #64748b; font-weight: 700; margin-top: 2px; letter-spacing: 0.02em; }
-    </style>
+
+        .find-ticket-search { display: flex; gap: 10px; margin: 8px 0 14px; }
+        .find-ticket-search .edit-input { flex: 1; min-width: 0; }
+        .find-ticket-photo-btn { flex-shrink: 0; padding: 0 14px; border-radius: 12px; border: 1px solid rgba(96,165,250,0.35); background: rgba(59,130,246,0.15); color: #93c5fd; font-weight: 800; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; font-family: inherit; cursor: pointer; }
+        .find-ticket-photo-btn:active { opacity: 0.75; }
+        .find-ticket-hint { font-size: 12px; font-weight: 700; color: #64748b; line-height: 1.45; margin-bottom: 12px; }
+        .find-ticket-results { max-height: 48vh; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
+        .find-ticket-empty { padding: 28px 12px; text-align: center; color: #64748b; font-size: 13px; font-weight: 700; line-height: 1.5; }
+        .find-ticket-row { display: flex; align-items: center; gap: 12px; padding: 12px; background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; cursor: pointer; text-align: left; width: 100%; color: inherit; font-family: inherit; }
+        .find-ticket-row:active { background: rgba(0,0,0,0.5); transform: scale(0.99); }
+        .find-ticket-thumb { width: 56px; height: 72px; border-radius: 8px; object-fit: cover; background: #111; flex-shrink: 0; }
+        .find-ticket-row-info { flex: 1; min-width: 0; }
+        .find-ticket-row-title { font-size: 15px; font-weight: 800; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .find-ticket-row-sub { font-size: 11px; color: #94a3b8; font-weight: 700; margin-top: 3px; letter-spacing: 0.02em; }
+        .find-ticket-row-meta { font-size: 10px; color: #64748b; font-weight: 800; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.06em; }
 </head>
 <body>
     <header class="app-header">
         <div class="header-title">
             <h1>DriverPay <span>Pro</span></h1>
-            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v2.12.16</p>
+            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v2.12.17</p>
         </div>
         <div class="menu-container">
             <button class="menu-btn" onclick="toggleMenu(event)" aria-label="Menu">
@@ -408,6 +422,15 @@
                 </svg>
             </span>
             Help
+        </button>
+        <button class="menu-item" onclick="closeMenu(); openFindTicket()">
+            <span class="menu-item-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="7"/>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+            </span>
+            Find Ticket
         </button>
         <button class="menu-item" onclick="closeMenu(); openDebug()">
             <span class="menu-item-icon">
@@ -473,7 +496,7 @@
             </div>
             <div class="footer-tagline">Built for the long haul</div>
             <div class="footer-meta">
-                <span class="footer-version">v2.12.16</span>
+                <span class="footer-version">v2.12.17</span>
                 <span class="footer-meta-dot"></span>
                 <span>© 2026</span>
                 <span class="footer-meta-dot"></span>
@@ -704,6 +727,27 @@
         </div>
     </div>
 
+    <div class="help-overlay" id="findTicketOverlay">
+        <div class="help-modal">
+            <div class="chart-handle"></div>
+            <div class="edit-eyebrow">FIND TICKET</div>
+            <div class="edit-title">Search Saved Tickets</div>
+            <div class="edit-subtitle">Search by ticket #, job, plant, truck, or date. Or snap a ticket photo and Grok will match it to a saved load.</div>
+            <div class="find-ticket-search">
+                <input type="search" id="findTicketQuery" class="edit-input" placeholder="Ticket #, job, plant…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="search">
+                <button type="button" class="find-ticket-photo-btn" id="findTicketPhotoBtn">Photo</button>
+            </div>
+            <div class="find-ticket-hint" id="findTicketHint">Requires a Grok API key in Settings.</div>
+            <div class="find-ticket-results" id="findTicketResults"></div>
+            <button class="chart-close" onclick="closeFindTicket()">CLOSE</button>
+        </div>
+    </div>
+
+    <input type="file" id="findTicketFile" class="doc-file-input"
+        accept="image/jpeg,image/png,image/heic,image/heif,.jpg,.jpeg,.png,.heic,.heif"
+        multiple
+        aria-hidden="true" tabindex="-1">
+
     <div class="help-overlay" id="debugOverlay">
         <div class="help-modal">
             <div class="chart-handle"></div>
@@ -777,7 +821,7 @@
         <button type="button" class="scan-cancel-btn" id="scanCancelBtn">Cancel</button>
     </div>
 
-    <!-- driverpay-scanner:2.12.16 -->
+    <!-- driverpay-scanner:2.12.17 -->
     <div class="doc-scanner" id="docScanner" aria-hidden="true" role="dialog" aria-label="Grok ticket scanner">
         <div class="doc-scanner-stage">
             <video id="docScannerVideo" class="doc-scanner-video" playsinline muted autoplay></video>
@@ -1067,7 +1111,7 @@
 
         function applySettingsToHeader() {
             const sub = document.getElementById('headerSubtitle');
-            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v2.12.16`;
+            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v2.12.17`;
         }
 
         let savedScrollY = 0;
@@ -1546,6 +1590,297 @@
         }
         function closeHelp() {
             document.getElementById('helpOverlay').classList.remove('active');
+            unlockBodyScroll();
+        }
+
+        // ── FIND TICKET ──
+        const findTicketState = { bound: false, lastQuery: '', matches: [] };
+
+        function normalizeFindQuery(q) {
+            return String(q || '').trim().toLowerCase().replace(/\s+/g, ' ');
+        }
+
+        function compactFindToken(q) {
+            return String(q || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        }
+
+        function collectSearchableTickets() {
+            const h = JSON.parse(localStorage.getItem('driver_history') || '[]');
+            const out = [];
+            (Array.isArray(h) ? h : []).forEach(settlement => {
+                if (!settlement || !Array.isArray(settlement.loads)) return;
+                settlement.loads.forEach(load => {
+                    if (!load) return;
+                    const docs = getLoadDocs(load);
+                    docs.forEach((doc, docIndex) => {
+                        if (!doc || !(doc.processed || doc.original || doc.ticket)) return;
+                        const o = doc.ocr || {};
+                        out.push({
+                            sId: settlement.id,
+                            lId: load.id,
+                            docIndex,
+                            doc,
+                            load,
+                            settlement,
+                            miles: load.miles,
+                            day: load.day,
+                            tons: load.tons,
+                            plant: o.plant || '',
+                            jobNumber: o.jobNumber || '',
+                            ticketNumber: o.ticketNumber || '',
+                            truckNumber: o.truckNumber || '',
+                            date: o.date || '',
+                            timeIn: o.timeIn || '',
+                            timeOut: o.timeOut || '',
+                            rawText: o.rawText || '',
+                            payoutDate: settlement.payoutDate || ''
+                        });
+                    });
+                });
+            });
+            return out;
+        }
+
+        function scoreTicketMatch(item, query) {
+            if (!query) return 1;
+            const q = normalizeFindQuery(query);
+            const qc = compactFindToken(query);
+            const fields = [
+                ['ticketNumber', 100],
+                ['jobNumber', 80],
+                ['plant', 50],
+                ['truckNumber', 60],
+                ['date', 40],
+                ['day', 20],
+                ['miles', 25],
+                ['tons', 15],
+                ['timeIn', 10],
+                ['timeOut', 10],
+                ['rawText', 5],
+                ['payoutDate', 10]
+            ];
+            let score = 0;
+            fields.forEach(([key, weight]) => {
+                const raw = item[key] == null ? '' : String(item[key]);
+                const low = raw.toLowerCase();
+                const compact = compactFindToken(raw);
+                if (!raw) return;
+                if (low === q || compact === qc) score += weight;
+                else if (low.indexOf(q) >= 0 || (qc && compact.indexOf(qc) >= 0)) score += Math.round(weight * 0.6);
+            });
+            const hay = [
+                item.ticketNumber, item.jobNumber, item.plant, item.truckNumber,
+                item.date, item.day, item.miles, item.tons, item.rawText
+            ].map(v => String(v == null ? '' : v).toLowerCase()).join(' ');
+            if (!score && hay.indexOf(q) >= 0) score = 3;
+            return score;
+        }
+
+        function searchSavedTickets(query) {
+            const all = collectSearchableTickets();
+            const q = normalizeFindQuery(query);
+            if (!q) {
+                return all.slice().sort((a, b) => {
+                    const ta = (a.doc && a.doc.createdAt) || 0;
+                    const tb = (b.doc && b.doc.createdAt) || 0;
+                    return tb - ta;
+                });
+            }
+            return all
+                .map(item => ({ item, score: scoreTicketMatch(item, q) }))
+                .filter(x => x.score > 0)
+                .sort((a, b) => b.score - a.score || String(b.item.ticketNumber).localeCompare(String(a.item.ticketNumber)))
+                .map(x => x.item);
+        }
+
+        function matchTicketsFromOcr(ocr) {
+            const all = collectSearchableTickets();
+            if (!all.length) return [];
+            const ticketNo = compactFindToken(ocr && ocr.ticketNumber);
+            const jobNo = compactFindToken(ocr && ocr.jobNumber);
+            const scored = all.map(item => {
+                let score = 0;
+                const it = compactFindToken(item.ticketNumber);
+                const ij = compactFindToken(item.jobNumber);
+                if (ticketNo && it && it === ticketNo) score += 100;
+                else if (ticketNo && it && (it.indexOf(ticketNo) >= 0 || ticketNo.indexOf(it) >= 0)) score += 70;
+                if (jobNo && ij && ij === jobNo) score += 40;
+                if (ocr && ocr.plant && item.plant && String(item.plant).toLowerCase() === String(ocr.plant).toLowerCase()) score += 15;
+                if (ocr && ocr.truckNumber && item.truckNumber && truckNumbersMatch(item.truckNumber, ocr.truckNumber)) score += 10;
+                if (ocr && ocr.date && item.date && compactFindToken(item.date) === compactFindToken(ocr.date)) score += 10;
+                return { item, score };
+            }).filter(x => x.score >= 40).sort((a, b) => b.score - a.score);
+            return scored.map(x => x.item);
+        }
+
+        function renderFindTicketResults(matches, emptyMsg) {
+            const root = document.getElementById('findTicketResults');
+            const hint = document.getElementById('findTicketHint');
+            if (!root) return;
+            findTicketState.matches = matches || [];
+            if (hint) {
+                const n = findTicketState.matches.length;
+                hint.textContent = n
+                    ? (n + ' ticket' + (n === 1 ? '' : 's') + ' found — tap to open.')
+                    : 'Requires a Grok API key in Settings.';
+            }
+            if (!findTicketState.matches.length) {
+                root.innerHTML = '<div class="find-ticket-empty">' + escapeHtml(emptyMsg || 'No matching tickets yet. Scan tickets with Grok first, then search here.') + '</div>';
+                return;
+            }
+            root.innerHTML = findTicketState.matches.map((m, idx) => {
+                const thumb = (m.doc && (m.doc.processed || m.doc.original)) || '';
+                const title = (m.ticketNumber ? ('#' + m.ticketNumber) : (m.jobNumber ? ('Job ' + m.jobNumber) : 'Ticket'))
+                    + (m.miles != null ? (' · ' + m.miles + ' mi') : '')
+                    + (m.day ? (' · ' + m.day) : '');
+                const subParts = [m.plant, m.jobNumber ? ('Job ' + m.jobNumber) : '', m.truckNumber ? ('Truck ' + m.truckNumber) : '', m.date]
+                    .filter(Boolean);
+                const meta = (m.doc && m.doc.createdAt)
+                    ? new Date(m.doc.createdAt).toLocaleString()
+                    : (m.payoutDate ? ('Pay ' + m.payoutDate) : 'Saved locally');
+                return '<button type="button" class="find-ticket-row" data-find-idx="' + idx + '">'
+                    + (thumb ? '<img class="find-ticket-thumb" src="' + thumb + '" alt="">' : '<div class="find-ticket-thumb"></div>')
+                    + '<div class="find-ticket-row-info">'
+                    + '<div class="find-ticket-row-title">' + escapeHtml(title) + '</div>'
+                    + '<div class="find-ticket-row-sub">' + escapeHtml(subParts.join(' · ') || 'Scanned ticket') + '</div>'
+                    + '<div class="find-ticket-row-meta">' + escapeHtml(meta) + '</div>'
+                    + '</div></button>';
+            }).join('');
+            root.querySelectorAll('.find-ticket-row').forEach(btn => {
+                btn.onclick = () => {
+                    const i = parseInt(btn.getAttribute('data-find-idx'), 10);
+                    const hit = findTicketState.matches[i];
+                    if (hit) openFoundTicket(hit);
+                };
+            });
+        }
+
+        function runFindTicketSearch() {
+            const input = document.getElementById('findTicketQuery');
+            const q = input ? input.value : '';
+            findTicketState.lastQuery = q;
+            const matches = searchSavedTickets(q);
+            renderFindTicketResults(
+                matches,
+                q ? 'No tickets match “' + q.trim() + '”.' : 'No scanned tickets saved yet.'
+            );
+        }
+
+        function openFoundTicket(hit) {
+            if (!hit) return;
+            const h = JSON.parse(localStorage.getItem('driver_history') || '[]');
+            const settlement = h.find(s => s && s.id == hit.sId);
+            const load = settlement && Array.isArray(settlement.loads)
+                ? settlement.loads.find(l => l && l.id == hit.lId)
+                : null;
+            if (!load) {
+                appAlert('That load is no longer in history.', { title: 'Not Found' });
+                return;
+            }
+            const docs = getLoadDocs(load);
+            if (!docs.length) {
+                appAlert('That load no longer has a ticket image.', { title: 'Not Found' });
+                return;
+            }
+            closeFindTicket();
+            openDocViewer(hit.sId, hit.lId, docs, hit.docIndex, load);
+        }
+
+        function bindFindTicketOnce() {
+            if (findTicketState.bound) return;
+            findTicketState.bound = true;
+            const input = document.getElementById('findTicketQuery');
+            const photoBtn = document.getElementById('findTicketPhotoBtn');
+            const fileInput = document.getElementById('findTicketFile');
+            if (input) {
+                input.addEventListener('input', () => runFindTicketSearch());
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        runFindTicketSearch();
+                        if (findTicketState.matches.length === 1) openFoundTicket(findTicketState.matches[0]);
+                    }
+                });
+            }
+            if (photoBtn && fileInput) {
+                photoBtn.addEventListener('click', async () => {
+                    const ready = await ensureGrokReadyForScan();
+                    if (!ready) return;
+                    preparePhotosInput(fileInput);
+                    try { fileInput.value = ''; } catch (_) {}
+                    try { fileInput.click(); } catch (_) {}
+                });
+                fileInput.addEventListener('change', async () => {
+                    const file = fileInput.files && fileInput.files[0];
+                    try { fileInput.value = ''; } catch (_) {}
+                    if (!file) return;
+                    await findTicketFromPhoto(file);
+                });
+            }
+        }
+
+        async function findTicketFromPhoto(file) {
+            const ready = await ensureGrokReadyForScan();
+            if (!ready) return;
+            showScanOverlay('Finding Ticket…', 'Grok is reading the photo to match a saved ticket');
+            try {
+                const dataUrl = await fileToUploadDataUrl(file);
+                // Prefer a modest upload size for OCR-only find
+                let ocrUrl = dataUrl;
+                try {
+                    const img = await loadImageFromUrl(dataUrl);
+                    const c = canvasFromImage(img, 1600);
+                    ocrUrl = c.toDataURL('image/jpeg', 0.85);
+                } catch (_) {}
+                const ocr = await grokReadTicket(ocrUrl);
+                hideScanOverlay();
+                const matches = matchTicketsFromOcr(ocr);
+                const label = (ocr && ocr.ticketNumber) ? ('#' + ocr.ticketNumber)
+                    : ((ocr && ocr.jobNumber) ? ('job ' + ocr.jobNumber) : 'this photo');
+                if (!matches.length) {
+                    const q = (ocr && (ocr.ticketNumber || ocr.jobNumber || ocr.plant)) || '';
+                    const input = document.getElementById('findTicketQuery');
+                    if (input && q) input.value = String(q);
+                    runFindTicketSearch();
+                    await appAlert(
+                        'Grok read ' + label + ', but no saved ticket matched. Try editing the search, or scan/save the ticket first.',
+                        { title: 'No Match' }
+                    );
+                    return;
+                }
+                if (matches.length === 1) {
+                    openFoundTicket(matches[0]);
+                    return;
+                }
+                const input = document.getElementById('findTicketQuery');
+                if (input) input.value = (ocr && ocr.ticketNumber) ? String(ocr.ticketNumber) : (ocr && ocr.jobNumber ? String(ocr.jobNumber) : '');
+                renderFindTicketResults(matches, 'No match');
+                const hint = document.getElementById('findTicketHint');
+                if (hint) hint.textContent = 'Grok found ' + matches.length + ' possible matches for ' + label + '.';
+            } catch (err) {
+                console.error('[find] photo search failed:', err);
+                hideScanOverlay();
+                await appAlert(formatScanError(err, 'Could not read that photo.'), { title: 'Find Failed' });
+            }
+        }
+
+        async function openFindTicket() {
+            const ready = await ensureGrokReadyForScan();
+            if (!ready) return;
+            bindFindTicketOnce();
+            const root = document.getElementById('findTicketOverlay');
+            if (!root) return;
+            const input = document.getElementById('findTicketQuery');
+            if (input) input.value = findTicketState.lastQuery || '';
+            root.classList.add('active');
+            lockBodyScroll();
+            runFindTicketSearch();
+            setTimeout(() => { try { if (input) input.focus(); } catch (_) {} }, 220);
+        }
+
+        function closeFindTicket() {
+            const root = document.getElementById('findTicketOverlay');
+            if (root) root.classList.remove('active');
             unlockBodyScroll();
         }
 
@@ -3866,7 +4201,7 @@
             applySettingsToHeader();
             bindScanOverlayOnce();
             if (getGrokApiKey()) loadScannerGuide();
-            ['chartOverlay','editOverlay','addOverlay','settingsOverlay','helpOverlay','debugOverlay','settlementOptionsOverlay','exportPickerOverlay'].forEach(id => {
+            ['chartOverlay','editOverlay','addOverlay','settingsOverlay','helpOverlay','findTicketOverlay','debugOverlay','settlementOptionsOverlay','exportPickerOverlay'].forEach(id => {
                 const ov = document.getElementById(id);
                 if (!ov) return;
                 ov.addEventListener('click', e => {
@@ -3876,6 +4211,7 @@
                     else if (id === 'addOverlay') closeAddModal();
                     else if (id === 'settingsOverlay') closeSettings();
                     else if (id === 'helpOverlay') closeHelp();
+                    else if (id === 'findTicketOverlay') closeFindTicket();
                     else if (id === 'debugOverlay') closeDebug();
                     else if (id === 'settlementOptionsOverlay') closeSettlementOptions();
                     else if (id === 'exportPickerOverlay') closeExportPicker();
