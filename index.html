@@ -6,8 +6,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="driverpay-build" content="2.12.15">
-    <title>DriverPay Pro v2.12.15</title>
+    <meta name="driverpay-build" content="2.12.16">
+    <title>DriverPay Pro v2.12.16</title>
     <script>
     (function () {
         var meta = document.querySelector('meta[name="driverpay-build"]');
@@ -379,7 +379,7 @@
     <header class="app-header">
         <div class="header-title">
             <h1>DriverPay <span>Pro</span></h1>
-            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v2.12.15</p>
+            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v2.12.16</p>
         </div>
         <div class="menu-container">
             <button class="menu-btn" onclick="toggleMenu(event)" aria-label="Menu">
@@ -473,7 +473,7 @@
             </div>
             <div class="footer-tagline">Built for the long haul</div>
             <div class="footer-meta">
-                <span class="footer-version">v2.12.15</span>
+                <span class="footer-version">v2.12.16</span>
                 <span class="footer-meta-dot"></span>
                 <span>© 2026</span>
                 <span class="footer-meta-dot"></span>
@@ -777,7 +777,7 @@
         <button type="button" class="scan-cancel-btn" id="scanCancelBtn">Cancel</button>
     </div>
 
-    <!-- driverpay-scanner:2.12.15 -->
+    <!-- driverpay-scanner:2.12.16 -->
     <div class="doc-scanner" id="docScanner" aria-hidden="true" role="dialog" aria-label="Grok ticket scanner">
         <div class="doc-scanner-stage">
             <video id="docScannerVideo" class="doc-scanner-video" playsinline muted autoplay></video>
@@ -1067,7 +1067,7 @@
 
         function applySettingsToHeader() {
             const sub = document.getElementById('headerSubtitle');
-            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v2.12.15`;
+            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v2.12.16`;
         }
 
         let savedScrollY = 0;
@@ -3350,15 +3350,13 @@
             const thumbs = document.getElementById('docViewerThumbs');
             const info = document.getElementById('docViewerInfo');
             const actions = root.querySelector('.doc-viewer-actions');
-            if (!stage || !header) return;
-            // Force visual/DOM order: header → image → thumbs → data → actions
-            let ref = header.nextSibling;
-            if (stage !== ref) root.insertBefore(stage, ref);
-            ref = stage.nextSibling;
-            if (thumbs && thumbs !== ref) root.insertBefore(thumbs, stage.nextSibling);
-            ref = (thumbs || stage).nextSibling;
-            if (info && info !== ref) root.insertBefore(info, (thumbs || stage).nextSibling);
-            if (actions) root.appendChild(actions);
+            if (!header || !stage || !actions) return;
+            // Force DOM order: header → image → thumbs → data → actions
+            root.appendChild(header);
+            root.appendChild(stage);
+            if (thumbs) root.appendChild(thumbs);
+            if (info) root.appendChild(info);
+            root.appendChild(actions);
         }
 
         function renderDocViewer(load) {
