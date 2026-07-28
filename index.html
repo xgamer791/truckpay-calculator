@@ -6,8 +6,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="driverpay-build" content="2.10.4">
-    <title>DriverPay Pro v2.10.4</title>
+    <meta name="driverpay-build" content="2.10.5">
+    <title>DriverPay Pro v2.10.5</title>
     <script>
     (function () {
         var meta = document.querySelector('meta[name="driverpay-build"]');
@@ -123,6 +123,11 @@
         .edit-input:focus, .edit-select:focus { outline: none; border-color: #3b82f6; }
         .grok-credits-link { display: inline-block; margin-top: 12px; font-size: 13px; font-weight: 800; color: #60a5fa; text-decoration: none; letter-spacing: 0.01em; }
         .grok-credits-link:active { opacity: 0.7; }
+        .settings-ext-link { color: #60a5fa; text-decoration: underline; text-underline-offset: 2px; font-weight: 800; }
+        .browser-chooser-list { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+        .browser-chooser-btn { width: 100%; padding: 14px 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.10); background: rgba(255,255,255,0.05); color: #e2e8f0; font-weight: 800; font-size: 15px; font-family: inherit; text-align: left; cursor: pointer; }
+        .browser-chooser-btn:active { background: rgba(59,130,246,0.18); border-color: rgba(59,130,246,0.35); }
+        .browser-chooser-btn.cancel { color: #94a3b8; text-align: center; margin-top: 4px; }
         .edit-textarea { width: 100%; background: rgba(0, 0, 0, 0.5) !important; border: 1px solid rgba(255, 255, 255, 0.2) !important; color: #fff !important; padding: 14px 16px; border-radius: 12px; font-size: 15px !important; font-weight: 600; font-family: inherit; resize: vertical; min-height: 60px; }
         .edit-row { margin-bottom: 18px; }
         .mode-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; background: rgba(0,0,0,0.4); border-radius: 12px; padding: 4px; }
@@ -347,7 +352,7 @@
     <header class="app-header">
         <div class="header-title">
             <h1>DriverPay <span>Pro</span></h1>
-            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v2.10.3</p>
+            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v2.10.5</p>
         </div>
         <div class="menu-container">
             <button class="menu-btn" onclick="toggleMenu(event)" aria-label="Menu">
@@ -441,7 +446,7 @@
             </div>
             <div class="footer-tagline">Built for the long haul</div>
             <div class="footer-meta">
-                <span class="footer-version">v2.10.3</span>
+                <span class="footer-version">v2.10.5</span>
                 <span class="footer-meta-dot"></span>
                 <span>© 2026</span>
                 <span class="footer-meta-dot"></span>
@@ -568,9 +573,9 @@
             <div style="margin-top: 28px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.06);">
                 <div class="edit-eyebrow">SCANNER · OPTIONAL</div>
                 <div class="edit-title" style="font-size: 18px; margin: 6px 0 4px;">Grok API Key</div>
-                <div class="edit-subtitle" style="margin-bottom: 14px;">xAI Grok key used for AI auto-rotation of scanned tickets. Stored locally on this device only — never sent with your ticket images except to api.x.ai for orientation. Get a key at console.x.ai.</div>
+                <div class="edit-subtitle" style="margin-bottom: 14px;">xAI Grok key used for AI auto-rotation of scanned tickets. Stored locally on this device only — never sent with your ticket images except to api.x.ai for orientation. Get a key at <a href="https://console.x.ai/team/default/api-keys" class="settings-ext-link" data-ext-title="Get a Grok API key">console.x.ai</a>.</div>
                 <input type="password" id="grokKeyInput" class="edit-input" placeholder="xai-..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
-                <a href="https://console.x.ai/team/default/billing" target="_blank" rel="noopener noreferrer" class="grok-credits-link">Top up Grok API credits →</a>
+                <a href="https://console.x.ai/team/default/billing" class="grok-credits-link settings-ext-link" data-ext-title="Top up Grok API credits">Top up Grok API credits →</a>
             </div>
 
             <div class="edit-actions" style="margin-top: 28px;">
@@ -731,7 +736,7 @@
         <div class="scan-sublabel" id="scanSublabel">Locking onto edges and cleaning up</div>
     </div>
 
-    <!-- driverpay-scanner:2.10.3 -->
+    <!-- driverpay-scanner:2.10.5 -->
     <div class="doc-scanner" id="docScanner" aria-hidden="true" role="dialog" aria-label="Document scanner">
         <div class="doc-scanner-stage">
             <video id="docScannerVideo" class="doc-scanner-video" playsinline muted autoplay></video>
@@ -990,7 +995,7 @@
 
         function applySettingsToHeader() {
             const sub = document.getElementById('headerSubtitle');
-            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v2.10.3`;
+            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v2.10.5`;
         }
 
         let savedScrollY = 0;
@@ -1080,11 +1085,146 @@
                 requestAnimationFrame(() => overlay.classList.add('active'));
                 const cleanup = () => {
                     overlay.classList.remove('active');
-                    setTimeout(() => { overlay.remove(); unlockBodyScroll(); resolve(); }, 200);
+                    setTimeout(() => {
+                        overlay.remove();
+                        unlockBodyScroll();
+                        if (document.getElementById('settingsOverlay') && document.getElementById('settingsOverlay').classList.contains('active')) lockBodyScroll();
+                        resolve();
+                    }, 200);
                 };
                 closeBtn.onclick = cleanup;
                 overlay.onclick = (e) => { if (e.target === overlay) cleanup(); };
             });
+        }
+
+        function detectMobilePlatform() {
+            const ua = navigator.userAgent || '';
+            const iOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            const android = /Android/i.test(ua);
+            return { iOS, android };
+        }
+
+        function buildBrowserOpenOptions(url) {
+            const { iOS, android } = detectMobilePlatform();
+            const options = [];
+            options.push({
+                label: iOS ? 'Safari' : 'Default browser',
+                run: () => { window.open(url, '_blank', 'noopener,noreferrer'); }
+            });
+            if (iOS) {
+                options.push({
+                    label: 'Chrome',
+                    run: () => {
+                        const chromeUrl = url.replace(/^https:\/\//i, 'googlechromes://').replace(/^http:\/\//i, 'googlechrome://');
+                        window.location.href = chromeUrl;
+                    }
+                });
+                options.push({
+                    label: 'Firefox',
+                    run: () => { window.location.href = 'firefox://open-url?url=' + encodeURIComponent(url); }
+                });
+                options.push({
+                    label: 'Edge',
+                    run: () => { window.location.href = url.replace(/^https/i, 'microsoft-edge-https').replace(/^http:/i, 'microsoft-edge-http:'); }
+                });
+            } else if (android) {
+                options.push({
+                    label: 'Chrome',
+                    run: () => {
+                        try {
+                            const u = new URL(url);
+                            window.location.href = 'intent://' + u.host + u.pathname + u.search + u.hash
+                                + '#Intent;scheme=' + u.protocol.replace(':', '') + ';package=com.android.chrome;S.browser_fallback_url='
+                                + encodeURIComponent(url) + ';end';
+                        } catch (_) {
+                            window.open(url, '_blank', 'noopener,noreferrer');
+                        }
+                    }
+                });
+                options.push({
+                    label: 'Firefox',
+                    run: () => {
+                        try {
+                            const u = new URL(url);
+                            window.location.href = 'intent://' + u.host + u.pathname + u.search + u.hash
+                                + '#Intent;scheme=' + u.protocol.replace(':', '') + ';package=org.mozilla.firefox;S.browser_fallback_url='
+                                + encodeURIComponent(url) + ';end';
+                        } catch (_) {
+                            window.open(url, '_blank', 'noopener,noreferrer');
+                        }
+                    }
+                });
+            }
+            options.push({
+                label: 'Copy link',
+                run: async () => {
+                    try {
+                        await navigator.clipboard.writeText(url);
+                        await appAlert('Link copied to clipboard.', { title: 'Copied' });
+                    } catch (_) {
+                        await appAlert(url, { title: 'Copy this link' });
+                    }
+                }
+            });
+            return options;
+        }
+
+        function chooseBrowserForLink(url, title) {
+            return new Promise(resolve => {
+                const overlay = document.createElement('div');
+                overlay.className = 'popup-overlay';
+                overlay.innerHTML = `
+                    <div class="popup-card">
+                        <div class="popup-title"></div>
+                        <div class="popup-message">Choose which browser should open this link.</div>
+                        <div class="browser-chooser-list"></div>
+                    </div>
+                `;
+                overlay.querySelector('.popup-title').textContent = title || 'Open link';
+                const list = overlay.querySelector('.browser-chooser-list');
+                const options = buildBrowserOpenOptions(url);
+                const finish = (fn) => {
+                    overlay.classList.remove('active');
+                    setTimeout(() => {
+                        overlay.remove();
+                        unlockBodyScroll();
+                        if (document.getElementById('settingsOverlay') && document.getElementById('settingsOverlay').classList.contains('active')) lockBodyScroll();
+                        resolve();
+                        if (typeof fn === 'function') {
+                            try { fn(); } catch (_) {}
+                        }
+                    }, 200);
+                };
+                options.forEach(opt => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'browser-chooser-btn';
+                    btn.textContent = opt.label;
+                    btn.onclick = () => finish(opt.run);
+                    list.appendChild(btn);
+                });
+                const cancel = document.createElement('button');
+                cancel.type = 'button';
+                cancel.className = 'browser-chooser-btn cancel';
+                cancel.textContent = 'Cancel';
+                cancel.onclick = () => finish(null);
+                list.appendChild(cancel);
+                document.body.appendChild(overlay);
+                lockBodyScroll();
+                requestAnimationFrame(() => overlay.classList.add('active'));
+                overlay.onclick = (e) => { if (e.target === overlay) finish(null); };
+            });
+        }
+
+        function onSettingsExternalLinkClick(e) {
+            const a = e.target && e.target.closest ? e.target.closest('a.settings-ext-link') : null;
+            if (!a) return;
+            e.preventDefault();
+            e.stopPropagation();
+            const url = a.getAttribute('href');
+            if (!url || url.charAt(0) === '#') return;
+            const title = a.getAttribute('data-ext-title') || a.textContent.trim() || 'Open link';
+            chooseBrowserForLink(url, title);
         }
 
         function isValidDay(d) { return typeof d === 'string' && VALID_DAYS.indexOf(d) !== -1; }
@@ -1171,7 +1311,12 @@
             document.getElementById('tonValueDisplay').textContent = formatTons(settings.avgTons);
             const keyInput = document.getElementById('grokKeyInput');
             if (keyInput) keyInput.value = settings.grokApiKey || '';
-            document.getElementById('settingsOverlay').classList.add('active');
+            const settingsOverlay = document.getElementById('settingsOverlay');
+            settingsOverlay.classList.add('active');
+            if (!settingsOverlay.dataset.extLinksBound) {
+                settingsOverlay.addEventListener('click', onSettingsExternalLinkClick);
+                settingsOverlay.dataset.extLinksBound = '1';
+            }
             lockBodyScroll();
         }
         function closeSettings() {
