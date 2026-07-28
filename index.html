@@ -6,8 +6,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="driverpay-build" content="2.10.6">
-    <title>DriverPay Pro v2.10.6</title>
+    <meta name="driverpay-build" content="2.11.0">
+    <title>DriverPay Pro v2.11.0</title>
     <script>
     (function () {
         var meta = document.querySelector('meta[name="driverpay-build"]');
@@ -223,32 +223,25 @@
         .scan-label { font-size: 12px; font-weight: 900; color: #60a5fa; letter-spacing: 0.28em; text-transform: uppercase; }
         .scan-sublabel { font-size: 11px; font-weight: 700; color: #475569; letter-spacing: 0.08em; max-width: 280px; text-align: center; line-height: 1.5; }
 
-        /* ---- Live document scanner (CamScanner-style) ---- */
+        /* ---- Grok ticket scanner ---- */
         .doc-scanner { position: fixed; inset: 0; z-index: 10020; background: #000; display: none; flex-direction: column; color: white; }
         .doc-scanner.active { display: flex; }
         .doc-scanner-stage { position: relative; flex: 1; min-height: 0; background: #000; overflow: hidden; }
-        .doc-scanner-video, .doc-scanner-overlay-canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-        .doc-scanner-overlay-canvas { pointer-events: none; z-index: 2; }
+        .doc-scanner-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
         .doc-scanner-top { position: absolute; top: 0; left: 0; right: 0; z-index: 4; display: flex; justify-content: space-between; align-items: flex-start; padding: calc(12px + env(safe-area-inset-top, 0px)) 16px 12px; pointer-events: none; }
         .doc-scanner-top > * { pointer-events: auto; }
-        .doc-scanner-hint { display: none !important; }
-        .doc-scanner-status { position: absolute; left: 50%; bottom: calc(148px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 4; font-size: 12px; font-weight: 900; letter-spacing: 0.16em; text-transform: uppercase; color: #86efac; text-shadow: 0 2px 8px rgba(0,0,0,0.8); pointer-events: none; opacity: 0; transition: opacity 0.2s; }
-        .doc-scanner-status.show { opacity: 1; }
+        .doc-scanner-guide { position: absolute; inset: 18% 10% 28% 10%; border: 2px dashed rgba(255,255,255,0.35); border-radius: 16px; z-index: 3; pointer-events: none; }
+        .doc-scanner-status { position: absolute; left: 50%; bottom: calc(148px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 4; font-size: 12px; font-weight: 900; letter-spacing: 0.14em; text-transform: uppercase; color: #93c5fd; text-shadow: 0 2px 8px rgba(0,0,0,0.8); pointer-events: none; white-space: nowrap; }
         .doc-scanner-bottom { position: absolute; left: 0; right: 0; bottom: 0; z-index: 4; padding: 18px 22px calc(22px + env(safe-area-inset-bottom, 0px)); display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.72) 45%, rgba(0,0,0,0.92) 100%); }
         .doc-scanner-side { display: flex; gap: 10px; align-items: center; }
         .doc-scanner-side.right { justify-content: flex-end; }
         .doc-btn { width: 48px; height: 48px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.16); background: rgba(15,23,42,0.72); color: white; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; -webkit-tap-highlight-color: transparent; }
         .doc-btn:active { transform: scale(0.94); background: rgba(30,41,59,0.9); }
-        .doc-btn.active { border-color: rgba(59,130,246,0.55); color: #93c5fd; background: rgba(37,99,235,0.28); }
-        .doc-btn.flash-on { border-color: rgba(251,191,36,0.55); color: #fde68a; background: rgba(251,191,36,0.18); }
-        .doc-capture { width: 78px; height: 78px; border-radius: 50%; border: 4px solid rgba(255,255,255,0.92); background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 0 0 1px rgba(0,0,0,0.35); }
+        .doc-capture { width: 78px; height: 78px; border-radius: 50%; border: 4px solid rgba(255,255,255,0.92); background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .doc-capture::after { content: ''; width: 62px; height: 62px; border-radius: 50%; background: white; transition: transform 0.12s ease; }
         .doc-capture:active::after { transform: scale(0.9); }
         .doc-capture:disabled { opacity: 0.45; }
-        .doc-mode-chip { min-width: 72px; height: 34px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.18); background: rgba(15,23,42,0.7); color: #e2e8f0; font-size: 11px; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; padding: 0 12px; cursor: pointer; font-family: inherit; }
-        .doc-mode-chip.auto { color: #86efac; border-color: rgba(34,197,94,0.45); }
-        .doc-gallery-thumb { width: 48px; height: 48px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.18); background: rgba(15,23,42,0.72); overflow: hidden; display: inline-flex; align-items: center; justify-content: center; color: #cbd5e1; cursor: pointer; }
-        .doc-gallery-thumb img { width: 100%; height: 100%; object-fit: cover; }
+        .doc-gallery-thumb { width: 48px; height: 48px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.18); background: rgba(15,23,42,0.72); display: inline-flex; align-items: center; justify-content: center; color: #cbd5e1; cursor: pointer; }
         .doc-perm { position: absolute; inset: 0; z-index: 6; display: none; align-items: center; justify-content: center; padding: 28px; background: rgba(15,23,42,0.96); text-align: center; }
         .doc-perm.show { display: flex; }
         .doc-perm-card { max-width: 360px; }
@@ -263,20 +256,15 @@
         .doc-review.active { display: flex; }
         .doc-review-header { display: flex; justify-content: space-between; align-items: center; padding: calc(12px + env(safe-area-inset-top, 0px)) 16px 10px; border-bottom: 1px solid rgba(255,255,255,0.08); }
         .doc-review-title { font-size: 15px; font-weight: 900; letter-spacing: -0.01em; }
-        .doc-review-stage { position: relative; flex: 1; min-height: 0; background: #020617; overflow: hidden; touch-action: none; }
-        .doc-review-canvas-wrap { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; transform-origin: center center; }
-        .doc-review-canvas-wrap canvas, .doc-review-canvas-wrap img { max-width: 100%; max-height: 100%; object-fit: contain; }
-        .doc-review-crop { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-        .doc-review-crop.active { pointer-events: auto; }
-        .doc-loupe { position: absolute; width: 96px; height: 96px; border-radius: 50%; border: 3px solid #60a5fa; overflow: hidden; pointer-events: none; z-index: 5; display: none; box-shadow: 0 8px 24px rgba(0,0,0,0.5); background: #000; }
-        .doc-loupe.show { display: block; }
-        .doc-loupe canvas { width: 100%; height: 100%; }
-        .doc-review-filters { display: flex; gap: 8px; overflow-x: auto; padding: 12px 16px; border-top: 1px solid rgba(255,255,255,0.06); -webkit-overflow-scrolling: touch; }
-        .doc-filter { flex: 0 0 auto; padding: 10px 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.04); color: #94a3b8; font-size: 11px; font-weight: 900; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; font-family: inherit; white-space: nowrap; }
-        .doc-filter.active { background: rgba(59,130,246,0.2); border-color: rgba(59,130,246,0.5); color: #93c5fd; }
-        .doc-review-tools { display: flex; gap: 8px; padding: 0 16px 12px; }
-        .doc-tool { flex: 1; padding: 12px 8px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); color: white; font-size: 11px; font-weight: 900; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; font-family: inherit; }
-        .doc-tool.active { border-color: rgba(59,130,246,0.45); color: #93c5fd; }
+        .doc-review-stage { position: relative; flex: 1; min-height: 0; background: #020617; overflow: auto; display: flex; align-items: flex-start; justify-content: center; padding: 16px; }
+        .doc-review-stage img { max-width: 100%; border-radius: 12px; box-shadow: 0 12px 40px rgba(0,0,0,0.45); background: #111; }
+        .doc-ocr-panel { padding: 14px 16px; border-top: 1px solid rgba(255,255,255,0.08); background: rgba(15,23,42,0.96); max-height: 42vh; overflow-y: auto; }
+        .doc-ocr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+        .doc-ocr-field label { display: block; font-size: 10px; font-weight: 900; color: #64748b; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 6px; }
+        .doc-ocr-field input, .doc-ocr-field textarea { width: 100%; background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.14); color: white; border-radius: 10px; padding: 12px; font-size: 15px; font-weight: 700; font-family: inherit; }
+        .doc-ocr-field.full { grid-column: 1 / -1; }
+        .doc-ocr-field textarea { min-height: 72px; resize: vertical; font-size: 13px; font-weight: 600; }
+        .doc-ocr-note { font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 10px; line-height: 1.45; }
         .doc-review-actions { display: grid; grid-template-columns: 1fr 1.4fr 1fr; gap: 10px; padding: 0 16px calc(18px + env(safe-area-inset-bottom, 0px)); }
         .doc-review-actions button { padding: 16px 8px; border: none; border-radius: 14px; font-weight: 900; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: white; cursor: pointer; font-family: inherit; }
         .doc-btn-muted { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1) !important; }
@@ -353,7 +341,7 @@
     <header class="app-header">
         <div class="header-title">
             <h1>DriverPay <span>Pro</span></h1>
-            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v2.10.6</p>
+            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v2.11.0</p>
         </div>
         <div class="menu-container">
             <button class="menu-btn" onclick="toggleMenu(event)" aria-label="Menu">
@@ -447,7 +435,7 @@
             </div>
             <div class="footer-tagline">Built for the long haul</div>
             <div class="footer-meta">
-                <span class="footer-version">v2.10.6</span>
+                <span class="footer-version">v2.11.0</span>
                 <span class="footer-meta-dot"></span>
                 <span>© 2026</span>
                 <span class="footer-meta-dot"></span>
@@ -574,7 +562,7 @@
             <div style="margin-top: 28px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.06);">
                 <div class="edit-eyebrow">SCANNER · OPTIONAL</div>
                 <div class="edit-title" style="font-size: 18px; margin: 6px 0 4px;">Grok API Key</div>
-                <div class="edit-subtitle" style="margin-bottom: 14px;">xAI Grok key used for AI auto-rotation of scanned tickets. Stored locally on this device only — never sent with your ticket images except to api.x.ai for orientation. Get a key at <a href="https://console.x.ai/team/default/api-keys" class="settings-ext-link" data-ext-title="Get a Grok API key">console.x.ai</a>.</div>
+                <div class="edit-subtitle" style="margin-bottom: 14px;">xAI Grok key used to clean tickets (background removal, B&amp;W, clarity, upright orientation) and read miles/tons text. Stored locally on this device only. Images are sent only to api.x.ai when you scan. Get a key at <a href="https://console.x.ai/team/default/api-keys" class="settings-ext-link" data-ext-title="Get a Grok API key">console.x.ai</a>.</div>
                 <input type="password" id="grokKeyInput" class="edit-input" placeholder="xai-..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
                 <a href="https://console.x.ai/team/default/billing" class="grok-credits-link settings-ext-link" data-ext-title="Top up Grok API credits">Top up Grok API credits →</a>
                 <a href="https://console.x.ai/team/default/api-keys" class="grok-credits-link settings-ext-link" data-ext-title="Grok API keys">Create & view API keys →</a>
@@ -620,7 +608,7 @@
                         <span class="help-section-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span>
                         Load Tickets
                     </div>
-                    <p>Every load has a camera icon. <strong style="color:#64748b;">Grey</strong> = no ticket yet. <strong style="color:#22c55e;">Green</strong> = document saved to the load. Tap grey to open the live document scanner; tap green to view, share, replace, add another, or delete. The scanner draws a live green outline around the paper, auto-captures when steady, then lets you review filters and corners before saving.</p>
+                    <p>Every load has a camera icon. <strong style="color:#64748b;">Grey</strong> = no ticket yet. <strong style="color:#22c55e;">Green</strong> = document saved to the load. Tap grey to open the Grok ticket scanner; tap green to view, share, replace, add another, or delete. Snap the ticket (or pick from gallery) — Grok removes the background, makes it black &amp; white, fixes orientation, sharpens text, and reads miles/tons for you to confirm before saving.</p>
                     <div class="help-tip"><strong>Tip:</strong> Scans are saved on your phone first so they work offline. Scanning inside Edit shows a <strong style="color:#3b82f6;">blue ticket icon</strong> until you tap Save.</div>
                 </div>
                 <div class="help-section">
@@ -734,15 +722,15 @@
 
     <div class="scan-overlay" id="scanOverlay" aria-hidden="true">
         <div class="scan-spinner"></div>
-        <div class="scan-label">Scanning Ticket…</div>
-        <div class="scan-sublabel" id="scanSublabel">Locking onto edges and cleaning up</div>
+        <div class="scan-label">Grok Scanning…</div>
+        <div class="scan-sublabel" id="scanSublabel">Cleaning ticket and reading text</div>
     </div>
 
-    <!-- driverpay-scanner:2.10.6 -->
-    <div class="doc-scanner" id="docScanner" aria-hidden="true" role="dialog" aria-label="Document scanner">
+    <!-- driverpay-scanner:2.11.0 -->
+    <div class="doc-scanner" id="docScanner" aria-hidden="true" role="dialog" aria-label="Grok ticket scanner">
         <div class="doc-scanner-stage">
             <video id="docScannerVideo" class="doc-scanner-video" playsinline muted autoplay></video>
-            <canvas id="docScannerOverlay" class="doc-scanner-overlay-canvas"></canvas>
+            <div class="doc-scanner-guide" aria-hidden="true"></div>
             <div class="doc-scanner-top">
                 <button type="button" class="doc-btn" id="docScannerClose" aria-label="Close scanner">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
@@ -751,22 +739,20 @@
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg>
                 </button>
             </div>
-            <div class="doc-scanner-status" id="docScannerStatus">Hold still</div>
+            <div class="doc-scanner-status" id="docScannerStatus">Center the ticket · Grok cleans it up</div>
             <div class="doc-scanner-bottom">
                 <div class="doc-scanner-side">
                     <button type="button" class="doc-gallery-thumb" id="docScannerGallery" aria-label="Choose photo from gallery">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
                     </button>
                 </div>
-                <button type="button" class="doc-capture" id="docScannerCapture" aria-label="Capture document"></button>
-                <div class="doc-scanner-side right">
-                    <button type="button" class="doc-mode-chip auto" id="docScannerMode" aria-label="Toggle automatic capture">Auto</button>
-                </div>
+                <button type="button" class="doc-capture" id="docScannerCapture" aria-label="Capture ticket"></button>
+                <div class="doc-scanner-side right"></div>
             </div>
             <div class="doc-perm" id="docScannerPerm">
                 <div class="doc-perm-card">
                     <div class="doc-perm-title" id="docScannerPermTitle">Camera access needed</div>
-                    <div class="doc-perm-msg" id="docScannerPermMsg">Allow camera access to scan load tickets and paperwork. You can also pick a photo from your gallery.</div>
+                    <div class="doc-perm-msg" id="docScannerPermMsg">Allow camera access to photograph load tickets. You can also pick a photo from your gallery — Grok handles the rest.</div>
                     <div class="doc-perm-actions">
                         <button type="button" class="doc-perm-primary" id="docScannerRetryCam">Try Again</button>
                         <button type="button" class="doc-perm-secondary" id="docScannerOpenGallery">Choose from Gallery</button>
@@ -775,37 +761,29 @@
                 </div>
             </div>
         </div>
-        <input type="file" id="docScannerFile" accept="image/*" style="display:none" aria-hidden="true">
+        <input type="file" id="docScannerFile" accept="image/*" capture="environment" style="display:none" aria-hidden="true">
     </div>
 
-    <div class="doc-review" id="docReview" aria-hidden="true" role="dialog" aria-label="Review scan">
+    <div class="doc-review" id="docReview" aria-hidden="true" role="dialog" aria-label="Review Grok scan">
         <div class="doc-review-header">
             <button type="button" class="doc-btn" id="docReviewClose" aria-label="Cancel review">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
             </button>
-            <div class="doc-review-title">Review Scan</div>
-            <button type="button" class="doc-btn" id="docReviewCompare" aria-label="Compare with original">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="18" rx="1"/><rect x="14" y="3" width="7" height="18" rx="1"/></svg>
-            </button>
+            <div class="doc-review-title">Grok Scan Review</div>
+            <div style="width:48px"></div>
         </div>
         <div class="doc-review-stage" id="docReviewStage">
-            <div class="doc-review-canvas-wrap" id="docReviewWrap">
-                <canvas id="docReviewCanvas"></canvas>
-                <canvas id="docReviewCrop" class="doc-review-crop"></canvas>
+            <img id="docReviewImg" alt="Grok cleaned ticket">
+        </div>
+        <div class="doc-ocr-panel">
+            <div class="doc-ocr-note">Grok cleaned this ticket and read the fields below. Edit anything that’s wrong before saving.</div>
+            <div class="doc-ocr-grid">
+                <div class="doc-ocr-field"><label for="ocrMiles">Miles</label><input type="number" id="ocrMiles" inputmode="decimal" step="0.1" placeholder="—"></div>
+                <div class="doc-ocr-field"><label for="ocrTons">Tons</label><input type="number" id="ocrTons" inputmode="decimal" step="0.01" placeholder="—"></div>
+                <div class="doc-ocr-field"><label for="ocrDate">Date</label><input type="text" id="ocrDate" placeholder="—" autocomplete="off"></div>
+                <div class="doc-ocr-field"><label for="ocrTicketNo">Ticket #</label><input type="text" id="ocrTicketNo" placeholder="—" autocomplete="off"></div>
+                <div class="doc-ocr-field full"><label for="ocrRaw">Full text</label><textarea id="ocrRaw" placeholder="Raw OCR text from Grok"></textarea></div>
             </div>
-            <div class="doc-loupe" id="docLoupe"><canvas id="docLoupeCanvas" width="192" height="192"></canvas></div>
-        </div>
-        <div class="doc-review-filters" id="docReviewFilters" role="tablist" aria-label="Enhancement filters">
-            <button type="button" class="doc-filter active" data-filter="bw">Black &amp; White</button>
-            <button type="button" class="doc-filter" data-filter="auto">Auto Enhance</button>
-            <button type="button" class="doc-filter" data-filter="enhanced">Enhanced Color</button>
-            <button type="button" class="doc-filter" data-filter="gray">Grayscale</button>
-            <button type="button" class="doc-filter" data-filter="original">Original Color</button>
-        </div>
-        <div class="doc-review-tools">
-            <button type="button" class="doc-tool" id="docReviewCropToggle">Adjust Corners</button>
-            <button type="button" class="doc-tool" id="docReviewRotateL" aria-label="Rotate left">Rotate Left</button>
-            <button type="button" class="doc-tool" id="docReviewRotateR" aria-label="Rotate right">Rotate Right</button>
         </div>
         <div class="doc-review-actions">
             <button type="button" class="doc-btn-muted" id="docReviewRetake">Retake</button>
@@ -997,7 +975,7 @@
 
         function applySettingsToHeader() {
             const sub = document.getElementById('headerSubtitle');
-            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v2.10.6`;
+            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v2.11.0`;
         }
 
         let savedScrollY = 0;
@@ -1699,644 +1677,34 @@
             overlay.onclick = (e) => { if (e.target === overlay) close(); };
         }
 
-        const SCAN_LONG_EDGE = 2000;
+        const GROK_CHAT_MODEL = 'grok-4.3';
+        const GROK_IMAGINE_MODEL = 'grok-imagine-image';
+        const SCAN_UPLOAD_EDGE = 1600;
         const SCAN_JPEG_QUALITY = 0.72;
-        const SCAN_AUTO_PORTRAIT = true;
-        const OPENCV_SRC = 'https://docs.opencv.org/4.7.0/opencv.js';
-        const JSCANIFY_SRC = 'https://cdn.jsdelivr.net/gh/ColonelParrot/jscanify@master/src/jscanify.min.js';
 
-        let scannerReady = null;
-
-        function loadScript(src) {
-            return new Promise((resolve, reject) => {
-                const existing = document.querySelector(`script[data-scanner-src="${src}"]`);
-                if (existing) {
-                    if (existing.dataset.loaded === '1') return resolve();
-                    existing.addEventListener('load', () => resolve());
-                    existing.addEventListener('error', () => reject(new Error('Failed to load ' + src)));
-                    return;
-                }
-                const s = document.createElement('script');
-                s.src = src;
-                s.async = true;
-                s.dataset.scannerSrc = src;
-                s.onload = () => { s.dataset.loaded = '1'; resolve(); };
-                s.onerror = () => reject(new Error('Failed to load ' + src));
-                document.head.appendChild(s);
-            });
-        }
-
-        function waitForOpenCV(timeoutMs) {
-            return new Promise((resolve, reject) => {
-                const ready = () => typeof cv !== 'undefined' && cv && cv.Mat && cv.adaptiveThreshold && cv.findContours;
-                if (ready()) { console.log('[scan] OpenCV ready immediately'); return resolve(); }
-
-                const t0 = performance.now();
-                let settled = false;
-                const finish = (via) => {
-                    if (settled) return;
-                    settled = true;
-                    clearInterval(pollId);
-                    const dt = Math.round(performance.now() - t0);
-                    console.log('[scan] OpenCV ready via ' + via + ' after ' + dt + 'ms');
-                    resolve();
-                };
-
-                if (typeof cv !== 'undefined' && cv && !ready()) {
-                    const prev = cv.onRuntimeInitialized;
-                    try {
-                        cv.onRuntimeInitialized = () => {
-                            if (typeof prev === 'function') { try { prev(); } catch (_) {} }
-                            if (ready()) finish('onRuntimeInitialized');
-                        };
-                    } catch (_) {}
-                }
-
-                const pollId = setInterval(() => {
-                    if (ready()) {
-                        finish('poll');
-                    } else if (performance.now() - t0 > timeoutMs) {
-                        clearInterval(pollId);
-                        if (settled) return;
-                        settled = true;
-                        console.error('[scan] OpenCV not ready after ' + timeoutMs + 'ms · cv typeof:', typeof cv);
-                        reject(new Error('OpenCV did not initialize within ' + timeoutMs + 'ms'));
-                    }
-                }, 100);
-            });
-        }
-
-        function loadScanner() {
-            if (scannerReady) return scannerReady;
-            scannerReady = (async () => {
-                await loadScript(OPENCV_SRC);
-                await loadScript(JSCANIFY_SRC);
-                if (typeof jscanify === 'undefined') throw new Error('jscanify global missing');
-                await waitForOpenCV(15000);
-                return new jscanify();
-            })().catch(err => { scannerReady = null; throw err; });
-            return scannerReady;
-        }
-
-        function showScanOverlay() {
-            const ov = document.getElementById('scanOverlay');
-            if (!ov) return;
-            const sub = document.getElementById('scanSublabel');
-            if (sub) sub.textContent = 'Locking onto edges and cleaning up';
-            ov.setAttribute('aria-hidden', 'false');
-            ov.classList.add('active');
-            lockBodyScroll();
-        }
-
-        function hideScanOverlay() {
-            const ov = document.getElementById('scanOverlay');
-            if (!ov) return;
-            ov.classList.remove('active');
-            ov.setAttribute('aria-hidden', 'true');
-            unlockBodyScroll();
-        }
-
-        function fitToLongEdge(srcW, srcH, longEdge) {
-            if (srcW >= srcH) {
-                const w = Math.min(longEdge, srcW);
-                const h = Math.max(1, Math.round(w * srcH / srcW));
-                return { w, h };
-            }
-            const h = Math.min(longEdge, srcH);
-            const w = Math.max(1, Math.round(h * srcW / srcH));
-            return { w, h };
-        }
-
-        function fileToImage(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = e => {
-                    const img = new Image();
-                    img.onload = () => resolve(img);
-                    img.onerror = () => reject(new Error('Image decode failed'));
-                    img.src = e.target.result;
-                };
-                reader.onerror = () => reject(new Error('File read failed'));
-                reader.readAsDataURL(file);
-            });
-        }
-
-        function readExifOrientation(buf) {
-            try {
-                const view = new DataView(buf);
-                if (view.byteLength < 4) return 1;
-                if (view.getUint16(0, false) !== 0xFFD8) return 1;
-                let offset = 2;
-                while (offset < view.byteLength - 1) {
-                    const marker = view.getUint16(offset, false);
-                    offset += 2;
-                    if (marker === 0xFFE1) {
-                        if (offset + 10 > view.byteLength) return 1;
-                        if (view.getUint32(offset + 2, false) !== 0x45786966) return 1;
-                        const tiffStart = offset + 8;
-                        const little = view.getUint16(tiffStart, false) === 0x4949;
-                        const ifdOffset = view.getUint32(tiffStart + 4, little);
-                        const tagCount = view.getUint16(tiffStart + ifdOffset, little);
-                        for (let i = 0; i < tagCount; i++) {
-                            const tagOffset = tiffStart + ifdOffset + 2 + i * 12;
-                            if (view.getUint16(tagOffset, little) === 0x0112) {
-                                return view.getUint16(tagOffset + 8, little) || 1;
-                            }
-                        }
-                        return 1;
-                    } else if ((marker & 0xFF00) !== 0xFF00) {
-                        return 1;
-                    } else {
-                        if (offset + 2 > view.byteLength) return 1;
-                        offset += view.getUint16(offset, false);
-                    }
-                }
-            } catch (err) {
-                console.warn('[scan] EXIF parse failed:', err);
-            }
-            return 1;
-        }
-
-        function drawOrientedToCanvas(source, srcW, srcH, orientation) {
-            const swap = orientation >= 5 && orientation <= 8;
-            const canvas = document.createElement('canvas');
-            canvas.width = swap ? srcH : srcW;
-            canvas.height = swap ? srcW : srcH;
-            const ctx = canvas.getContext('2d');
-            switch (orientation) {
-                case 2: ctx.transform(-1, 0, 0, 1, srcW, 0); break;
-                case 3: ctx.transform(-1, 0, 0, -1, srcW, srcH); break;
-                case 4: ctx.transform(1, 0, 0, -1, 0, srcH); break;
-                case 5: ctx.transform(0, 1, 1, 0, 0, 0); break;
-                case 6: ctx.transform(0, 1, -1, 0, srcH, 0); break;
-                case 7: ctx.transform(0, -1, -1, 0, srcH, srcW); break;
-                case 8: ctx.transform(0, -1, 1, 0, 0, srcW); break;
-            }
-            ctx.drawImage(source, 0, 0);
-            return canvas;
-        }
-
-        async function loadOrientedCanvas(file) {
-            if (typeof createImageBitmap === 'function') {
-                try {
-                    const bm = await createImageBitmap(file, { imageOrientation: 'from-image' });
-                    const c = document.createElement('canvas');
-                    c.width = bm.width;
-                    c.height = bm.height;
-                    c.getContext('2d').drawImage(bm, 0, 0);
-                    if (bm.close) bm.close();
-                    console.log('[scan] oriented via createImageBitmap:', c.width + 'x' + c.height);
-                    return { canvas: c, method: 'createImageBitmap' };
-                } catch (err) {
-                    console.warn('[scan] createImageBitmap with imageOrientation failed, falling back to manual EXIF:', err);
-                }
-            }
-            let orientation = 1;
-            try {
-                const buf = await file.arrayBuffer();
-                orientation = readExifOrientation(buf);
-            } catch (err) {
-                console.warn('[scan] could not read file bytes for EXIF:', err);
-            }
-            const img = await fileToImage(file);
-            const w = img.naturalWidth || img.width;
-            const h = img.naturalHeight || img.height;
-            const oriented = drawOrientedToCanvas(img, w, h, orientation);
-            console.log('[scan] oriented via manual EXIF (orientation=' + orientation + '):', oriented.width + 'x' + oriented.height);
-            return { canvas: oriented, method: 'manual-exif:' + orientation };
-        }
-
-        function downsizeCanvas(src, longEdge) {
-            const { w, h } = fitToLongEdge(src.width, src.height, longEdge);
-            if (w === src.width && h === src.height) return src;
-            const c = document.createElement('canvas');
-            c.width = w;
-            c.height = h;
-            c.getContext('2d').drawImage(src, 0, 0, w, h);
-            return c;
-        }
-
-        function rotateCanvas90CW(src) {
-            const out = document.createElement('canvas');
-            out.width = src.height;
-            out.height = src.width;
-            const ctx = out.getContext('2d');
-            ctx.translate(out.width, 0);
-            ctx.rotate(Math.PI / 2);
-            ctx.drawImage(src, 0, 0);
-            return out;
-        }
-
-        function rotateCanvasDegrees(src, degrees) {
-            degrees = ((degrees % 360) + 360) % 360;
-            if (degrees === 0) return src;
-            const out = document.createElement('canvas');
-            if (degrees === 90 || degrees === 270) {
-                out.width = src.height;
-                out.height = src.width;
-            } else {
-                out.width = src.width;
-                out.height = src.height;
-            }
-            const ctx = out.getContext('2d');
-            if (degrees === 90) {
-                ctx.translate(out.width, 0);
-                ctx.rotate(Math.PI / 2);
-            } else if (degrees === 180) {
-                ctx.translate(out.width, out.height);
-                ctx.rotate(Math.PI);
-            } else if (degrees === 270) {
-                ctx.translate(0, out.height);
-                ctx.rotate(-Math.PI / 2);
-            }
-            ctx.drawImage(src, 0, 0);
-            return out;
-        }
-
-        async function requestGrokRotation(canvas) {
-            const key = (settings && typeof settings.grokApiKey === 'string') ? settings.grokApiKey.trim() : '';
-            if (!key) {
-                console.log('[scan] Grok skipped — no API key configured');
-                return 0;
-            }
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
-            const sizeKb = Math.round(((dataUrl.split(',')[1] || '').length) * 0.75 / 1024);
-            console.log('[scan] Grok rotation request sent (' + sizeKb + 'kb image)');
-            const t0 = performance.now();
-            try {
-                const res = await fetch('https://api.x.ai/v1/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                        'content-type': 'application/json',
-                        'Authorization': 'Bearer ' + key
-                    },
-                    body: JSON.stringify({
-                        model: 'grok-4',
-                        max_tokens: 20,
-                        temperature: 0,
-                        messages: [{
-                            role: 'user',
-                            content: [
-                                {
-                                    type: 'image_url',
-                                    image_url: {
-                                        url: dataUrl,
-                                        detail: 'low'
-                                    }
-                                },
-                                {
-                                    type: 'text',
-                                    text: 'This is a scanned document. Which rotation makes the text readable upright? Reply with EXACTLY one of these four values and nothing else: 0, 90, 180, 270. The number is degrees of clockwise rotation needed to make the text upright.'
-                                }
-                            ]
-                        }]
-                    })
-                });
-                const dt = Math.round(performance.now() - t0);
-                if (!res.ok) {
-                    let body = '';
-                    try { body = await res.text(); } catch (_) {}
-                    console.error('[scan] Grok error: HTTP ' + res.status + ' (took ' + dt + 'ms) · ' + body.slice(0, 300));
-                    return 0;
-                }
-                const json = await res.json();
-                const text = (json && json.choices && json.choices[0] && json.choices[0].message && json.choices[0].message.content)
-                    ? String(json.choices[0].message.content).trim()
-                    : '';
-                const m = text.match(/\b(0|90|180|270)\b/);
-                const parsed = m ? parseInt(m[1], 10) : NaN;
-                if (parsed === 0 || parsed === 90 || parsed === 180 || parsed === 270) {
-                    console.log('[scan] Grok rotation response: ' + parsed + 'deg (took ' + dt + 'ms)');
-                    return parsed;
-                }
-                console.warn('[scan] Grok unexpected response: "' + text.slice(0, 100) + '" — treating as 0 (took ' + dt + 'ms)');
-                return 0;
-            } catch (err) {
-                const dt = Math.round(performance.now() - t0);
-                console.error('[scan] Grok error: ' + (err && err.message ? err.message : err) + ' (took ' + dt + 'ms)');
-                return 0;
-            }
-        }
-
-        function describeCorners(c) {
-            if (!c) return 'null';
-            const pt = p => p ? '(' + Math.round(p.x) + ',' + Math.round(p.y) + ')' : '∅';
-            return 'TL' + pt(c.topLeftCorner) + ' TR' + pt(c.topRightCorner) + ' BR' + pt(c.bottomRightCorner) + ' BL' + pt(c.bottomLeftCorner);
-        }
-
-        function validateCorners(corners, imgW, imgH) {
-            if (!corners) return { ok: false, reason: 'no corners returned' };
-            const tl = corners.topLeftCorner, tr = corners.topRightCorner, br = corners.bottomRightCorner, bl = corners.bottomLeftCorner;
-            const pts = [tl, tr, br, bl];
-            for (const p of pts) {
-                if (!p || typeof p.x !== 'number' || typeof p.y !== 'number' || !isFinite(p.x) || !isFinite(p.y)) {
-                    return { ok: false, reason: 'corner missing or non-numeric' };
-                }
-                const pad = 5;
-                if (p.x < -pad || p.y < -pad || p.x > imgW + pad || p.y > imgH + pad) {
-                    return { ok: false, reason: 'corner (' + Math.round(p.x) + ',' + Math.round(p.y) + ') outside ' + imgW + 'x' + imgH };
-                }
-            }
-            const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
-            const top = dist(tl, tr), right = dist(tr, br), bottom = dist(br, bl), left = dist(bl, tl);
-            const minSide = Math.min(imgW, imgH) * 0.2;
-            if (top < minSide || right < minSide || bottom < minSide || left < minSide) {
-                return { ok: false, reason: 'side(s) under 20% of min edge: top=' + Math.round(top) + ' right=' + Math.round(right) + ' bottom=' + Math.round(bottom) + ' left=' + Math.round(left) + ' (min=' + Math.round(minSide) + ')' };
-            }
-            return { ok: true, sides: { top, right, bottom, left } };
-        }
-
-        function targetDimsFromCorners(corners) {
-            const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
-            const w = Math.max(dist(corners.topLeftCorner, corners.topRightCorner), dist(corners.bottomLeftCorner, corners.bottomRightCorner));
-            const h = Math.max(dist(corners.topLeftCorner, corners.bottomLeftCorner), dist(corners.topRightCorner, corners.bottomRightCorner));
-            if (w >= h) {
-                return { w: SCAN_LONG_EDGE, h: Math.max(1, Math.round(SCAN_LONG_EDGE * h / w)) };
-            }
-            return { w: Math.max(1, Math.round(SCAN_LONG_EDGE * w / h)), h: SCAN_LONG_EDGE };
-        }
-
-        function applyScannerLook(canvas) {
-            if (typeof cv === 'undefined' || !cv.Mat || !cv.adaptiveThreshold) {
-                console.warn('[scan] applyScannerLook skipped — OpenCV unavailable');
-                return false;
-            }
-            let src, gray, blurred, eq, bw, kernel, opened;
-            try {
-                src = cv.imread(canvas);
-                gray = new cv.Mat();
-                if (src.channels() === 4) cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
-                else if (src.channels() === 3) cv.cvtColor(src, gray, cv.COLOR_RGB2GRAY);
-                else src.copyTo(gray);
-
-                // Gentle denoise — keep thin handwriting / ticket numbers
-                blurred = new cv.Mat();
-                cv.GaussianBlur(gray, blurred, new cv.Size(3, 3), 0);
-
-                // Boost local readability under uneven truck lighting
-                eq = new cv.Mat();
-                try { cv.equalizeHist(blurred, eq); }
-                catch (_) { blurred.copyTo(eq); }
-
-                bw = new cv.Mat();
-                // Smaller block + slightly higher C = cleaner pages, fewer crushed marks
-                cv.adaptiveThreshold(eq, bw, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 35, 11);
-
-                // Speckle cleanup without erasing light pencil/ink
-                kernel = cv.Mat.ones(2, 2, cv.CV_8U);
-                opened = new cv.Mat();
-                cv.morphologyEx(bw, opened, cv.MORPH_OPEN, kernel);
-                cv.morphologyEx(opened, bw, cv.MORPH_CLOSE, kernel);
-
-                cv.imshow(canvas, bw);
-                return true;
-            } catch (err) {
-                console.error('[scan] adaptive threshold failed:', err);
-                return false;
-            } finally {
-                if (src) src.delete();
-                if (gray) gray.delete();
-                if (blurred) blurred.delete();
-                if (eq) eq.delete();
-                if (bw) bw.delete();
-                if (kernel) kernel.delete();
-                if (opened) opened.delete();
-            }
-        }
-
-        function scoreTextOrientation(canvas) {
-            // Higher score => more likely upright text (strong horizontal ink structure)
-            const w = canvas.width, h = canvas.height;
-            if (!w || !h) return 0;
-            const sw = Math.min(220, w);
-            const sh = Math.max(1, Math.round(h * (sw / w)));
-            const c = document.createElement('canvas');
-            c.width = sw; c.height = sh;
-            const ctx = c.getContext('2d', { willReadFrequently: true });
-            ctx.drawImage(canvas, 0, 0, sw, sh);
-            const d = ctx.getImageData(0, 0, sw, sh).data;
-            const row = new Float32Array(sh);
-            for (let y = 0; y < sh; y++) {
-                let ink = 0;
-                for (let x = 0; x < sw; x++) {
-                    const i = (y * sw + x) * 4;
-                    if (d[i] < 140) ink++;
-                }
-                row[y] = ink;
-            }
-            let diffSum = 0, diffSum2 = 0, n = 0;
-            for (let y = 1; y < sh; y++) {
-                const v = row[y] - row[y - 1];
-                diffSum += v; diffSum2 += v * v; n++;
-            }
-            const mean = n ? diffSum / n : 0;
-            const varDiff = n ? (diffSum2 / n - mean * mean) : 0;
-            // Prefer a bit more content in the upper half (forms/headers)
-            let top = 0, bot = 0;
-            for (let y = 0; y < sh; y++) {
-                if (y < sh / 2) top += row[y]; else bot += row[y];
-            }
-            const topBias = (top + 1) / (bot + 1);
-            return varDiff * (0.85 + 0.15 * Math.min(2, topBias));
-        }
-
-        function estimateDocumentRotation(canvas) {
-            let bestDeg = 0, bestScore = -1;
-            let current = canvas;
-            for (const deg of [0, 90, 180, 270]) {
-                const scored = deg === 0 ? current : rotateCanvasDegrees(canvas, deg);
-                const score = scoreTextOrientation(scored);
-                if (score > bestScore) { bestScore = score; bestDeg = deg; }
-            }
-            console.log('[scan] local orientation pick=' + bestDeg + 'deg score=' + bestScore.toFixed(1));
-            return bestDeg;
-        }
-
-        async function scanTicket(file) {
-            resetScanLog();
-            const t0 = performance.now();
-            console.log('[scan] START', { name: file.name, size: file.size, type: file.type });
-
-            const sublabelTimer = setTimeout(() => {
-                const el = document.getElementById('scanSublabel');
-                if (el) el.textContent = 'Detecting orientation…';
-            }, 8000);
-
-            const oriented = await loadOrientedCanvas(file);
-            const fullCanvas = oriented.canvas;
-            console.log('[scan] full oriented canvas:', fullCanvas.width + 'x' + fullCanvas.height, '· method:', oriented.method);
-
-            const workingCanvas = downsizeCanvas(fullCanvas, SCAN_LONG_EDGE);
-            console.log('[scan] working canvas (post-downsize):', workingCanvas.width + 'x' + workingCanvas.height);
-
-            let finalCanvas = workingCanvas;
-            let path = 'fallback-raw';
-            let pathDetail = '(scanner not attempted)';
-
-            try {
-                const scanner = await loadScanner();
-                console.log('[scan] scanner instance ready');
-
-                let contour = null;
-                let corners = null;
-                let srcMat = null;
-                try {
-                    srcMat = cv.imread(workingCanvas);
-                    try {
-                        contour = scanner.findPaperContour(srcMat);
-                        console.log('[scan] findPaperContour ok · contour present:', !!contour);
-                    } catch (err) {
-                        console.error('[scan] findPaperContour threw:', err);
-                    }
-                    if (contour) {
-                        try {
-                            corners = scanner.getCornerPoints(contour, srcMat);
-                            console.log('[scan] getCornerPoints ok:', describeCorners(corners));
-                        } catch (err) {
-                            console.error('[scan] getCornerPoints threw:', err);
-                        }
-                    }
-                } finally {
-                    if (contour && typeof contour.delete === 'function') { try { contour.delete(); } catch (_) {} }
-                    if (srcMat) { try { srcMat.delete(); } catch (_) {} }
-                }
-
-                const validation = validateCorners(corners, workingCanvas.width, workingCanvas.height);
-                console.log('[scan] corner validation:', validation);
-
-                if (validation.ok) {
-                    const { w: targetW, h: targetH } = targetDimsFromCorners(corners);
-                    console.log('[scan] extractPaper target:', targetW + 'x' + targetH);
-                    let extracted = null;
-                    try {
-                        extracted = scanner.extractPaper(workingCanvas, targetW, targetH, corners);
-                    } catch (err) {
-                        console.error('[scan] extractPaper threw:', err);
-                    }
-                    if (extracted) {
-                        console.log('[scan] extractPaper returned canvas:', extracted.width + 'x' + extracted.height);
-                    } else {
-                        console.warn('[scan] extractPaper returned null/undefined');
-                    }
-                    if (!extracted || !extracted.width || !extracted.height) {
-                        pathDetail = 'extractPaper produced no canvas';
-                    } else if (extracted.width < 100 || extracted.height < 100) {
-                        pathDetail = 'extracted canvas under 100px (' + extracted.width + 'x' + extracted.height + ')';
-                    } else if (extracted.width === workingCanvas.width && extracted.height === workingCanvas.height) {
-                        pathDetail = 'extracted canvas matches input dims — no crop happened';
-                    } else {
-                        finalCanvas = extracted;
-                        path = 'extracted';
-                        pathDetail = 'corners ' + describeCorners(corners);
-                    }
-                    if (path !== 'extracted') console.warn('[scan] extracted canvas rejected:', pathDetail);
-                } else {
-                    pathDetail = validation.reason;
-                }
-            } catch (err) {
-                console.error('[scan] scanner pipeline error:', err);
-                pathDetail = (err && err.message) || String(err);
-            }
-
-            if (SCAN_AUTO_PORTRAIT) {
-                if (finalCanvas.width > finalCanvas.height) {
-                    const beforeW = finalCanvas.width, beforeH = finalCanvas.height;
-                    finalCanvas = rotateCanvas90CW(finalCanvas);
-                    console.log('[scan] auto-rotated 90deg CW (was ' + beforeW + 'x' + beforeH + ' → now ' + finalCanvas.width + 'x' + finalCanvas.height + ')');
-                } else {
-                    console.log('[scan] no rotation needed (' + finalCanvas.width + 'x' + finalCanvas.height + ')');
-                }
-            }
-
-            console.log('[scan] applying B&W threshold · path:', path, '· canvas:', finalCanvas.width + 'x' + finalCanvas.height);
-            const bwOk = applyScannerLook(finalCanvas);
-            console.log('[scan] B&W threshold applied:', bwOk);
-
-            if (bwOk) {
-                const grokDeg = await requestGrokRotation(finalCanvas);
-                if (grokDeg !== 0) {
-                    const beforeW = finalCanvas.width, beforeH = finalCanvas.height;
-                    finalCanvas = rotateCanvasDegrees(finalCanvas, grokDeg);
-                    console.log('[scan] Grok applied: rotated ' + grokDeg + 'deg (was ' + beforeW + 'x' + beforeH + ' → now ' + finalCanvas.width + 'x' + finalCanvas.height + ')');
-                }
-            }
-
-            clearTimeout(sublabelTimer);
-            const dataUrl = finalCanvas.toDataURL('image/jpeg', SCAN_JPEG_QUALITY);
-            const dt = Math.round(performance.now() - t0);
-            console.log('[scan] DONE in ' + dt + 'ms · path:', path, '· detail:', pathDetail, '· final:', finalCanvas.width + 'x' + finalCanvas.height, '· bytes:', dataUrl.length);
-            return dataUrl;
-        }
-
-        // ---- CamScanner-style live document scanner ---------------------------------
-        const DOC_DETECT_W = 480;
-        const DOC_STABLE_MS = 900;
-        const DOC_COOLDOWN_MS = 2500;
-        const DOC_DETECT_INTERVAL_MS = 55;
-        const DOC_READY_MOVE_PX = 14;
-        const DOC_LOST_GRACE_MS = 700;
-        const DOC_MIN_AREA_RATIO = 0.06;
-        const DOC_MAX_AREA_RATIO = 0.72;
-        const DOC_OUTLIER_PX = 55;
-        const DOC_LOCK_HITS = 2;
-        const processingLoads = new Set(); // `${sId}|${lId}` while processing
-
-        let docScan = {
+        const docScan = {
             active: false,
-            mode: 'direct', // direct | edit | replace | add
+            mode: 'direct',
             sId: null,
             lId: null,
             docId: null,
-            autoMode: true,
-            flashOn: false,
             stream: null,
             track: null,
-            raf: 0,
-            detectBusy: false,
-            lastDetectAt: 0,
-            lastDrawAt: 0,
-            targetPts: null,   // latest detected corners (detect-canvas space)
-            displayPts: null,  // smoothly interpolated corners for drawing
-            detectW: DOC_DETECT_W,
-            detectH: 1,
-            smoothed: null,    // alias of displayPts for capture/lastGood
-            lastGood: null,
-            confidence: 0,
-            stableSince: 0,
-            lostAt: 0,
-            hitStreak: 0,
-            pendingPts: null,
-            pendingHits: 0,
-            lastCaptureAt: 0,
+            videoReady: false,
+            flashOn: false,
             capturing: false,
-            videoReady: false
+            bound: false
         };
 
-        let docReview = {
+        const docReview = {
             active: false,
-            originalCanvas: null,
-            sourceCanvas: null,
-            corners: null,
-            filter: 'auto',
-            rotation: 0,
-            cropMode: false,
-            compare: false,
-            dragging: null,
-            scale: 1,
-            panX: 0,
-            panY: 0,
-            pinch: null,
+            originalUrl: null,
             processedUrl: null,
-            originalUrl: null
+            ocr: null
         };
 
-        let docViewer = {
-            active: false,
-            sId: null,
-            lId: null,
-            docs: [],
-            index: 0
-        };
+        let processingLoads = new Set();
+        const docViewer = { sId: null, lId: null, docs: [], index: 0 };
 
         function loadKey(sId, lId) { return String(sId) + '|' + String(lId); }
 
@@ -2354,7 +1722,7 @@
                     createdAt: null,
                     modifiedAt: null,
                     syncStatus: 'local',
-                    filter: 'auto'
+                    filter: 'grok'
                 }];
             }
             return [];
@@ -2371,396 +1739,33 @@
             try { if (navigator.vibrate) navigator.vibrate(ms || 18); } catch (_) {}
         }
 
-        function cornersToArray(c) {
-            if (!c) return null;
-            return [
-                { x: c.topLeftCorner.x, y: c.topLeftCorner.y },
-                { x: c.topRightCorner.x, y: c.topRightCorner.y },
-                { x: c.bottomRightCorner.x, y: c.bottomRightCorner.y },
-                { x: c.bottomLeftCorner.x, y: c.bottomLeftCorner.y }
-            ];
+        function showScanOverlay(label, sub) {
+            const ov = document.getElementById('scanOverlay');
+            if (!ov) return;
+            const lab = ov.querySelector('.scan-label');
+            const subEl = document.getElementById('scanSublabel');
+            if (lab && label) lab.textContent = label;
+            if (subEl && sub) subEl.textContent = sub;
+            ov.classList.add('active');
+            ov.setAttribute('aria-hidden', 'false');
+            lockBodyScroll();
         }
-
-        function arrayToCorners(arr) {
-            if (!arr || arr.length !== 4) return null;
-            return {
-                topLeftCorner: { x: arr[0].x, y: arr[0].y },
-                topRightCorner: { x: arr[1].x, y: arr[1].y },
-                bottomRightCorner: { x: arr[2].x, y: arr[2].y },
-                bottomLeftCorner: { x: arr[3].x, y: arr[3].y }
-            };
-        }
-
-        function smoothCorners(prev, next, alpha) {
-            if (!next) return prev;
-            if (!prev) return next.map(p => ({ x: p.x, y: p.y }));
-            return next.map((p, i) => ({
-                x: prev[i].x + (p.x - prev[i].x) * alpha,
-                y: prev[i].y + (p.y - prev[i].y) * alpha
-            }));
-        }
-
-        function lerpDisplayCorners(display, target, dtMs) {
-            if (!target) return display;
-            if (!display) return target.map(p => ({ x: p.x, y: p.y }));
-            const motion = cornerMotion(display, target);
-            // Soft chase: follow real camera motion, heavily damp tiny jitter
-            const follow = motion > 40 ? 0.42 : (motion > 18 ? 0.28 : (motion > 8 ? 0.16 : (motion > 3 ? 0.09 : 0.045)));
-            const t = 1 - Math.pow(1 - follow, Math.max(0.5, dtMs) / 16.67);
-            return smoothCorners(display, target, Math.min(1, t));
-        }
-
-        function cornerMotion(a, b) {
-            if (!a || !b) return 999;
-            let max = 0;
-            for (let i = 0; i < 4; i++) max = Math.max(max, Math.hypot(a[i].x - b[i].x, a[i].y - b[i].y));
-            return max;
-        }
-
-        function quadArea(pts) {
-            if (!pts || pts.length !== 4) return 0;
-            let a = 0;
-            for (let i = 0; i < 4; i++) {
-                const j = (i + 1) % 4;
-                a += pts[i].x * pts[j].y - pts[j].x * pts[i].y;
-            }
-            return Math.abs(a) / 2;
-        }
-
-        function cornersInsideFrame(pts, w, h, pad) {
-            pad = pad || 8;
-            return pts.every(p => p.x >= pad && p.y >= pad && p.x <= w - pad && p.y <= h - pad);
-        }
-
-        function estimateBrightness(ctx, w, h) {
-            const sample = ctx.getImageData(0, 0, w, h).data;
-            let sum = 0, n = 0;
-            for (let i = 0; i < sample.length; i += 32) {
-                sum += 0.299 * sample[i] + 0.587 * sample[i + 1] + 0.114 * sample[i + 2];
-                n++;
-            }
-            return n ? sum / n : 0;
-        }
-
-        function estimateSharpness(ctx, w, h) {
-            // Laplacian-ish variance on a tiny grayscale sampling
-            const sw = Math.min(80, w), sh = Math.max(1, Math.round(sw * h / w));
-            const c = document.createElement('canvas');
-            c.width = sw; c.height = sh;
-            const g = c.getContext('2d', { willReadFrequently: true });
-            g.drawImage(ctx.canvas, 0, 0, sw, sh);
-            const d = g.getImageData(0, 0, sw, sh).data;
-            const gray = new Float32Array(sw * sh);
-            for (let i = 0, p = 0; i < d.length; i += 4, p++) gray[p] = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
-            let sum = 0, sum2 = 0, n = 0;
-            for (let y = 1; y < sh - 1; y++) {
-                for (let x = 1; x < sw - 1; x++) {
-                    const i = y * sw + x;
-                    const lap = -4 * gray[i] + gray[i - 1] + gray[i + 1] + gray[i - sw] + gray[i + sw];
-                    sum += lap; sum2 += lap * lap; n++;
-                }
-            }
-            if (!n) return 0;
-            const mean = sum / n;
-            return sum2 / n - mean * mean;
-        }
-
-        function orderCornerPoints(pts) {
-            if (!pts || pts.length !== 4) return null;
-            const copy = pts.map(p => ({ x: p.x, y: p.y }));
-            const sum = copy.map(p => p.x + p.y);
-            const diff = copy.map(p => p.y - p.x);
-            const tl = copy[sum.indexOf(Math.min.apply(null, sum))];
-            const br = copy[sum.indexOf(Math.max.apply(null, sum))];
-            const tr = copy[diff.indexOf(Math.min.apply(null, diff))];
-            const bl = copy[diff.indexOf(Math.max.apply(null, diff))];
-            if (!tl || !tr || !br || !bl) return null;
-            const key = [tl, tr, br, bl].map(p => Math.round(p.x) + ',' + Math.round(p.y));
-            if (new Set(key).size < 4) return null;
-            return { topLeftCorner: tl, topRightCorner: tr, bottomRightCorner: br, bottomLeftCorner: bl };
-        }
-
-        function meanBrightnessInQuad(srcMat, corners) {
-            let mask = null;
-            try {
-                mask = cv.Mat.zeros(srcMat.rows, srcMat.cols, cv.CV_8UC1);
-                const pts = cv.matFromArray(4, 1, cv.CV_32SC2, [
-                    Math.round(corners.topLeftCorner.x), Math.round(corners.topLeftCorner.y),
-                    Math.round(corners.topRightCorner.x), Math.round(corners.topRightCorner.y),
-                    Math.round(corners.bottomRightCorner.x), Math.round(corners.bottomRightCorner.y),
-                    Math.round(corners.bottomLeftCorner.x), Math.round(corners.bottomLeftCorner.y)
-                ]);
-                const mv = new cv.MatVector();
-                mv.push_back(pts);
-                cv.fillPoly(mask, mv, new cv.Scalar(255));
-                pts.delete(); mv.delete();
-                const mean = cv.mean(srcMat, mask);
-                return 0.299 * mean[0] + 0.587 * mean[1] + 0.114 * mean[2];
-            } catch (_) {
-                return 0;
-            } finally {
-                if (mask) mask.delete();
-            }
-        }
-
-        function scoreDocumentCandidate(srcMat, corners, imgW, imgH) {
-            const validation = validateCorners(corners, imgW, imgH);
-            if (!validation.ok) return null;
-            const pts = cornersToArray(corners);
-            const ratio = quadArea(pts) / (imgW * imgH);
-            if (ratio < DOC_MIN_AREA_RATIO || ratio > DOC_MAX_AREA_RATIO) return null;
-            const sides = validation.sides;
-            const avgW = (sides.top + sides.bottom) / 2;
-            const avgH = (sides.left + sides.right) / 2;
-            const aspect = avgW / Math.max(1, avgH);
-            if (aspect < 0.35 || aspect > 3.2) return null;
-            const balW = Math.min(sides.top, sides.bottom) / Math.max(sides.top, sides.bottom);
-            const balH = Math.min(sides.left, sides.right) / Math.max(sides.left, sides.right);
-            const rectScore = (balW + balH) / 2;
-            const brightness = meanBrightnessInQuad(srcMat, corners);
-            const pad = Math.max(3, Math.min(imgW, imgH) * 0.015);
-            let touches = 0;
-            for (const p of pts) {
-                if (p.x <= pad || p.y <= pad || p.x >= imgW - pad || p.y >= imgH - pad) touches++;
-            }
-            let score = 0;
-            score += Math.min(1, brightness / 230) * 50; // prefer white paper
-            score += rectScore * 22;
-            score += Math.max(0, 1 - Math.abs(ratio - 0.26) / 0.26) * 14;
-            score += (4 - touches) * 3.5;
-            if (ratio > 0.62) score -= 28;
-            if (brightness < 110) score -= 24;
-            if (score < 35) return null;
-            return { corners, pts, areaRatio: ratio, sides, score, brightness };
-        }
-
-        function candidatesFromBinary(srcMat, binary) {
-            const out = [];
-            const contours = new cv.MatVector();
-            const hierarchy = new cv.Mat();
-            try {
-                cv.findContours(binary, contours, hierarchy, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE);
-                const frameArea = srcMat.rows * srcMat.cols;
-                for (let i = 0; i < contours.size(); i++) {
-                    const cnt = contours.get(i);
-                    const area = cv.contourArea(cnt);
-                    if (area < frameArea * DOC_MIN_AREA_RATIO || area > frameArea * DOC_MAX_AREA_RATIO) continue;
-                    const peri = cv.arcLength(cnt, true);
-                    const approx = new cv.Mat();
-                    cv.approxPolyDP(cnt, approx, 0.025 * peri, true);
-                    let pts = null;
-                    if (approx.rows === 4) {
-                        pts = [];
-                        for (let r = 0; r < 4; r++) pts.push({ x: approx.data32S[r * 2], y: approx.data32S[r * 2 + 1] });
-                    } else {
-                        try {
-                            const rect = cv.minAreaRect(cnt);
-                            const boxMat = new cv.Mat();
-                            cv.boxPoints(rect, boxMat);
-                            if (boxMat.rows === 4) {
-                                pts = [];
-                                for (let r = 0; r < 4; r++) pts.push({ x: boxMat.data32F[r * 2], y: boxMat.data32F[r * 2 + 1] });
-                            }
-                            boxMat.delete();
-                        } catch (_) {}
-                    }
-                    approx.delete();
-                    if (!pts) continue;
-                    const corners = orderCornerPoints(pts);
-                    if (!corners) continue;
-                    const scored = scoreDocumentCandidate(srcMat, corners, srcMat.cols, srcMat.rows);
-                    if (scored) out.push(scored);
-                }
-            } finally {
-                contours.delete(); hierarchy.delete();
-            }
-            return out;
-        }
-
-        function detectCornersFromCanvas(canvas) {
-            if (typeof cv === 'undefined' || !cv.Mat) return null;
-            const mats = [];
-            const track = (m) => { if (m) mats.push(m); return m; };
-            try {
-                const srcMat = track(cv.imread(canvas));
-                const imgW = srcMat.cols, imgH = srcMat.rows;
-                let gray = track(new cv.Mat());
-                if (srcMat.channels() === 4) cv.cvtColor(srcMat, gray, cv.COLOR_RGBA2GRAY);
-                else if (srcMat.channels() === 3) cv.cvtColor(srcMat, gray, cv.COLOR_RGB2GRAY);
-                else { gray = srcMat; }
-
-                const candidates = [];
-                const blur = track(new cv.Mat());
-                cv.GaussianBlur(gray, blur, new cv.Size(5, 5), 0);
-                const mu = cv.mean(blur)[0];
-
-                // Bright paper (white form on clipboard / dark cabin)
-                try {
-                    const bright = track(new cv.Mat());
-                    cv.threshold(blur, bright, Math.max(145, mu + 20), 255, cv.THRESH_BINARY);
-                    const k = track(cv.Mat.ones(5, 5, cv.CV_8U));
-                    const closed = track(new cv.Mat());
-                    cv.morphologyEx(bright, closed, cv.MORPH_CLOSE, k);
-                    const opened = track(new cv.Mat());
-                    cv.morphologyEx(closed, opened, cv.MORPH_OPEN, k);
-                    candidates.push.apply(candidates, candidatesFromBinary(srcMat, opened));
-                    const otsu = track(new cv.Mat());
-                    cv.threshold(blur, otsu, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU);
-                    candidates.push.apply(candidates, candidatesFromBinary(srcMat, otsu));
-                } catch (err) { console.warn('[scan] bright detect failed:', err); }
-
-                // Edges
-                try {
-                    const edges = track(new cv.Mat());
-                    cv.Canny(blur, edges, 35, 120);
-                    const k2 = track(cv.Mat.ones(3, 3, cv.CV_8U));
-                    const dil = track(new cv.Mat());
-                    cv.dilate(edges, dil, k2);
-                    candidates.push.apply(candidates, candidatesFromBinary(srcMat, dil));
-                } catch (err) { console.warn('[scan] canny detect failed:', err); }
-
-                // Adaptive
-                try {
-                    const adapt = track(new cv.Mat());
-                    cv.adaptiveThreshold(gray, adapt, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 35, 6);
-                    candidates.push.apply(candidates, candidatesFromBinary(srcMat, adapt));
-                } catch (err) { console.warn('[scan] adaptive detect failed:', err); }
-
-                // jscanify largest contour only if it scores like a document
-                try {
-                    const scanner = window.__docScannerInst;
-                    if (scanner) {
-                        const contour = scanner.findPaperContour(srcMat);
-                        if (contour) {
-                            try {
-                                const raw = scanner.getCornerPoints(contour, srcMat);
-                                const arr = cornersToArray(raw);
-                                const ordered = arr ? orderCornerPoints(arr) : null;
-                                const scored = scoreDocumentCandidate(srcMat, ordered || raw, imgW, imgH);
-                                if (scored) candidates.push(scored);
-                            } finally {
-                                if (typeof contour.delete === 'function') contour.delete();
-                            }
-                        }
-                    }
-                } catch (err) { console.warn('[scan] jscanify detect failed:', err); }
-
-                if (!candidates.length) return null;
-                candidates.sort((a, b) => b.score - a.score);
-                const best = candidates[0];
-                try {
-                    const tightPts = tightenToBrightPaper(canvas, best.pts);
-                    if (tightPts && cornersLookTight(tightPts, imgW, imgH)) {
-                        const corners = arrayToCorners(tightPts);
-                        const scored = scoreDocumentCandidate(srcMat, corners, imgW, imgH);
-                        if (scored && scored.score >= best.score * 0.85) return scored;
-                        return {
-                            corners,
-                            pts: tightPts,
-                            areaRatio: quadArea(tightPts) / (imgW * imgH),
-                            sides: best.sides,
-                            score: best.score,
-                            brightness: best.brightness
-                        };
-                    }
-                } catch (_) {}
-                return best;
-            } catch (err) {
-                console.error('[scan] detectCornersFromCanvas error:', err);
-                return null;
-            } finally {
-                const seen = new Set();
-                for (let i = mats.length - 1; i >= 0; i--) {
-                    const m = mats[i];
-                    if (!m || seen.has(m)) continue;
-                    seen.add(m);
-                    try { m.delete(); } catch (_) {}
-                }
-            }
-        }
-
-        function drawScannerOverlay(canvas, pts, confidence) {
-            const w = canvas.width, h = canvas.height;
-            const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, w, h);
-            if (!pts) return; // no placement frame — live green outline only when edges are detected
-
-            // Darken outside the detected document
-            ctx.fillStyle = 'rgba(0,0,0,0.42)';
-            ctx.fillRect(0, 0, w, h);
-            ctx.save();
-            ctx.globalCompositeOperation = 'destination-out';
-            ctx.beginPath();
-            ctx.moveTo(pts[0].x, pts[0].y);
-            for (let i = 1; i < 4; i++) ctx.lineTo(pts[i].x, pts[i].y);
-            ctx.closePath();
-            ctx.fill();
-            ctx.restore();
-
-            const ready = confidence >= 0.85;
-            const warn = confidence < 0.45;
-            const stroke = ready ? '#22c55e' : (warn ? '#fbbf24' : '#4ade80');
-            const glow = ready ? 'rgba(34,197,94,0.55)' : (warn ? 'rgba(251,191,36,0.35)' : 'rgba(74,222,128,0.35)');
-            ctx.save();
-            ctx.lineJoin = 'round';
-            ctx.lineCap = 'round';
-            ctx.shadowColor = glow;
-            ctx.shadowBlur = ready ? 18 : 10;
-            ctx.strokeStyle = stroke;
-            ctx.lineWidth = ready ? 4.5 : 3.25;
-            ctx.beginPath();
-            ctx.moveTo(pts[0].x, pts[0].y);
-            for (let i = 1; i < 4; i++) ctx.lineTo(pts[i].x, pts[i].y);
-            ctx.closePath();
-            ctx.stroke();
-            for (const p of pts) {
-                ctx.beginPath();
-                ctx.fillStyle = stroke;
-                ctx.arc(p.x, p.y, ready ? 7 : 5.5, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.fillStyle = '#fff';
-                ctx.arc(p.x, p.y, ready ? 2.8 : 2.2, 0, Math.PI * 2);
-                ctx.fill();
-            }
-            ctx.restore();
-        }
-
-        function mapPtsToDisplay(pts, srcW, srcH, canvasW, canvasH) {
-            // object-fit: cover mapping from detection canvas space -> overlay canvas space
-            // Detection canvas is drawn from video with cover-like letterbox? We draw video into detect canvas with cover.
-            // Overlay matches video element CSS cover. Map normalized coords.
-            const scale = Math.max(canvasW / srcW, canvasH / srcH);
-            const dw = srcW * scale, dh = srcH * scale;
-            const ox = (canvasW - dw) / 2, oy = (canvasH - dh) / 2;
-            return pts.map(p => ({ x: ox + p.x * scale, y: oy + p.y * scale }));
-        }
-
-        function setScannerHint() { /* placement hint removed */ }
-
-        function setScannerStatus(text, show) {
-            const el = document.getElementById('docScannerStatus');
-            if (!el) return;
-            if (text) el.textContent = text;
-            el.classList.toggle('show', !!show);
-        }
-
-        async function ensureScannerEngine() {
-            const scanner = await loadScanner();
-            window.__docScannerInst = scanner;
-            return scanner;
+        function hideScanOverlay() {
+            const ov = document.getElementById('scanOverlay');
+            if (!ov) return;
+            ov.classList.remove('active');
+            ov.setAttribute('aria-hidden', 'true');
         }
 
         function getGrokApiKey() {
             return (settings && typeof settings.grokApiKey === 'string') ? settings.grokApiKey.trim() : '';
         }
 
-        /** Returns true if scanning may proceed. Blocks with a prompt when no usable Grok key is set. */
         async function ensureGrokReadyForScan() {
             const key = getGrokApiKey();
             if (!key) {
                 const go = await appConfirm(
-                    'Add your Grok API key in Settings before scanning tickets. Get one at console.x.ai, paste it under Menu → Settings, then try again.',
+                    'Add your Grok API key in Settings before scanning tickets. Grok cleans the photo, fixes orientation, and reads the ticket text.',
                     { title: 'Grok API Key Needed', variant: 'warn', confirmText: 'Open Settings', cancelText: 'Cancel' }
                 );
                 if (go) openSettings();
@@ -2768,32 +1773,192 @@
             }
             if (key.indexOf('sk-ant-') === 0) {
                 const go = await appConfirm(
-                    'That key looks like Anthropic’s, not Grok. Replace it with an xAI Grok key (usually starts with xai-) in Settings.',
+                    'That key looks like Anthropic’s, not Grok. Paste an xAI Grok key in Settings.',
                     { title: 'Wrong API Key', variant: 'warn', confirmText: 'Open Settings', cancelText: 'Cancel' }
                 );
                 if (go) openSettings();
                 return false;
             }
-            // Soft-check: if xAI rejects the key, stop here. Network/CORS failures are ignored so scanning still works.
-            try {
-                const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
-                const timer = ctrl ? setTimeout(() => { try { ctrl.abort(); } catch (_) {} }, 4000) : null;
-                const res = await fetch('https://api.x.ai/v1/models', {
-                    method: 'GET',
-                    headers: { 'Authorization': 'Bearer ' + key },
-                    signal: ctrl ? ctrl.signal : undefined
-                });
-                if (timer) clearTimeout(timer);
-                if (res.status === 401 || res.status === 403) {
-                    const go = await appConfirm(
-                        'Your Grok API key was rejected by xAI. Double-check it in Settings, or create a new key at console.x.ai.',
-                        { title: 'Grok API Key Invalid', variant: 'warn', confirmText: 'Open Settings', cancelText: 'Cancel' }
-                    );
-                    if (go) openSettings();
-                    return false;
-                }
-            } catch (_) { /* CORS/offline/timeout — allow scan; rotation will no-op if the key fails later */ }
             return true;
+        }
+
+        function canvasFromImage(img, maxEdge) {
+            const w = img.naturalWidth || img.width;
+            const h = img.naturalHeight || img.height;
+            const scale = Math.min(1, maxEdge / Math.max(w, h));
+            const cw = Math.max(1, Math.round(w * scale));
+            const ch = Math.max(1, Math.round(h * scale));
+            const c = document.createElement('canvas');
+            c.width = cw; c.height = ch;
+            c.getContext('2d').drawImage(img, 0, 0, cw, ch);
+            return c;
+        }
+
+        function loadImageFromUrl(url) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = () => reject(new Error('Could not load image'));
+                img.src = url;
+            });
+        }
+
+        async function fileToUploadDataUrl(file) {
+            const url = URL.createObjectURL(file);
+            try {
+                const img = await loadImageFromUrl(url);
+                const canvas = canvasFromImage(img, SCAN_UPLOAD_EDGE);
+                return canvas.toDataURL('image/jpeg', SCAN_JPEG_QUALITY);
+            } finally {
+                URL.revokeObjectURL(url);
+            }
+        }
+
+        async function videoFrameToDataUrl(video) {
+            const canvas = document.createElement('canvas');
+            const scale = Math.min(1, SCAN_UPLOAD_EDGE / Math.max(video.videoWidth || 1, video.videoHeight || 1));
+            canvas.width = Math.max(1, Math.round((video.videoWidth || 1280) * scale));
+            canvas.height = Math.max(1, Math.round((video.videoHeight || 720) * scale));
+            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+            return canvas.toDataURL('image/jpeg', SCAN_JPEG_QUALITY);
+        }
+
+        async function urlToDataUrl(url) {
+            if (url && url.indexOf('data:') === 0) return url;
+            const res = await fetch(url);
+            if (!res.ok) throw new Error('Failed to download cleaned image (' + res.status + ')');
+            const blob = await res.blob();
+            return await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = () => reject(new Error('Failed to read cleaned image'));
+                reader.readAsDataURL(blob);
+            });
+        }
+
+        async function grokCleanTicketImage(dataUrl) {
+            const key = getGrokApiKey();
+            const prompt = [
+                'This is a photo of a trucking load ticket / scale ticket / delivery ticket.',
+                'Edit it into a clean scanned document:',
+                '- Remove background clutter (hands, dashboard, clipboard edges outside the paper)',
+                '- Deskew / straighten and auto-rotate so text is upright and readable',
+                '- Convert to high-contrast black & white scanner look',
+                '- Improve clarity and sharpness of printed text and numbers',
+                '- Keep all ticket text fully legible; do not invent or erase numbers',
+                '- Output a flat rectangular document filling the frame'
+            ].join('\n');
+
+            console.log('[scan] Grok Imagine cleanup request…');
+            const res = await fetch('https://api.x.ai/v1/images/edits', {
+                method: 'POST',
+                headers: {
+                    'content-type': 'application/json',
+                    'Authorization': 'Bearer ' + key
+                },
+                body: JSON.stringify({
+                    model: GROK_IMAGINE_MODEL,
+                    prompt,
+                    image: { url: dataUrl, type: 'image_url' },
+                    response_format: 'url'
+                })
+            });
+            if (!res.ok) {
+                let body = '';
+                try { body = await res.text(); } catch (_) {}
+                console.error('[scan] Imagine error', res.status, body.slice(0, 400));
+                throw new Error('Grok image cleanup failed (HTTP ' + res.status + '). Enable Imagine image models on your API key.');
+            }
+            const json = await res.json();
+            const outUrl = (json && json.data && json.data[0] && (json.data[0].url || json.data[0].b64_json))
+                ? (json.data[0].url || ('data:image/png;base64,' + json.data[0].b64_json))
+                : (json && json.url) || null;
+            if (!outUrl) throw new Error('Grok returned no cleaned image.');
+            return await urlToDataUrl(outUrl);
+        }
+
+        async function grokReadTicket(dataUrl) {
+            const key = getGrokApiKey();
+            const prompt = [
+                'Read this trucking load / scale / delivery ticket.',
+                'Return ONLY valid JSON with these keys:',
+                '{"miles": number|null, "tons": number|null, "date": string|null, "ticketNumber": string|null, "rawText": string}',
+                'miles = haul distance / miles if present.',
+                'tons = net weight in tons if present (convert from pounds / 2000 if needed).',
+                'date = ticket date as printed.',
+                'ticketNumber = ticket/load ID if present.',
+                'rawText = all readable text on the ticket.',
+                'If a field is missing use null. Do not invent values.'
+            ].join(' ');
+
+            console.log('[scan] Grok OCR request…');
+            const res = await fetch('https://api.x.ai/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'content-type': 'application/json',
+                    'Authorization': 'Bearer ' + key
+                },
+                body: JSON.stringify({
+                    model: GROK_CHAT_MODEL,
+                    temperature: 0,
+                    max_tokens: 800,
+                    messages: [{
+                        role: 'user',
+                        content: [
+                            { type: 'image_url', image_url: { url: dataUrl, detail: 'high' } },
+                            { type: 'text', text: prompt }
+                        ]
+                    }]
+                })
+            });
+            if (!res.ok) {
+                let body = '';
+                try { body = await res.text(); } catch (_) {}
+                console.error('[scan] OCR error', res.status, body.slice(0, 400));
+                throw new Error('Grok text read failed (HTTP ' + res.status + '). Enable Chat models (e.g. grok-4.3) on your API key.');
+            }
+            const json = await res.json();
+            const text = (json && json.choices && json.choices[0] && json.choices[0].message && json.choices[0].message.content)
+                ? String(json.choices[0].message.content).trim()
+                : '';
+            const m = text.match(/\{[\s\S]*\}/);
+            if (!m) return { miles: null, tons: null, date: null, ticketNumber: null, rawText: text };
+            try {
+                const parsed = JSON.parse(m[0]);
+                return {
+                    miles: (parsed.miles == null || parsed.miles === '') ? null : Number(parsed.miles),
+                    tons: (parsed.tons == null || parsed.tons === '') ? null : Number(parsed.tons),
+                    date: parsed.date || null,
+                    ticketNumber: parsed.ticketNumber || null,
+                    rawText: parsed.rawText || text
+                };
+            } catch (_) {
+                return { miles: null, tons: null, date: null, ticketNumber: null, rawText: text };
+            }
+        }
+
+        async function processWithGrok(originalDataUrl) {
+            showScanOverlay('Grok Cleaning Ticket…', 'Removing background · B&W · upright · sharpening');
+            let cleaned;
+            try {
+                cleaned = await grokCleanTicketImage(originalDataUrl);
+            } catch (err) {
+                console.error('[scan] cleanup failed, falling back to original:', err);
+                cleaned = originalDataUrl;
+                await appAlert((err && err.message) ? err.message : String(err), { title: 'Grok Cleanup Issue' });
+            }
+
+            showScanOverlay('Grok Reading Ticket…', 'Extracting miles, tons, and ticket text');
+            let ocr = { miles: null, tons: null, date: null, ticketNumber: null, rawText: '' };
+            try {
+                ocr = await grokReadTicket(cleaned);
+            } catch (err) {
+                console.error('[scan] OCR failed:', err);
+                await appAlert((err && err.message) ? err.message : String(err), { title: 'Grok Read Issue' });
+            } finally {
+                hideScanOverlay();
+            }
+            return { cleaned, ocr };
         }
 
         async function openDocScanner(opts) {
@@ -2803,51 +1968,20 @@
             docScan.sId = opts.sId != null ? opts.sId : (editingLoad && editingLoad.sId);
             docScan.lId = opts.lId != null ? opts.lId : (editingLoad && editingLoad.lId);
             docScan.docId = opts.docId || null;
-            docScan.autoMode = true;
             docScan.flashOn = false;
-            docScan.smoothed = null;
-            docScan.targetPts = null;
-            docScan.displayPts = null;
-            docScan.lastGood = null;
-            docScan.confidence = 0;
-            docScan.stableSince = 0;
-            docScan.lostAt = 0;
-            docScan.hitStreak = 0;
-            docScan.pendingPts = null;
-            docScan.pendingHits = 0;
-            docScan.lastDrawAt = 0;
             docScan.capturing = false;
             docScan.videoReady = false;
 
             const root = document.getElementById('docScanner');
-            const modeBtn = document.getElementById('docScannerMode');
-            const flashBtn = document.getElementById('docScannerFlash');
             const perm = document.getElementById('docScannerPerm');
             if (!root) return;
             root.classList.add('active');
             root.setAttribute('aria-hidden', 'false');
-            if (modeBtn) { modeBtn.textContent = 'Auto'; modeBtn.classList.add('auto'); }
-            if (flashBtn) flashBtn.classList.remove('flash-on');
             if (perm) perm.classList.remove('show');
-            setScannerStatus('', false);
             lockBodyScroll();
             docScan.active = true;
-
-            try {
-                showScanOverlay();
-                const sub = document.getElementById('scanSublabel');
-                if (sub) sub.textContent = 'Starting camera…';
-                await ensureScannerEngine();
-            } catch (err) {
-                console.error('[scan] engine preload failed:', err);
-            } finally {
-                hideScanOverlay();
-            }
-
             bindScannerControlsOnce();
-            const ok = await startScannerCamera();
-            if (!ok) return; // permission UI shown; gallery still available via bound controls
-            startDetectLoop();
+            await startScannerCamera();
         }
 
         async function startScannerCamera() {
@@ -2855,17 +1989,13 @@
             const perm = document.getElementById('docScannerPerm');
             stopScannerCamera();
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                showCameraPermission('Camera unavailable', 'This device or browser cannot open the camera. You can still choose a photo from your gallery.');
+                showCameraPermission('Camera unavailable', 'This device cannot open the camera. Choose a photo from your gallery instead — Grok will still clean and read it.');
                 return false;
             }
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({
                     audio: false,
-                    video: {
-                        facingMode: { ideal: 'environment' },
-                        width: { ideal: 1920 },
-                        height: { ideal: 1080 }
-                    }
+                    video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } }
                 });
                 docScan.stream = stream;
                 docScan.track = stream.getVideoTracks()[0] || null;
@@ -2876,17 +2006,7 @@
                 return true;
             } catch (err) {
                 console.error('[scan] getUserMedia failed:', err);
-                const name = err && err.name ? err.name : '';
-                if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
-                    showCameraPermission(
-                        'Camera permission denied',
-                        'Allow camera access in your browser or device settings to scan documents. You can also choose an existing photo.'
-                    );
-                } else if (name === 'NotFoundError' || name === 'DevicesNotFoundError') {
-                    showCameraPermission('No camera found', 'No rear camera is available. Choose a photo from your gallery instead.');
-                } else {
-                    showCameraPermission('Camera unavailable', 'Could not open the camera. Try again or choose a photo from your gallery.');
-                }
+                showCameraPermission('Camera access needed', 'Allow camera access or choose a photo from your gallery.');
                 return false;
             }
         }
@@ -2901,10 +2021,9 @@
         }
 
         function stopScannerCamera() {
-            if (docScan.raf) { cancelAnimationFrame(docScan.raf); docScan.raf = 0; }
-            if (docScan.stream) {
-                try { docScan.stream.getTracks().forEach(t => t.stop()); } catch (_) {}
-            }
+            try {
+                if (docScan.stream) docScan.stream.getTracks().forEach(t => t.stop());
+            } catch (_) {}
             docScan.stream = null;
             docScan.track = null;
             docScan.videoReady = false;
@@ -2913,886 +2032,157 @@
         }
 
         function closeDocScanner() {
-            docScan.active = false;
             stopScannerCamera();
             const root = document.getElementById('docScanner');
             if (root) {
                 root.classList.remove('active');
                 root.setAttribute('aria-hidden', 'true');
             }
-            const perm = document.getElementById('docScannerPerm');
-            if (perm) perm.classList.remove('show');
+            docScan.active = false;
             unlockBodyScroll();
             if (document.getElementById('editOverlay') && document.getElementById('editOverlay').classList.contains('active')) lockBodyScroll();
         }
 
-        let scannerControlsBound = false;
         function bindScannerControlsOnce() {
-            if (scannerControlsBound) return;
-            scannerControlsBound = true;
+            if (docScan.bound) return;
+            docScan.bound = true;
+            const fileInput = document.getElementById('docScannerFile');
             document.getElementById('docScannerClose').onclick = () => closeDocScanner();
             document.getElementById('docScannerPermClose').onclick = () => closeDocScanner();
-            document.getElementById('docScannerRetryCam').onclick = async () => {
-                const ok = await startScannerCamera();
-                if (ok) startDetectLoop();
-            };
-            document.getElementById('docScannerOpenGallery').onclick = () => pickGalleryImage();
-            document.getElementById('docScannerGallery').onclick = () => pickGalleryImage();
-            document.getElementById('docScannerCapture').onclick = () => captureFromScanner(true);
-            document.getElementById('docScannerMode').onclick = () => {
-                docScan.autoMode = !docScan.autoMode;
-                const btn = document.getElementById('docScannerMode');
-                btn.textContent = docScan.autoMode ? 'Auto' : 'Manual';
-                btn.classList.toggle('auto', docScan.autoMode);
-                setScannerStatus(docScan.autoMode ? '' : 'Manual', !docScan.autoMode);
-            };
+            document.getElementById('docScannerRetryCam').onclick = () => startScannerCamera();
+            document.getElementById('docScannerGallery').onclick = () => fileInput && fileInput.click();
+            document.getElementById('docScannerOpenGallery').onclick = () => fileInput && fileInput.click();
+            document.getElementById('docScannerCapture').onclick = () => captureFromScanner();
             document.getElementById('docScannerFlash').onclick = async () => {
+                if (!docScan.track || typeof docScan.track.applyConstraints !== 'function') {
+                    await appAlert('Flash/torch is not supported on this camera.');
+                    return;
+                }
                 docScan.flashOn = !docScan.flashOn;
-                const btn = document.getElementById('docScannerFlash');
-                btn.classList.toggle('flash-on', docScan.flashOn);
-                if (docScan.track) {
-                    try {
-                        const caps = docScan.track.getCapabilities ? docScan.track.getCapabilities() : {};
-                        if (caps.torch) await docScan.track.applyConstraints({ advanced: [{ torch: docScan.flashOn }] });
-                        else if (docScan.flashOn) await appAlert('Flash/torch is not supported on this camera.');
-                    } catch (err) {
-                        console.warn('[scan] torch failed:', err);
-                        if (docScan.flashOn) await appAlert('Could not toggle flash on this device.');
-                    }
+                try {
+                    await docScan.track.applyConstraints({ advanced: [{ torch: docScan.flashOn }] });
+                } catch (_) {
+                    docScan.flashOn = false;
+                    await appAlert('Could not toggle flash on this device.');
                 }
             };
-            document.getElementById('docScannerFile').onchange = async (e) => {
-                const file = e.target.files && e.target.files[0];
-                e.target.value = '';
-                if (!file) return;
-                await ingestScannerFile(file);
+            if (fileInput) {
+                fileInput.onchange = async () => {
+                    const file = fileInput.files && fileInput.files[0];
+                    fileInput.value = '';
+                    if (!file) return;
+                    await ingestScannerFile(file);
+                };
+            }
+            document.getElementById('docReviewClose').onclick = () => closeDocReview();
+            document.getElementById('docReviewCancel').onclick = () => closeDocReview();
+            document.getElementById('docReviewRetake').onclick = async () => {
+                closeDocReview();
+                await openDocScanner({ mode: docScan.mode, sId: docScan.sId, lId: docScan.lId, docId: docScan.docId });
             };
+            document.getElementById('docReviewSave').onclick = () => saveDocReview();
         }
 
-        function pickGalleryImage() {
-            const input = document.getElementById('docScannerFile');
-            if (!input) return;
-            input.removeAttribute('capture');
-            input.click();
-        }
-
-        function startDetectLoop() {
-            if (docScan.raf) cancelAnimationFrame(docScan.raf);
+        async function captureFromScanner() {
+            if (docScan.capturing) return;
             const video = document.getElementById('docScannerVideo');
-            const overlay = document.getElementById('docScannerOverlay');
-            const detectCanvas = document.createElement('canvas');
-            const detectCtx = detectCanvas.getContext('2d', { willReadFrequently: true });
-
-            const paintOverlay = (now) => {
-                const rect = overlay.parentElement.getBoundingClientRect();
-                const dpr = Math.min(window.devicePixelRatio || 1, 2);
-                const cw = Math.max(1, Math.round(rect.width * dpr));
-                const ch = Math.max(1, Math.round(rect.height * dpr));
-                if (overlay.width !== cw || overlay.height !== ch) {
-                    overlay.width = cw; overlay.height = ch;
-                }
-                const dt = docScan.lastDrawAt ? Math.min(34, now - docScan.lastDrawAt) : 16.7;
-                docScan.lastDrawAt = now;
-
-                // Smoothly chase the latest detection every animation frame
-                if (docScan.targetPts) {
-                    docScan.displayPts = lerpDisplayCorners(docScan.displayPts, docScan.targetPts, dt);
-                    docScan.smoothed = docScan.displayPts;
-                } else if (docScan.lostAt && (now - docScan.lostAt) > DOC_LOST_GRACE_MS) {
-                    docScan.displayPts = null;
-                    docScan.smoothed = null;
-                }
-
-                const drawPts = docScan.displayPts
-                    ? mapPtsToDisplay(docScan.displayPts, docScan.detectW || DOC_DETECT_W, docScan.detectH || 1, cw, ch)
-                    : null;
-                drawScannerOverlay(overlay, drawPts, docScan.confidence);
-            };
-
-            const tick = () => {
-                if (!docScan.active) return;
-                docScan.raf = requestAnimationFrame(tick);
-                if (!docScan.videoReady || !video.videoWidth) return;
-
-                const now = performance.now();
-                paintOverlay(now);
-
-                if (docScan.detectBusy || now - docScan.lastDetectAt < DOC_DETECT_INTERVAL_MS) return;
-                docScan.lastDetectAt = now;
-                docScan.detectBusy = true;
-
-                // Run detection without blocking the rAF paint path
-                Promise.resolve().then(() => {
-                    try {
-                        if (!docScan.active || !window.__docScannerInst) return;
-                        const vw = video.videoWidth, vh = video.videoHeight;
-                        detectCanvas.width = DOC_DETECT_W;
-                        detectCanvas.height = Math.max(1, Math.round(vh * (DOC_DETECT_W / vw)));
-                        docScan.detectW = detectCanvas.width;
-                        docScan.detectH = detectCanvas.height;
-                        detectCtx.drawImage(video, 0, 0, detectCanvas.width, detectCanvas.height);
-
-                        const found = detectCornersFromCanvas(detectCanvas);
-                        if (found) {
-                            const bright = estimateBrightness(detectCtx, detectCanvas.width, detectCanvas.height);
-                            const sharp = estimateSharpness(detectCtx, detectCanvas.width, detectCanvas.height);
-                            const lightingOk = bright > 35 && bright < 245;
-                            const focusOk = sharp > 12;
-
-                            // Anti-jitter lock: ignore one-off jumps unless they persist
-                            const prevTarget = docScan.targetPts;
-                            const jump = cornerMotion(prevTarget, found.pts);
-                            let accept = found.pts;
-                            if (prevTarget && jump > DOC_OUTLIER_PX) {
-                                const pendJump = cornerMotion(docScan.pendingPts, found.pts);
-                                if (docScan.pendingPts && pendJump < DOC_OUTLIER_PX * 0.7) {
-                                    docScan.pendingHits++;
-                                } else {
-                                    docScan.pendingPts = found.pts.map(p => ({ x: p.x, y: p.y }));
-                                    docScan.pendingHits = 1;
-                                }
-                                if (docScan.pendingHits < DOC_LOCK_HITS) {
-                                    accept = null; // keep previous target this frame
-                                } else {
-                                    docScan.pendingPts = null;
-                                    docScan.pendingHits = 0;
-                                }
-                            } else {
-                                docScan.pendingPts = null;
-                                docScan.pendingHits = 0;
-                            }
-
-                            if (accept) {
-                                docScan.hitStreak = Math.min(8, docScan.hitStreak + 1);
-                                // Heavy target damping — display layer adds a second smooth pass
-                                const targetAlpha = jump > 40 ? 0.35 : (jump > 18 ? 0.22 : 0.14);
-                                docScan.targetPts = smoothCorners(prevTarget, accept, prevTarget ? targetAlpha : 1);
-                                docScan.lostAt = 0;
-                            }
-
-                            // Don't show outline until we have a short lock streak (kills flicker)
-                            if (docScan.hitStreak < DOC_LOCK_HITS && !docScan.displayPts) {
-                                docScan.confidence = Math.max(docScan.confidence, 0.3);
-                            } else {
-                                const displayMotion = cornerMotion(docScan.displayPts, docScan.targetPts);
-                                const steady = displayMotion < DOC_READY_MOVE_PX;
-                                let confidence = 0.45;
-                                if (lightingOk) confidence += 0.15;
-                                if (focusOk) confidence += 0.1;
-                                if (steady) confidence += 0.2;
-                                if (found.areaRatio > 0.12 && found.areaRatio < 0.7) confidence += 0.1;
-                                docScan.confidence = Math.min(1, confidence);
-                                if (docScan.targetPts) {
-                                    docScan.lastGood = {
-                                        pts: (docScan.displayPts || docScan.targetPts).map(p => ({ ...p })),
-                                        detectW: detectCanvas.width,
-                                        detectH: detectCanvas.height,
-                                        corners: arrayToCorners(docScan.displayPts || docScan.targetPts)
-                                    };
-                                }
-
-                                if (docScan.confidence >= 0.85 && steady) {
-                                    if (!docScan.stableSince) {
-                                        docScan.stableSince = now;
-                                        haptic(10);
-                                    }
-                                    const held = performance.now() - docScan.stableSince;
-                                    setScannerStatus('Hold still', held > 180);
-                                    if (docScan.autoMode && !docScan.capturing && held >= DOC_STABLE_MS && (performance.now() - docScan.lastCaptureAt) > DOC_COOLDOWN_MS) {
-                                        if (lightingOk && focusOk) captureFromScanner(false);
-                                        else setScannerStatus(lightingOk ? 'Hold steadier' : 'Need better light', true);
-                                    }
-                                } else {
-                                    docScan.stableSince = 0;
-                                    if (docScan.autoMode) setScannerStatus('', false);
-                                }
-                            }
-                        } else {
-                            docScan.hitStreak = Math.max(0, docScan.hitStreak - 1);
-                            docScan.pendingPts = null;
-                            docScan.pendingHits = 0;
-                            if (!docScan.lostAt) docScan.lostAt = performance.now();
-                            docScan.confidence = Math.max(0, docScan.confidence - 0.05);
-                            // Keep last outline while moving / brief miss — don't snap off
-                            if (performance.now() - docScan.lostAt > DOC_LOST_GRACE_MS) {
-                                docScan.targetPts = null;
-                            }
-                            docScan.stableSince = 0;
-                            if (docScan.autoMode) setScannerStatus('', false);
-                        }
-                    } catch (err) {
-                        console.warn('[scan] detect tick error:', err);
-                    } finally {
-                        docScan.detectBusy = false;
-                    }
-                });
-            };
-            docScan.raf = requestAnimationFrame(tick);
-        }
-
-        async function captureFromScanner(manual) {
-            if (!docScan.active || docScan.capturing) return;
-            if (!manual && (performance.now() - docScan.lastCaptureAt) < DOC_COOLDOWN_MS) return;
-            const video = document.getElementById('docScannerVideo');
-            if (!video || !video.videoWidth) {
-                if (manual) await appAlert('Camera is not ready yet.');
+            if (!docScan.videoReady || !video || !video.videoWidth) {
+                await appAlert('Camera is not ready yet.');
                 return;
             }
             docScan.capturing = true;
-            docScan.lastCaptureAt = performance.now();
-            setScannerStatus('Capturing…', true);
-            haptic(25);
             try {
-                const full = document.createElement('canvas');
-                full.width = video.videoWidth;
-                full.height = video.videoHeight;
-                full.getContext('2d').drawImage(video, 0, 0);
-                const corners = docScan.lastGood && docScan.lastGood.corners
-                    ? scaleCorners(docScan.lastGood.corners, docScan.lastGood.detectW, docScan.lastGood.detectH, full.width, full.height)
-                    : null;
-                // Drop camera UI first so review feels snappy, then crop + B&W
-                const originalUrl = full.toDataURL('image/jpeg', 0.92);
+                haptic(18);
+                const dataUrl = await videoFrameToDataUrl(video);
                 closeDocScanner();
-                await openDocReviewFromCanvas(full, corners, originalUrl);
+                await runGrokPipeline(dataUrl);
             } catch (err) {
                 console.error('[scan] capture failed:', err);
                 await appAlert('Capture failed. Try again or pick a photo from your gallery.');
             } finally {
                 docScan.capturing = false;
-                setScannerStatus('', false);
             }
         }
 
-        function scaleCorners(corners, fromW, fromH, toW, toH) {
-            const sx = toW / fromW, sy = toH / fromH;
-            const map = p => ({ x: p.x * sx, y: p.y * sy });
-            return {
-                topLeftCorner: map(corners.topLeftCorner),
-                topRightCorner: map(corners.topRightCorner),
-                bottomRightCorner: map(corners.bottomRightCorner),
-                bottomLeftCorner: map(corners.bottomLeftCorner)
-            };
-        }
-
         async function ingestScannerFile(file) {
-            showScanOverlay();
+            if (docScan.capturing) return;
+            docScan.capturing = true;
             try {
-                const oriented = await loadOrientedCanvas(file);
-                const canvas = oriented.canvas;
-                let corners = null;
-                try {
-                    await ensureScannerEngine();
-                    const working = downsizeCanvas(canvas, 1200);
-                    const found = detectCornersFromCanvas(working);
-                    if (found) corners = scaleCorners(found.corners, working.width, working.height, canvas.width, canvas.height);
-                } catch (err) {
-                    console.warn('[scan] gallery detect failed:', err);
-                }
-                const originalUrl = canvas.toDataURL('image/jpeg', 0.92);
+                const dataUrl = await fileToUploadDataUrl(file);
                 closeDocScanner();
-                await openDocReviewFromCanvas(canvas, corners, originalUrl);
+                await runGrokPipeline(dataUrl);
             } catch (err) {
                 console.error('[scan] gallery ingest failed:', err);
                 await appAlert('Could not open that image. Try another photo.');
             } finally {
+                docScan.capturing = false;
+            }
+        }
+
+        async function runGrokPipeline(originalDataUrl) {
+            try {
+                const { cleaned, ocr } = await processWithGrok(originalDataUrl);
+                openDocReview(originalDataUrl, cleaned, ocr);
+            } catch (err) {
                 hideScanOverlay();
+                console.error('[scan] pipeline failed:', err);
+                await appAlert((err && err.message) ? err.message : String(err), { title: 'Scan Failed' });
             }
         }
 
-        function cornersLookTight(pts, w, h) {
-            if (!pts || pts.length !== 4) return false;
-            const ratio = quadArea(pts) / (w * h);
-            return ratio >= DOC_MIN_AREA_RATIO && ratio <= DOC_MAX_AREA_RATIO;
-        }
-
-        function insetCorners(pts, factor) {
-            if (!pts || pts.length !== 4) return pts;
-            const cx = (pts[0].x + pts[1].x + pts[2].x + pts[3].x) / 4;
-            const cy = (pts[0].y + pts[1].y + pts[2].y + pts[3].y) / 4;
-            return pts.map(p => ({
-                x: p.x + (cx - p.x) * factor,
-                y: p.y + (cy - p.y) * factor
-            }));
-        }
-
-        function tightenToBrightPaper(canvas, pts) {
-            // Snap a loose clipboard/cabin quad down to the bright white sheet inside it.
-            if (typeof cv === 'undefined' || !cv.Mat || !pts || pts.length !== 4) return pts;
-            let src = null, gray = null, mask = null, bright = null, masked = null;
-            let contours = null, hierarchy = null;
-            try {
-                src = cv.imread(canvas);
-                gray = new cv.Mat();
-                if (src.channels() === 4) cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
-                else if (src.channels() === 3) cv.cvtColor(src, gray, cv.COLOR_RGB2GRAY);
-                else src.copyTo(gray);
-
-                mask = cv.Mat.zeros(gray.rows, gray.cols, cv.CV_8UC1);
-                const poly = cv.matFromArray(4, 1, cv.CV_32SC2, [
-                    Math.round(pts[0].x), Math.round(pts[0].y),
-                    Math.round(pts[1].x), Math.round(pts[1].y),
-                    Math.round(pts[2].x), Math.round(pts[2].y),
-                    Math.round(pts[3].x), Math.round(pts[3].y)
-                ]);
-                const mv = new cv.MatVector();
-                mv.push_back(poly);
-                cv.fillPoly(mask, mv, new cv.Scalar(255));
-                poly.delete(); mv.delete();
-
-                const mu = cv.mean(gray, mask)[0];
-                bright = new cv.Mat();
-                // Paper is brighter than blue clipboard / hands / cabin inside the rough quad
-                cv.threshold(gray, bright, Math.max(155, mu + 12), 255, cv.THRESH_BINARY);
-                masked = new cv.Mat();
-                cv.bitwise_and(bright, mask, masked);
-
-                contours = new cv.MatVector();
-                hierarchy = new cv.Mat();
-                cv.findContours(masked, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
-                const outerArea = quadArea(pts);
-                let bestPts = null, bestArea = 0;
-                for (let i = 0; i < contours.size(); i++) {
-                    const cnt = contours.get(i);
-                    const area = cv.contourArea(cnt);
-                    // Must be a substantial sheet, but smaller than a clipboard-inclusive outer box
-                    if (area < outerArea * 0.35 || area > outerArea * 0.98) continue;
-                    const peri = cv.arcLength(cnt, true);
-                    const approx = new cv.Mat();
-                    cv.approxPolyDP(cnt, approx, 0.02 * peri, true);
-                    let cand = null;
-                    if (approx.rows === 4) {
-                        cand = [];
-                        for (let r = 0; r < 4; r++) cand.push({ x: approx.data32S[r * 2], y: approx.data32S[r * 2 + 1] });
-                    } else {
-                        try {
-                            const rect = cv.minAreaRect(cnt);
-                            const boxMat = new cv.Mat();
-                            cv.boxPoints(rect, boxMat);
-                            if (boxMat.rows === 4) {
-                                cand = [];
-                                for (let r = 0; r < 4; r++) cand.push({ x: boxMat.data32F[r * 2], y: boxMat.data32F[r * 2 + 1] });
-                            }
-                            boxMat.delete();
-                        } catch (_) {}
-                    }
-                    approx.delete();
-                    if (!cand) continue;
-                    const ordered = orderCornerPoints(cand);
-                    if (!ordered) continue;
-                    const arr = cornersToArray(ordered);
-                    if (!cornersLookTight(arr, canvas.width, canvas.height)) continue;
-                    if (area > bestArea) { bestArea = area; bestPts = arr; }
-                }
-                if (bestPts) {
-                    // Slight inset keeps blue clipboard lip out of the crop
-                    const tight = insetCorners(bestPts, 0.018);
-                    console.log('[scan] tightened to white paper (' + (bestArea / outerArea * 100).toFixed(0) + '% of outer quad)');
-                    return tight;
-                }
-            } catch (err) {
-                console.warn('[scan] tightenToBrightPaper failed:', err);
-            } finally {
-                if (src) src.delete();
-                if (gray) gray.delete();
-                if (mask) mask.delete();
-                if (bright) bright.delete();
-                if (masked) masked.delete();
-                if (contours) contours.delete();
-                if (hierarchy) hierarchy.delete();
-            }
-            return insetCorners(pts, 0.015);
-        }
-
-        function pickBestDocumentCorners(sourceCanvas, hintCorners) {
-            const w = sourceCanvas.width, h = sourceCanvas.height;
-            let best = null;
-            let bestScore = -1;
-
-            const consider = (pts, scoreBonus) => {
-                if (!pts || !cornersLookTight(pts, w, h)) return;
-                const corners = arrayToCorners(pts);
-                const validation = validateCorners(corners, w, h);
-                if (!validation.ok) return;
-                // Prefer brighter / mid-size quads when we only have geometry
-                const ratio = quadArea(pts) / (w * h);
-                let score = 40 + (scoreBonus || 0);
-                score += Math.max(0, 1 - Math.abs(ratio - 0.28) / 0.28) * 20;
-                if (ratio > 0.65) score -= 30;
-                if (score > bestScore) {
-                    bestScore = score;
-                    best = pts.map(p => ({ x: p.x, y: p.y }));
-                }
-            };
-
-            try {
-                const working = downsizeCanvas(sourceCanvas, 1400);
-                const found = detectCornersFromCanvas(working);
-                if (found && found.corners) {
-                    const scaled = cornersToArray(scaleCorners(found.corners, working.width, working.height, w, h));
-                    // Use detector score when available
-                    const bonus = (found.score || 0) + (found.brightness || 0) * 0.05;
-                    if (scaled && cornersLookTight(scaled, w, h)) {
-                        best = scaled;
-                        bestScore = bonus;
-                        console.log('[scan] full-res detect corners score=' + (found.score || 0).toFixed(1) +
-                            ' area=' + (found.areaRatio * 100).toFixed(1) + '%');
-                    }
-                }
-            } catch (err) {
-                console.warn('[scan] full-res detect failed:', err);
-            }
-
-            if (hintCorners) {
-                const hint = Array.isArray(hintCorners) ? hintCorners : cornersToArray(hintCorners);
-                consider(hint, 10); // live outline is a useful prior
-            }
-
-            if (!best) return null;
-            const tightened = tightenToBrightPaper(sourceCanvas, best);
-            if (tightened && cornersLookTight(tightened, w, h)) return tightened;
-            return best;
-        }
-
-        async function openDocReviewFromCanvas(sourceCanvas, corners, originalUrl) {
+        function openDocReview(originalUrl, processedUrl, ocr) {
             docReview.active = true;
-            docReview.sourceCanvas = cloneCanvas(sourceCanvas);
-            docReview.originalCanvas = cloneCanvas(sourceCanvas);
-            docReview.originalUrl = originalUrl || sourceCanvas.toDataURL('image/jpeg', 0.92);
-            docReview.filter = 'bw';
-            docReview.rotation = 0;
-            docReview.cropMode = false;
-            docReview.compare = false;
-            docReview.scale = 1;
-            docReview.panX = 0;
-            docReview.panY = 0;
-
+            docReview.originalUrl = originalUrl;
+            docReview.processedUrl = processedUrl;
+            docReview.ocr = ocr || {};
             const root = document.getElementById('docReview');
-            root.classList.add('active');
-            root.setAttribute('aria-hidden', 'false');
-            lockBodyScroll();
-            document.querySelectorAll('.doc-filter').forEach(b => b.classList.toggle('active', b.dataset.filter === 'bw'));
-            document.getElementById('docReviewCropToggle').classList.remove('active');
-            bindReviewControlsOnce();
-            showScanOverlay();
-            try {
-                await ensureScannerEngine();
-                const sub = document.getElementById('scanSublabel');
-                if (sub) sub.textContent = 'Finding document edges…';
-                const best = pickBestDocumentCorners(docReview.sourceCanvas, corners);
-                if (best) {
-                    docReview.corners = best;
-                    docReview.cropMode = false;
-                    console.log('[scan] review auto-crop locked');
-                } else {
-                    // Do not fake a full-frame crop — let the driver adjust corners
-                    docReview.corners = defaultFullCorners(sourceCanvas.width, sourceCanvas.height);
-                    docReview.cropMode = true;
-                    document.getElementById('docReviewCropToggle').classList.add('active');
-                    console.warn('[scan] no tight document lock — Adjust Corners enabled');
-                }
-                if (sub) sub.textContent = docReview.filter === 'bw' ? 'Creating black & white scan…' : 'Cropping background and enhancing…';
-                await renderDocReview(false);
-            } finally {
-                hideScanOverlay();
+            const img = document.getElementById('docReviewImg');
+            if (img) img.src = processedUrl || originalUrl;
+            document.getElementById('ocrMiles').value = (ocr && ocr.miles != null && !isNaN(ocr.miles)) ? ocr.miles : '';
+            document.getElementById('ocrTons').value = (ocr && ocr.tons != null && !isNaN(ocr.tons)) ? ocr.tons : '';
+            document.getElementById('ocrDate').value = (ocr && ocr.date) ? ocr.date : '';
+            document.getElementById('ocrTicketNo').value = (ocr && ocr.ticketNumber) ? ocr.ticketNumber : '';
+            document.getElementById('ocrRaw').value = (ocr && ocr.rawText) ? ocr.rawText : '';
+            if (root) {
+                root.classList.add('active');
+                root.setAttribute('aria-hidden', 'false');
             }
-        }
-
-        function defaultFullCorners(w, h) {
-            const p = Math.min(w, h) * 0.04;
-            return [
-                { x: p, y: p },
-                { x: w - p, y: p },
-                { x: w - p, y: h - p },
-                { x: p, y: h - p }
-            ];
-        }
-
-        function cloneCanvas(src) {
-            const c = document.createElement('canvas');
-            c.width = src.width; c.height = src.height;
-            c.getContext('2d').drawImage(src, 0, 0);
-            return c;
+            lockBodyScroll();
         }
 
         function closeDocReview() {
-            docReview.active = false;
             const root = document.getElementById('docReview');
             if (root) {
                 root.classList.remove('active');
                 root.setAttribute('aria-hidden', 'true');
             }
+            docReview.active = false;
             unlockBodyScroll();
             if (document.getElementById('editOverlay') && document.getElementById('editOverlay').classList.contains('active')) lockBodyScroll();
         }
 
-        let reviewControlsBound = false;
-        function bindReviewControlsOnce() {
-            if (reviewControlsBound) return;
-            reviewControlsBound = true;
-            document.getElementById('docReviewClose').onclick = () => closeDocReview();
-            document.getElementById('docReviewCancel').onclick = () => closeDocReview();
-            document.getElementById('docReviewRetake').onclick = async () => {
-                closeDocReview();
-                openDocScanner({ mode: docScan.mode, sId: docScan.sId, lId: docScan.lId, docId: docScan.docId });
+        function readOcrFieldsFromForm() {
+            const milesRaw = document.getElementById('ocrMiles').value.trim();
+            const tonsRaw = document.getElementById('ocrTons').value.trim();
+            const miles = milesRaw === '' ? null : parseFloat(milesRaw);
+            const tons = tonsRaw === '' ? null : parseFloat(tonsRaw);
+            return {
+                miles: (miles != null && !isNaN(miles)) ? miles : null,
+                tons: (tons != null && !isNaN(tons)) ? tons : null,
+                date: document.getElementById('ocrDate').value.trim() || null,
+                ticketNumber: document.getElementById('ocrTicketNo').value.trim() || null,
+                rawText: document.getElementById('ocrRaw').value.trim() || ''
             };
-            document.getElementById('docReviewSave').onclick = () => saveDocReview();
-            document.getElementById('docReviewRotateL').onclick = async () => { docReview.rotation = (docReview.rotation + 270) % 360; await reprocessReviewGeometry(); };
-            document.getElementById('docReviewRotateR').onclick = async () => { docReview.rotation = (docReview.rotation + 90) % 360; await reprocessReviewGeometry(); };
-            document.getElementById('docReviewCropToggle').onclick = async () => {
-                docReview.cropMode = !docReview.cropMode;
-                document.getElementById('docReviewCropToggle').classList.toggle('active', docReview.cropMode);
-                await renderDocReview(false);
-            };
-            document.getElementById('docReviewCompare').onclick = async () => {
-                docReview.compare = !docReview.compare;
-                document.getElementById('docReviewCompare').classList.toggle('active', docReview.compare);
-                await renderDocReview(false);
-            };
-            document.querySelectorAll('.doc-filter').forEach(btn => {
-                btn.onclick = async () => {
-                    docReview.filter = btn.dataset.filter;
-                    document.querySelectorAll('.doc-filter').forEach(b => b.classList.toggle('active', b === btn));
-                    await renderDocReview(false);
-                };
-            });
-
-            const stage = document.getElementById('docReviewStage');
-            const crop = document.getElementById('docReviewCrop');
-            stage.addEventListener('touchstart', onReviewTouchStart, { passive: false });
-            stage.addEventListener('touchmove', onReviewTouchMove, { passive: false });
-            stage.addEventListener('touchend', onReviewTouchEnd, { passive: false });
-            crop.addEventListener('pointerdown', onCropPointerDown);
-            window.addEventListener('pointermove', onCropPointerMove);
-            window.addEventListener('pointerup', onCropPointerUp);
         }
-
-        async function reprocessReviewGeometry() {
-            docReview.sourceCanvas = rotateCanvasDegrees(docReview.originalCanvas, docReview.rotation);
-            const best = pickBestDocumentCorners(docReview.sourceCanvas, null);
-            if (best) {
-                docReview.corners = best;
-                docReview.cropMode = false;
-                document.getElementById('docReviewCropToggle').classList.remove('active');
-            } else {
-                docReview.corners = defaultFullCorners(docReview.sourceCanvas.width, docReview.sourceCanvas.height);
-                docReview.cropMode = true;
-                document.getElementById('docReviewCropToggle').classList.add('active');
-            }
-            await renderDocReview();
-        }
-
-        async function extractWithCorners(sourceCanvas, cornersArr) {
-            const corners = arrayToCorners(cornersArr);
-            const validation = validateCorners(corners, sourceCanvas.width, sourceCanvas.height);
-            let extracted = null;
-            if (validation.ok) {
-                try {
-                    const scanner = window.__docScannerInst || await ensureScannerEngine();
-                    const { w, h } = targetDimsFromCorners(corners);
-                    extracted = scanner.extractPaper(sourceCanvas, w, h, corners);
-                } catch (err) {
-                    console.warn('[scan] extractPaper failed in review:', err);
-                }
-            }
-            if (!extracted || !extracted.width) {
-                // manual crop bounding box fallback
-                const xs = cornersArr.map(p => p.x), ys = cornersArr.map(p => p.y);
-                const minX = Math.max(0, Math.floor(Math.min(...xs)));
-                const minY = Math.max(0, Math.floor(Math.min(...ys)));
-                const maxX = Math.min(sourceCanvas.width, Math.ceil(Math.max(...xs)));
-                const maxY = Math.min(sourceCanvas.height, Math.ceil(Math.max(...ys)));
-                const c = document.createElement('canvas');
-                c.width = Math.max(1, maxX - minX);
-                c.height = Math.max(1, maxY - minY);
-                c.getContext('2d').drawImage(sourceCanvas, minX, minY, c.width, c.height, 0, 0, c.width, c.height);
-                extracted = c;
-            }
-            return extracted;
-        }
-
-        function applyEnhanceFilter(canvas, filter) {
-            if (filter === 'original') return canvas;
-            if (filter === 'bw') {
-                applyScannerLook(canvas);
-                return canvas;
-            }
-            const ctx = canvas.getContext('2d');
-            const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const d = img.data;
-            if (filter === 'gray') {
-                for (let i = 0; i < d.length; i += 4) {
-                    const g = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
-                    d[i] = d[i + 1] = d[i + 2] = g;
-                }
-                ctx.putImageData(img, 0, 0);
-                unsharpMask(canvas, 0.45, 1.1);
-                return canvas;
-            }
-            // auto / enhanced color: white-balance-ish + local contrast + mild sharpen
-            let rSum = 0, gSum = 0, bSum = 0, n = 0;
-            for (let i = 0; i < d.length; i += 32) {
-                rSum += d[i]; gSum += d[i + 1]; bSum += d[i + 2]; n++;
-            }
-            const rAvg = rSum / n || 1, gAvg = gSum / n || 1, bAvg = bSum / n || 1;
-            const avg = (rAvg + gAvg + bAvg) / 3;
-            const rGain = avg / rAvg, gGain = avg / gAvg, bGain = avg / bAvg;
-            const contrast = filter === 'enhanced' ? 1.18 : 1.12;
-            const bright = filter === 'auto' ? 8 : 4;
-            for (let i = 0; i < d.length; i += 4) {
-                let r = d[i] * rGain, g = d[i + 1] * gGain, b = d[i + 2] * bGain;
-                r = (r - 128) * contrast + 128 + bright;
-                g = (g - 128) * contrast + 128 + bright;
-                b = (b - 128) * contrast + 128 + bright;
-                d[i] = Math.max(0, Math.min(255, r));
-                d[i + 1] = Math.max(0, Math.min(255, g));
-                d[i + 2] = Math.max(0, Math.min(255, b));
-            }
-            ctx.putImageData(img, 0, 0);
-            unsharpMask(canvas, filter === 'enhanced' ? 0.55 : 0.4, 1.0);
-            return canvas;
-        }
-
-        function unsharpMask(canvas, amount, radius) {
-            // simple high-pass sharpen via canvas filter blur difference approximation
-            const w = canvas.width, h = canvas.height;
-            const ctx = canvas.getContext('2d');
-            const src = ctx.getImageData(0, 0, w, h);
-            const blurC = document.createElement('canvas');
-            blurC.width = w; blurC.height = h;
-            const bctx = blurC.getContext('2d');
-            bctx.filter = 'blur(' + (radius || 1) + 'px)';
-            bctx.drawImage(canvas, 0, 0);
-            const blurred = bctx.getImageData(0, 0, w, h).data;
-            const d = src.data;
-            for (let i = 0; i < d.length; i += 4) {
-                d[i] = Math.max(0, Math.min(255, d[i] + (d[i] - blurred[i]) * amount));
-                d[i + 1] = Math.max(0, Math.min(255, d[i + 1] + (d[i + 1] - blurred[i + 1]) * amount));
-                d[i + 2] = Math.max(0, Math.min(255, d[i + 2] + (d[i + 2] - blurred[i + 2]) * amount));
-            }
-            ctx.putImageData(src, 0, 0);
-        }
-
-        async function renderDocReview(showBusy) {
-            if (showBusy !== false) showScanOverlay();
-            try {
-                const view = document.getElementById('docReviewCanvas');
-                // Crop mode previews the full source so corner handles match the image.
-                if (docReview.cropMode) {
-                    view.width = docReview.sourceCanvas.width;
-                    view.height = docReview.sourceCanvas.height;
-                    view.getContext('2d').drawImage(docReview.sourceCanvas, 0, 0);
-                    fitReviewTransform();
-                    drawReviewCropOverlay();
-                    return;
-                }
-                let extracted = await extractWithCorners(docReview.sourceCanvas, docReview.corners);
-                if (SCAN_AUTO_PORTRAIT && extracted.width > extracted.height) {
-                    extracted = rotateCanvas90CW(extracted);
-                }
-                const out = cloneCanvas(extracted);
-                if (!docReview.compare) applyEnhanceFilter(out, docReview.filter);
-                if ((docReview.filter === 'auto' || docReview.filter === 'bw') && !docReview.compare) {
-                    try {
-                        let deg = 0;
-                        const key = (settings && typeof settings.grokApiKey === 'string') ? settings.grokApiKey.trim() : '';
-                        if (key) deg = await requestGrokRotation(out);
-                        if (!deg) deg = estimateDocumentRotation(out);
-                        if (deg) {
-                            const rotated = rotateCanvasDegrees(out, deg);
-                            out.width = rotated.width; out.height = rotated.height;
-                            out.getContext('2d').drawImage(rotated, 0, 0);
-                        }
-                    } catch (_) {}
-                }
-                view.width = out.width; view.height = out.height;
-                view.getContext('2d').drawImage(out, 0, 0);
-                docReview.processedUrl = out.toDataURL('image/jpeg', SCAN_JPEG_QUALITY);
-                fitReviewTransform();
-                drawReviewCropOverlay();
-            } finally {
-                if (showBusy !== false) hideScanOverlay();
-            }
-        }
-
-        function fitReviewTransform() {
-            const wrap = document.getElementById('docReviewWrap');
-            wrap.style.transform = 'translate(' + docReview.panX + 'px,' + docReview.panY + 'px) scale(' + docReview.scale + ')';
-        }
-
-        function drawReviewCropOverlay() {
-            const crop = document.getElementById('docReviewCrop');
-            const stage = document.getElementById('docReviewStage');
-            const canvas = document.getElementById('docReviewCanvas');
-            if (!crop || !stage || !canvas) return;
-            const rect = stage.getBoundingClientRect();
-            crop.width = Math.max(1, Math.round(rect.width));
-            crop.height = Math.max(1, Math.round(rect.height));
-            const ctx = crop.getContext('2d');
-            ctx.clearRect(0, 0, crop.width, crop.height);
-            crop.classList.toggle('active', !!docReview.cropMode);
-            if (!docReview.cropMode) {
-                document.getElementById('docLoupe').classList.remove('show');
-                return;
-            }
-            // Map source corners into stage space approximating the displayed canvas box
-            const disp = getReviewImageBox();
-            if (!disp) return;
-            const pts = docReview.corners.map(p => ({
-                x: disp.left + (p.x / docReview.sourceCanvas.width) * disp.width,
-                y: disp.top + (p.y / docReview.sourceCanvas.height) * disp.height
-            }));
-            ctx.fillStyle = 'rgba(0,0,0,0.35)';
-            ctx.fillRect(0, 0, crop.width, crop.height);
-            ctx.save();
-            ctx.globalCompositeOperation = 'destination-out';
-            ctx.beginPath();
-            ctx.moveTo(pts[0].x, pts[0].y);
-            for (let i = 1; i < 4; i++) ctx.lineTo(pts[i].x, pts[i].y);
-            ctx.closePath();
-            ctx.fill();
-            ctx.restore();
-            ctx.strokeStyle = '#22c55e';
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            ctx.moveTo(pts[0].x, pts[0].y);
-            for (let i = 1; i < 4; i++) ctx.lineTo(pts[i].x, pts[i].y);
-            ctx.closePath();
-            ctx.stroke();
-            pts.forEach((p, idx) => {
-                ctx.beginPath();
-                ctx.fillStyle = docReview.dragging === idx ? '#60a5fa' : '#22c55e';
-                ctx.arc(p.x, p.y, 12, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.fillStyle = '#fff';
-                ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
-                ctx.fill();
-            });
-        }
-
-        function getReviewImageBox() {
-            const stage = document.getElementById('docReviewStage');
-            const src = docReview.sourceCanvas;
-            if (!stage || !src) return null;
-            const sw = stage.clientWidth, sh = stage.clientHeight;
-            const scale = Math.min(sw / src.width, sh / src.height);
-            const width = src.width * scale * docReview.scale;
-            const height = src.height * scale * docReview.scale;
-            const left = (sw - width) / 2 + docReview.panX;
-            const top = (sh - height) / 2 + docReview.panY;
-            return { left, top, width, height, scale: scale * docReview.scale };
-        }
-
-        function onCropPointerDown(e) {
-            if (!docReview.cropMode) return;
-            const box = getReviewImageBox();
-            if (!box) return;
-            const rect = e.target.getBoundingClientRect();
-            const x = e.clientX - rect.left, y = e.clientY - rect.top;
-            const pts = docReview.corners.map(p => ({
-                x: box.left + (p.x / docReview.sourceCanvas.width) * box.width,
-                y: box.top + (p.y / docReview.sourceCanvas.height) * box.height
-            }));
-            let hit = -1;
-            for (let i = 0; i < 4; i++) if (Math.hypot(pts[i].x - x, pts[i].y - y) < 28) hit = i;
-            if (hit < 0) return;
-            docReview.dragging = hit;
-            e.target.setPointerCapture(e.pointerId);
-            showLoupe(e.clientX, e.clientY, hit);
-            drawReviewCropOverlay();
-        }
-
-        function onCropPointerMove(e) {
-            if (docReview.dragging == null || !docReview.cropMode) return;
-            const crop = document.getElementById('docReviewCrop');
-            const rect = crop.getBoundingClientRect();
-            const box = getReviewImageBox();
-            if (!box) return;
-            const x = e.clientX - rect.left, y = e.clientY - rect.top;
-            const nx = ((x - box.left) / box.width) * docReview.sourceCanvas.width;
-            const ny = ((y - box.top) / box.height) * docReview.sourceCanvas.height;
-            docReview.corners[docReview.dragging] = {
-                x: Math.max(0, Math.min(docReview.sourceCanvas.width, nx)),
-                y: Math.max(0, Math.min(docReview.sourceCanvas.height, ny))
-            };
-            showLoupe(e.clientX, e.clientY, docReview.dragging);
-            drawReviewCropOverlay();
-        }
-
-        async function onCropPointerUp() {
-            if (docReview.dragging == null) return;
-            docReview.dragging = null;
-            document.getElementById('docLoupe').classList.remove('show');
-            await renderDocReview(false);
-        }
-
-        function showLoupe(clientX, clientY, idx) {
-            const loupe = document.getElementById('docLoupe');
-            const lc = document.getElementById('docLoupeCanvas');
-            const stage = document.getElementById('docReviewStage');
-            const srect = stage.getBoundingClientRect();
-            const p = docReview.corners[idx];
-            const zoom = 2.5;
-            const srcSize = 80;
-            const ctx = lc.getContext('2d');
-            ctx.fillStyle = '#000';
-            ctx.fillRect(0, 0, lc.width, lc.height);
-            ctx.drawImage(
-                docReview.sourceCanvas,
-                p.x - srcSize / 2, p.y - srcSize / 2, srcSize, srcSize,
-                0, 0, lc.width, lc.height
-            );
-            ctx.strokeStyle = '#60a5fa';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(lc.width / 2, 0); ctx.lineTo(lc.width / 2, lc.height);
-            ctx.moveTo(0, lc.height / 2); ctx.lineTo(lc.width, lc.height / 2);
-            ctx.stroke();
-            loupe.classList.add('show');
-            let lx = clientX - srect.left - 48;
-            let ly = clientY - srect.top - 110;
-            lx = Math.max(8, Math.min(srect.width - 104, lx));
-            ly = Math.max(8, Math.min(srect.height - 104, ly));
-            loupe.style.left = lx + 'px';
-            loupe.style.top = ly + 'px';
-        }
-
-        function onReviewTouchStart(e) {
-            if (docReview.cropMode) return;
-            if (e.touches.length === 1) {
-                docReview._pan = { x: e.touches[0].clientX, y: e.touches[0].clientY, panX: docReview.panX, panY: docReview.panY };
-            } else if (e.touches.length === 2) {
-                const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-                docReview.pinch = { dist: d, scale: docReview.scale };
-                docReview._pan = null;
-            }
-        }
-        function onReviewTouchMove(e) {
-            if (docReview.cropMode) return;
-            if (e.touches.length === 2 && docReview.pinch) {
-                e.preventDefault();
-                const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-                docReview.scale = Math.max(1, Math.min(4, docReview.pinch.scale * (d / docReview.pinch.dist)));
-                fitReviewTransform();
-                drawReviewCropOverlay();
-            } else if (e.touches.length === 1 && docReview._pan && docReview.scale > 1) {
-                e.preventDefault();
-                docReview.panX = docReview._pan.panX + (e.touches[0].clientX - docReview._pan.x);
-                docReview.panY = docReview._pan.panY + (e.touches[0].clientY - docReview._pan.y);
-                fitReviewTransform();
-                drawReviewCropOverlay();
-            }
-        }
-        function onReviewTouchEnd() { docReview._pan = null; docReview.pinch = null; }
 
         async function saveDocReview() {
-            if (!docReview.processedUrl) await renderDocReview();
             const processed = docReview.processedUrl;
             const original = docReview.originalUrl;
             if (!processed) {
                 await appAlert('Nothing to save — processing failed.');
                 return;
             }
+            const ocr = readOcrFieldsFromForm();
             const now = new Date().toISOString();
             const doc = {
                 id: 'doc_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
@@ -3801,12 +2191,12 @@
                 type: 'ticket',
                 original,
                 processed,
-                filter: docReview.filter,
+                filter: 'grok',
                 createdAt: now,
                 modifiedAt: now,
                 syncStatus: 'local',
-                corners: docReview.corners,
-                rotation: docReview.rotation
+                ocr,
+                provider: 'grok'
             };
 
             if (docScan.mode === 'edit') {
@@ -3814,6 +2204,21 @@
                 editingLoad.stagedTicket = processed;
                 editingLoad.stagedDocument = doc;
                 editingLoad.removeTicket = false;
+                if (ocr.miles != null) {
+                    editingLoad.miles = ocr.miles;
+                    const info = document.getElementById('editLoadInfo');
+                    if (info) info.textContent = ocr.miles + ' miles';
+                }
+                if (ocr.tons != null) {
+                    editingLoad.tons = ocr.tons;
+                    const tonsInput = document.getElementById('editTons');
+                    if (tonsInput) tonsInput.value = ocr.tons;
+                }
+                if (ocr.rawText) {
+                    const note = document.getElementById('editNote');
+                    if (note && !note.value.trim()) note.value = ocr.rawText.slice(0, 400);
+                }
+                try { if (typeof updatePayPreview === 'function') updatePayPreview(); } catch (_) {}
                 updateEditTicketUI();
                 closeDocReview();
                 haptic(20);
@@ -3829,6 +2234,20 @@
             processingLoads.add(key);
             renderHistory();
             try {
+                // Apply OCR miles/tons onto the load when present
+                try {
+                    let h = JSON.parse(localStorage.getItem('driver_history') || '[]');
+                    const sIdx = h.findIndex(s => s && s.id == docScan.sId);
+                    if (sIdx >= 0) {
+                        const lIdx = h[sIdx].loads.findIndex(l => l && l.id == docScan.lId);
+                        if (lIdx >= 0) {
+                            if (ocr.miles != null) h[sIdx].loads[lIdx].miles = ocr.miles;
+                            if (ocr.tons != null) h[sIdx].loads[lIdx].tons = ocr.tons;
+                            localStorage.setItem('driver_history', JSON.stringify(h));
+                        }
+                    }
+                } catch (_) {}
+
                 const ok = persistLoadDocument(docScan.sId, docScan.lId, doc, docScan.mode, docScan.docId);
                 if (!ok) {
                     await appAlert('Could not save the scan locally. Free up storage and try again.');
