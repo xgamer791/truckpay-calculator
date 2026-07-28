@@ -28,7 +28,7 @@ Single-file SPA. No framework. State lives entirely in `localStorage` under two 
 
 ### Ticket scanner (`scanner.md`)
 
-`scanner.md` at the repo root is the plant/layout memory for Grok. When a Grok API key is present, the live app fetches it on startup / before each scan and injects it into OCR prompts. Update plant **LEARNED** sections when sample tickets are provided. Do not invent plant layouts.
+`scanner.md` at the repo root is the plant/layout memory for Grok. When a Grok API key is present, the live app fetches it on startup / before each scan and injects it into OCR prompts. **LEARNED** sections for Colorado Materials and Hunter Stone (Martin Marietta + CM-division variants) are filled from sample tickets — update them when forms change or misreads appear. Do not invent a third plant.
 
 OCR extracts: plant, jobNumber, date, timeIn, timeOut, truckNumber, miles, tons, ticketNumber, rawText. If `truckNumber` ≠ `expectedTruckNumber`, the app pops a warning immediately and, if the driver stores anyway, appends a note like `Wrong truck number on ticket: … (expected 1205).`
 
