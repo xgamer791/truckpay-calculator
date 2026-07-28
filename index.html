@@ -6,8 +6,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="driverpay-build" content="2.12.14">
-    <title>DriverPay Pro v2.12.14</title>
+    <meta name="driverpay-build" content="2.12.15">
+    <title>DriverPay Pro v2.12.15</title>
     <script>
     (function () {
         var meta = document.querySelector('meta[name="driverpay-build"]');
@@ -304,18 +304,18 @@
 
         .doc-viewer { position: fixed; inset: 0; z-index: 10025; background: rgba(2,6,23,0.98); display: none; flex-direction: column; }
         .doc-viewer.active { display: flex; }
-        .doc-viewer-header { padding: calc(12px + env(safe-area-inset-top, 0px)) 16px 12px; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+        .doc-viewer-header { order: 0; padding: calc(12px + env(safe-area-inset-top, 0px)) 16px 12px; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; border-bottom: 1px solid rgba(255,255,255,0.08); }
         .doc-viewer-meta { min-width: 0; }
         .doc-viewer-eyebrow { font-size: 10px; font-weight: 900; color: #3b82f6; letter-spacing: 0.18em; margin-bottom: 4px; }
         .doc-viewer-title { font-size: 16px; font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .doc-viewer-sub { font-size: 12px; font-weight: 700; color: #64748b; margin-top: 4px; }
-        .doc-viewer-stage { flex: 1; min-height: 0; overflow: auto; display: flex; align-items: center; justify-content: center; padding: 16px; touch-action: pan-x pan-y pinch-zoom; cursor: zoom-in; -webkit-tap-highlight-color: transparent; }
+        .doc-viewer-stage { order: 1; flex: 1 1 auto; min-height: 140px; overflow: auto; display: flex; align-items: center; justify-content: center; padding: 12px 16px; touch-action: pan-x pan-y pinch-zoom; cursor: zoom-in; -webkit-tap-highlight-color: transparent; }
         .doc-viewer-stage img { max-width: 100%; max-height: 100%; border-radius: 12px; box-shadow: 0 12px 40px rgba(0,0,0,0.45); background: #111; pointer-events: none; }
-        .doc-viewer-thumbs { display: none; gap: 8px; overflow-x: auto; padding: 10px 16px; border-top: 1px solid rgba(255,255,255,0.06); }
+        .doc-viewer-thumbs { order: 2; display: none; gap: 8px; overflow-x: auto; padding: 10px 16px; border-top: 1px solid rgba(255,255,255,0.06); }
         .doc-viewer-thumbs.show { display: flex; }
         .doc-viewer-thumb { width: 56px; height: 72px; border-radius: 8px; object-fit: cover; border: 2px solid transparent; cursor: pointer; flex: 0 0 auto; opacity: 0.7; }
         .doc-viewer-thumb.active { border-color: #3b82f6; opacity: 1; }
-        .doc-viewer-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 12px 16px calc(18px + env(safe-area-inset-bottom, 0px)); }
+        .doc-viewer-actions { order: 4; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 12px 16px calc(18px + env(safe-area-inset-bottom, 0px)); }
         .doc-viewer-actions button { padding: 14px 6px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); color: white; font-size: 10px; font-weight: 900; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; font-family: inherit; }
         .doc-viewer-actions .danger { color: #fca5a5; border-color: rgba(239,68,68,0.3); }
         .ticket-icon.processing { color: #60a5fa; position: relative; }
@@ -324,7 +324,7 @@
         .ticket-icon.pending-sync { color: #fbbf24; }
         .ticket-icon { position: relative; }
 
-        .doc-viewer-info { padding: 14px 16px; border-top: 1px solid rgba(255,255,255,0.08); background: rgba(15,23,42,0.98); flex-shrink: 0; max-height: 42vh; overflow-y: auto; }
+        .doc-viewer-info { order: 3; padding: 14px 16px; border-top: 1px solid rgba(255,255,255,0.08); background: rgba(15,23,42,0.98); flex: 0 0 auto; max-height: 38vh; overflow-y: auto; }
         .doc-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; }
         .doc-info-item { min-width: 0; }
         .doc-info-item.full { grid-column: 1 / -1; }
@@ -379,7 +379,7 @@
     <header class="app-header">
         <div class="header-title">
             <h1>DriverPay <span>Pro</span></h1>
-            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v2.12.14</p>
+            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v2.12.15</p>
         </div>
         <div class="menu-container">
             <button class="menu-btn" onclick="toggleMenu(event)" aria-label="Menu">
@@ -473,7 +473,7 @@
             </div>
             <div class="footer-tagline">Built for the long haul</div>
             <div class="footer-meta">
-                <span class="footer-version">v2.12.14</span>
+                <span class="footer-version">v2.12.15</span>
                 <span class="footer-meta-dot"></span>
                 <span>© 2026</span>
                 <span class="footer-meta-dot"></span>
@@ -777,7 +777,7 @@
         <button type="button" class="scan-cancel-btn" id="scanCancelBtn">Cancel</button>
     </div>
 
-    <!-- driverpay-scanner:2.12.14 -->
+    <!-- driverpay-scanner:2.12.15 -->
     <div class="doc-scanner" id="docScanner" aria-hidden="true" role="dialog" aria-label="Grok ticket scanner">
         <div class="doc-scanner-stage">
             <video id="docScannerVideo" class="doc-scanner-video" playsinline muted autoplay></video>
@@ -1067,7 +1067,7 @@
 
         function applySettingsToHeader() {
             const sub = document.getElementById('headerSubtitle');
-            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v2.12.14`;
+            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v2.12.15`;
         }
 
         let savedScrollY = 0;
@@ -3342,7 +3342,27 @@
             bindLightboxZoomOnce();
         }
 
+        function ensureViewerImageOnTop() {
+            const root = document.getElementById('docViewer');
+            if (!root) return;
+            const header = root.querySelector('.doc-viewer-header');
+            const stage = document.getElementById('docViewerStage');
+            const thumbs = document.getElementById('docViewerThumbs');
+            const info = document.getElementById('docViewerInfo');
+            const actions = root.querySelector('.doc-viewer-actions');
+            if (!stage || !header) return;
+            // Force visual/DOM order: header → image → thumbs → data → actions
+            let ref = header.nextSibling;
+            if (stage !== ref) root.insertBefore(stage, ref);
+            ref = stage.nextSibling;
+            if (thumbs && thumbs !== ref) root.insertBefore(thumbs, stage.nextSibling);
+            ref = (thumbs || stage).nextSibling;
+            if (info && info !== ref) root.insertBefore(info, (thumbs || stage).nextSibling);
+            if (actions) root.appendChild(actions);
+        }
+
         function renderDocViewer(load) {
+            ensureViewerImageOnTop();
             const doc = docViewer.docs[docViewer.index];
             if (!doc) return;
             const img = document.getElementById('docViewerImg');
