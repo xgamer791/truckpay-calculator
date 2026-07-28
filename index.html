@@ -6,8 +6,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="driverpay-build" content="2.12.7">
-    <title>DriverPay Pro v2.12.7</title>
+    <meta name="driverpay-build" content="2.12.8">
+    <title>DriverPay Pro v2.12.8</title>
     <script>
     (function () {
         var meta = document.querySelector('meta[name="driverpay-build"]');
@@ -270,18 +270,24 @@
 
         .doc-review { position: fixed; inset: 0; z-index: 10030; background: #0f172a; display: none; flex-direction: column; }
         .doc-review.active { display: flex; }
-        .doc-review-header { display: flex; justify-content: space-between; align-items: center; padding: calc(12px + env(safe-area-inset-top, 0px)) 16px 10px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+        .doc-review-header { display: flex; justify-content: space-between; align-items: center; padding: calc(12px + env(safe-area-inset-top, 0px)) 16px 8px; border-bottom: 1px solid rgba(255,255,255,0.08); flex-shrink: 0; }
         .doc-review-title { font-size: 15px; font-weight: 900; letter-spacing: -0.01em; }
-        .doc-review-stage { position: relative; flex: 1; min-height: 0; background: #020617; overflow: auto; display: flex; align-items: flex-start; justify-content: center; padding: 16px; }
-        .doc-review-stage img { max-width: 100%; border-radius: 12px; box-shadow: 0 12px 40px rgba(0,0,0,0.45); background: #111; }
-        .doc-ocr-panel { padding: 14px 16px; border-top: 1px solid rgba(255,255,255,0.08); background: rgba(15,23,42,0.96); max-height: 42vh; overflow-y: auto; }
-        .doc-ocr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+        /* Tight wrap around ticket — no tall empty black band under the image */
+        .doc-review-stage { position: relative; flex: 0 0 auto; background: #020617; overflow: hidden; display: block; padding: 8px 12px 0; max-height: min(46vh, 420px); }
+        .doc-review-zoom { position: relative; width: 100%; overflow: hidden; border-radius: 12px; background: #020617; touch-action: none; -webkit-user-select: none; user-select: none; }
+        .doc-review-zoom img { display: block; width: 100%; height: auto; max-height: min(44vh, 400px); object-fit: contain; object-position: center top; border-radius: 12px; background: #111; box-shadow: 0 8px 28px rgba(0,0,0,0.4); transform-origin: 0 0; will-change: transform; }
+        .doc-review-zoom-hint { position: absolute; right: 10px; bottom: 10px; z-index: 2; padding: 5px 8px; border-radius: 8px; background: rgba(15,23,42,0.78); color: #94a3b8; font-size: 9px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; pointer-events: none; }
+        .doc-ocr-panel { padding: 10px 16px 8px; border-top: 1px solid rgba(255,255,255,0.08); background: rgba(15,23,42,0.96); flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+        .doc-ocr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px; }
         .doc-ocr-field label { display: block; font-size: 10px; font-weight: 900; color: #64748b; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 6px; }
         .doc-ocr-field input, .doc-ocr-field textarea { width: 100%; background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.14); color: white; border-radius: 10px; padding: 12px; font-size: 15px; font-weight: 700; font-family: inherit; }
         .doc-ocr-field.full { grid-column: 1 / -1; }
-        .doc-ocr-field textarea { min-height: 72px; resize: vertical; font-size: 13px; font-weight: 600; }
+        .doc-ocr-field textarea { min-height: 64px; resize: vertical; font-size: 13px; font-weight: 600; }
         .doc-ocr-note { font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 10px; line-height: 1.45; }
-        .doc-review-actions { display: grid; grid-template-columns: 1fr 1.4fr 1fr; gap: 10px; padding: 0 16px calc(18px + env(safe-area-inset-bottom, 0px)); }
+        .doc-review-tools { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 8px 16px 0; flex-shrink: 0; }
+        .doc-review-tools button { padding: 12px 8px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.05); color: #e2e8f0; font-weight: 900; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; font-family: inherit; }
+        .doc-review-tools button:active { opacity: 0.75; transform: scale(0.98); }
+        .doc-review-actions { display: grid; grid-template-columns: 1fr 1.4fr 1fr; gap: 10px; padding: 10px 16px calc(18px + env(safe-area-inset-bottom, 0px)); flex-shrink: 0; }
         .doc-review-actions button { padding: 16px 8px; border: none; border-radius: 14px; font-weight: 900; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: white; cursor: pointer; font-family: inherit; }
         .doc-btn-muted { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1) !important; }
         .doc-btn-danger { background: rgba(239,68,68,0.18); color: #fca5a5 !important; }
@@ -364,7 +370,7 @@
     <header class="app-header">
         <div class="header-title">
             <h1>DriverPay <span>Pro</span></h1>
-            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v2.12.7</p>
+            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v2.12.8</p>
         </div>
         <div class="menu-container">
             <button class="menu-btn" onclick="toggleMenu(event)" aria-label="Menu">
@@ -458,7 +464,7 @@
             </div>
             <div class="footer-tagline">Built for the long haul</div>
             <div class="footer-meta">
-                <span class="footer-version">v2.12.7</span>
+                <span class="footer-version">v2.12.8</span>
                 <span class="footer-meta-dot"></span>
                 <span>© 2026</span>
                 <span class="footer-meta-dot"></span>
@@ -762,7 +768,7 @@
         <button type="button" class="scan-cancel-btn" id="scanCancelBtn">Cancel</button>
     </div>
 
-    <!-- driverpay-scanner:2.12.7 -->
+    <!-- driverpay-scanner:2.12.8 -->
     <div class="doc-scanner" id="docScanner" aria-hidden="true" role="dialog" aria-label="Grok ticket scanner">
         <div class="doc-scanner-stage">
             <video id="docScannerVideo" class="doc-scanner-video" playsinline muted autoplay></video>
@@ -816,7 +822,10 @@
             <div style="width:48px"></div>
         </div>
         <div class="doc-review-stage" id="docReviewStage">
-            <img id="docReviewImg" alt="Grok cleaned ticket">
+            <div class="doc-review-zoom" id="docReviewZoom">
+                <img id="docReviewImg" alt="Grok cleaned ticket">
+                <div class="doc-review-zoom-hint">Pinch to zoom</div>
+            </div>
         </div>
         <div class="doc-ocr-panel">
             <div class="doc-ocr-note">Grok cleaned this ticket using scanner.md plant rules. Confirm the fields below before saving.</div>
@@ -836,6 +845,10 @@
                 <option value="Colorado Materials"></option>
                 <option value="Hunter Stone"></option>
             </datalist>
+        </div>
+        <div class="doc-review-tools">
+            <button type="button" id="docReviewExport">Export</button>
+            <button type="button" id="docReviewSavePhotos">Save to Photos</button>
         </div>
         <div class="doc-review-actions">
             <button type="button" class="doc-btn-muted" id="docReviewRetake">Retake</button>
@@ -1033,7 +1046,7 @@
 
         function applySettingsToHeader() {
             const sub = document.getElementById('headerSubtitle');
-            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v2.12.7`;
+            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v2.12.8`;
         }
 
         let savedScrollY = 0;
@@ -1892,6 +1905,200 @@
             wrongTruckAck: null // { ticketTruck, note } after immediate mismatch confirm
         };
 
+        const reviewZoom = {
+            scale: 1, x: 0, y: 0,
+            min: 1, max: 4,
+            pointers: new Map(),
+            lastTap: 0,
+            bound: false
+        };
+
+        function applyReviewZoom() {
+            const img = document.getElementById('docReviewImg');
+            if (!img) return;
+            img.style.transform = 'translate(' + reviewZoom.x + 'px,' + reviewZoom.y + 'px) scale(' + reviewZoom.scale + ')';
+            const hint = document.querySelector('.doc-review-zoom-hint');
+            if (hint) hint.style.opacity = reviewZoom.scale > 1.01 ? '0' : '1';
+        }
+
+        function resetReviewZoom() {
+            reviewZoom.scale = 1;
+            reviewZoom.x = 0;
+            reviewZoom.y = 0;
+            reviewZoom.pointers.clear();
+            applyReviewZoom();
+        }
+
+        function clampReviewPan() {
+            const viewport = document.getElementById('docReviewZoom');
+            const img = document.getElementById('docReviewImg');
+            if (!viewport || !img) return;
+            const vw = viewport.clientWidth || 1;
+            const vh = viewport.clientHeight || 1;
+            const iw = img.offsetWidth * reviewZoom.scale;
+            const ih = img.offsetHeight * reviewZoom.scale;
+            const maxX = Math.max(0, (iw - vw) / 2 + vw * 0.15);
+            const maxY = Math.max(0, (ih - vh) / 2 + vh * 0.15);
+            reviewZoom.x = Math.max(-maxX, Math.min(maxX, reviewZoom.x));
+            reviewZoom.y = Math.max(-maxY, Math.min(maxY, reviewZoom.y));
+        }
+
+        function bindReviewZoomOnce() {
+            if (reviewZoom.bound) return;
+            const viewport = document.getElementById('docReviewZoom');
+            if (!viewport) return;
+            reviewZoom.bound = true;
+
+            const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+            const midpoint = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+
+            viewport.addEventListener('pointerdown', (e) => {
+                viewport.setPointerCapture(e.pointerId);
+                reviewZoom.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+                if (reviewZoom.pointers.size === 1) {
+                    const now = Date.now();
+                    if (now - reviewZoom.lastTap < 280) {
+                        if (reviewZoom.scale > 1.05) resetReviewZoom();
+                        else {
+                            reviewZoom.scale = 2.2;
+                            const rect = viewport.getBoundingClientRect();
+                            reviewZoom.x = (rect.width / 2 - (e.clientX - rect.left)) * 0.6;
+                            reviewZoom.y = (rect.height / 2 - (e.clientY - rect.top)) * 0.6;
+                            clampReviewPan();
+                            applyReviewZoom();
+                        }
+                        reviewZoom.lastTap = 0;
+                    } else {
+                        reviewZoom.lastTap = now;
+                    }
+                }
+            });
+            viewport.addEventListener('pointermove', (e) => {
+                if (!reviewZoom.pointers.has(e.pointerId)) return;
+                const prev = reviewZoom.pointers.get(e.pointerId);
+                const next = { x: e.clientX, y: e.clientY };
+                reviewZoom.pointers.set(e.pointerId, next);
+                const pts = Array.from(reviewZoom.pointers.values());
+                if (pts.length === 1 && reviewZoom.scale > 1.01) {
+                    reviewZoom.x += next.x - prev.x;
+                    reviewZoom.y += next.y - prev.y;
+                    clampReviewPan();
+                    applyReviewZoom();
+                } else if (pts.length >= 2) {
+                    const ids = Array.from(reviewZoom.pointers.keys());
+                    const a = reviewZoom.pointers.get(ids[0]);
+                    const b = reviewZoom.pointers.get(ids[1]);
+                    // Approximate: use movement of current pointer vs stored — better keep start pinch state
+                    if (!reviewZoom._pinch) {
+                        reviewZoom._pinch = {
+                            startDist: dist(pts[0], pts[1]),
+                            startScale: reviewZoom.scale,
+                            startMid: midpoint(pts[0], pts[1]),
+                            startX: reviewZoom.x,
+                            startY: reviewZoom.y
+                        };
+                    } else {
+                        // Update second point already in map; recompute from current two points
+                        const curPts = Array.from(reviewZoom.pointers.values());
+                        const d = dist(curPts[0], curPts[1]);
+                        const mid = midpoint(curPts[0], curPts[1]);
+                        const p = reviewZoom._pinch;
+                        let nextScale = p.startScale * (d / (p.startDist || 1));
+                        nextScale = Math.max(reviewZoom.min, Math.min(reviewZoom.max, nextScale));
+                        reviewZoom.scale = nextScale;
+                        reviewZoom.x = p.startX + (mid.x - p.startMid.x);
+                        reviewZoom.y = p.startY + (mid.y - p.startMid.y);
+                        clampReviewPan();
+                        applyReviewZoom();
+                    }
+                }
+            });
+            const endPointer = (e) => {
+                reviewZoom.pointers.delete(e.pointerId);
+                if (reviewZoom.pointers.size < 2) reviewZoom._pinch = null;
+                if (reviewZoom.scale < 1.05) resetReviewZoom();
+            };
+            viewport.addEventListener('pointerup', endPointer);
+            viewport.addEventListener('pointercancel', endPointer);
+            viewport.addEventListener('pointerleave', (e) => {
+                if (reviewZoom.pointers.has(e.pointerId)) endPointer(e);
+            });
+            // Desktop wheel zoom
+            viewport.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const delta = e.deltaY > 0 ? 0.9 : 1.1;
+                reviewZoom.scale = Math.max(reviewZoom.min, Math.min(reviewZoom.max, reviewZoom.scale * delta));
+                if (reviewZoom.scale <= 1.01) resetReviewZoom();
+                else { clampReviewPan(); applyReviewZoom(); }
+            }, { passive: false });
+        }
+
+        async function dataUrlToJpegFile(dataUrl, filename) {
+            const res = await fetch(dataUrl);
+            let blob = await res.blob();
+            if (blob.type && blob.type.indexOf('jpeg') < 0) {
+                // Re-encode to JPEG for Photos compatibility when needed
+                const img = await loadImageFromUrl(dataUrl);
+                const c = document.createElement('canvas');
+                c.width = img.naturalWidth || img.width;
+                c.height = img.naturalHeight || img.height;
+                c.getContext('2d').drawImage(img, 0, 0);
+                blob = await new Promise(resolve => c.toBlob(resolve, 'image/jpeg', 0.92));
+            }
+            return new File([blob], filename || 'ticket.jpg', { type: 'image/jpeg' });
+        }
+
+        function downloadDataUrl(dataUrl, filename) {
+            const a = document.createElement('a');
+            a.href = dataUrl;
+            a.download = filename || 'ticket.jpg';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+        }
+
+        function reviewTicketFilename(prefix) {
+            const ticket = (document.getElementById('ocrTicketNo') && document.getElementById('ocrTicketNo').value.trim()) || 'ticket';
+            const safe = String(ticket).replace(/[^a-zA-Z0-9_-]+/g, '').slice(0, 24) || 'ticket';
+            return (prefix || 'ticket') + '-' + safe + '.jpg';
+        }
+
+        async function exportReviewTicket() {
+            const url = docReview.processedUrl || docReview.originalUrl;
+            if (!url) { await appAlert('No ticket image to export.'); return; }
+            const filename = reviewTicketFilename('export');
+            try {
+                const file = await dataUrlToJpegFile(url, filename);
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share({ files: [file], title: 'Ticket export', text: 'DriverPay ticket' });
+                    return;
+                }
+            } catch (err) {
+                console.warn('[scan] export share failed:', err);
+            }
+            downloadDataUrl(url, filename);
+            await appAlert('Ticket downloaded as ' + filename + '.', { title: 'Exported' });
+        }
+
+        async function saveReviewToPhotos() {
+            const url = docReview.processedUrl || docReview.originalUrl;
+            if (!url) { await appAlert('No ticket image to save.'); return; }
+            const filename = reviewTicketFilename('ticket');
+            try {
+                const file = await dataUrlToJpegFile(url, filename);
+                // iOS share sheet includes “Save Image” / Photos
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share({ files: [file], title: 'Save ticket' });
+                    return;
+                }
+            } catch (err) {
+                if (err && err.name === 'AbortError') return;
+                console.warn('[scan] save-to-photos share failed:', err);
+            }
+            downloadDataUrl(url, filename);
+            await appAlert('Image downloaded. On iPhone, open the file and tap Share → Save to Photos.', { title: 'Save to Photos' });
+        }
+
         function escapeHtml(str) {
             return String(str)
                 .replace(/&/g, '&amp;')
@@ -2586,6 +2793,11 @@
                 await openDocScanner({ mode: docScan.mode, sId: docScan.sId, lId: docScan.lId, docId: docScan.docId });
             };
             document.getElementById('docReviewSave').onclick = () => saveDocReview();
+            const exportBtn = document.getElementById('docReviewExport');
+            const photosBtn = document.getElementById('docReviewSavePhotos');
+            if (exportBtn) exportBtn.onclick = () => exportReviewTicket();
+            if (photosBtn) photosBtn.onclick = () => saveReviewToPhotos();
+            bindReviewZoomOnce();
         }
 
         async function captureFromScanner() {
@@ -2638,7 +2850,12 @@
             docReview.wrongTruckAck = null;
             const root = document.getElementById('docReview');
             const img = document.getElementById('docReviewImg');
-            if (img) img.src = processedUrl || originalUrl;
+            if (img) {
+                img.onload = () => { resetReviewZoom(); };
+                img.src = processedUrl || originalUrl;
+            }
+            resetReviewZoom();
+            bindReviewZoomOnce();
             setOcrField('ocrPlant', ocr && ocr.plant);
             setOcrField('ocrJob', ocr && ocr.jobNumber);
             setOcrField('ocrDate', ocr && ocr.date);
@@ -2677,6 +2894,7 @@
             }
             docReview.active = false;
             docReview.wrongTruckAck = null;
+            resetReviewZoom();
             unlockBodyScroll();
             if (document.getElementById('editOverlay') && document.getElementById('editOverlay').classList.contains('active')) lockBodyScroll();
         }
