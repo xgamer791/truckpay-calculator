@@ -6,8 +6,26 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="driverpay-build" content="2.10.3">
-    <title>DriverPay Pro v2.10.3</title>
+    <meta name="driverpay-build" content="2.10.4">
+    <title>DriverPay Pro v2.10.4</title>
+    <script>
+    (function () {
+        var meta = document.querySelector('meta[name="driverpay-build"]');
+        var localBuild = meta && meta.getAttribute('content');
+        if (!localBuild) return;
+        var key = 'driverpay_build_seen';
+        try { sessionStorage.setItem(key, localBuild); } catch (_) {}
+        fetch(location.pathname.replace(/\/?$/, '/') + 'index.html?_=' + Date.now(), { cache: 'no-store', headers: { 'Cache-Control': 'no-cache' } })
+            .then(function (r) { return r.text(); })
+            .then(function (html) {
+                var m = html.match(/name=["']driverpay-build["']\s+content=["']([^"']+)["']/i);
+                if (!m || !m[1] || m[1] === localBuild) return;
+                var next = location.pathname.replace(/\/?$/, '/') + '?v=' + String(m[1]).replace(/\./g, '') + '&t=' + Date.now();
+                location.replace(next);
+            })
+            .catch(function () {});
+    })();
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
