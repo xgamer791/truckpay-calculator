@@ -2089,7 +2089,8 @@
                 '- Deskew / straighten and auto-rotate so text is upright and readable',
                 '- Convert to high-contrast black & white scanner look',
                 '- Improve clarity and sharpness of printed text and numbers',
-                '- Keep all ticket text fully legible; do not invent or erase numbers',
+                '- Keep ALL ticket text, numbers, barcodes, and box borders fully legible; do not invent or erase values',
+                '- Preserve the rectangular form layout (headers, grids, weight tables)',
                 '- Output a flat rectangular document filling the frame'
             ].join('\n');
 
@@ -2129,18 +2130,47 @@
             };
         }
 
+        function normalizePlantName(v) {
+            if (v == null || v === '') return null;
+            const s = String(v).trim();
+            const lower = s.toLowerCase();
+            if (lower.indexOf('hunter') >= 0) return 'Hunter Stone';
+            if (lower.indexOf('colorado materials') >= 0 || lower === 'colorado' || lower.indexOf('colorado mat') >= 0) return 'Colorado Materials';
+            // Martin Marietta alone is not enough — need Hunter Stone in plant line (handled in prompt).
+            if (lower.indexOf('martin marietta') >= 0 && lower.indexOf('hunter') < 0) return null;
+            return s;
+        }
+
+        function extractTruckUnit(v) {
+            if (v == null || v === '') return null;
+            const s = String(v).trim();
+            // Prefer a 3–5 digit unit, optionally prefixed (RST1205, TRK-1205, 1205 JLP…).
+            const prefixed = s.match(/\b(?:RST|TRK|TRUCK|UNIT)?[\s#-]*([0-9]{3,5})\b/i);
+            if (prefixed) return prefixed[1].replace(/^0+/, '') || prefixed[1];
+            const digits = s.match(/([0-9]{3,5})/);
+            return digits ? (digits[1].replace(/^0+/, '') || digits[1]) : s;
+        }
+
         function normalizeOcr(parsed, fallbackText) {
-            const numOrNull = (v) => (v == null || v === '') ? null : Number(v);
+            const numOrNull = (v) => {
+                if (v == null || v === '') return null;
+                const n = Number(String(v).replace(/,/g, ''));
+                return isNaN(n) ? null : n;
+            };
+            const plant = normalizePlantName(parsed.plant || parsed.Plant || null);
+            let truckRaw = parsed.truckNumber != null ? parsed.truckNumber
+                : (parsed.vehicle != null ? parsed.vehicle : (parsed.truck != null ? parsed.truck : null));
+            const truckNumber = extractTruckUnit(truckRaw);
             return {
-                plant: parsed.plant || null,
-                jobNumber: parsed.jobNumber || parsed.job || null,
+                plant,
+                jobNumber: parsed.jobNumber || parsed.job || parsed.orderNumber || parsed.orderNo || null,
                 date: parsed.date || null,
-                timeIn: parsed.timeIn || null,
+                timeIn: parsed.timeIn || parsed.time || null,
                 timeOut: parsed.timeOut || null,
-                truckNumber: (parsed.truckNumber != null && parsed.truckNumber !== '') ? String(parsed.truckNumber) : null,
+                truckNumber: truckNumber ? String(truckNumber) : null,
                 miles: numOrNull(parsed.miles),
-                tons: numOrNull(parsed.tons),
-                ticketNumber: parsed.ticketNumber || null,
+                tons: numOrNull(parsed.tons != null ? parsed.tons : parsed.netTons),
+                ticketNumber: parsed.ticketNumber || parsed.ticket || null,
                 rawText: parsed.rawText || fallbackText || ''
             };
         }
@@ -2150,21 +2180,28 @@
             const guide = await loadScannerGuide();
             const expectedTruck = getExpectedTruckNumber();
             const prompt = [
-                'Follow scanner.md exactly (included below).',
-                'Read this trucking load / scale / delivery ticket.',
-                'Return ONLY valid JSON with these keys:',
+                'You are DriverPay Pro ticket OCR. Follow scanner.md LEARNED layouts EXACTLY (included below).',
+                'Steps: (1) identify plant from logo/header/plant line (2) apply that plant field map (3) return JSON only.',
+                'Return ONLY valid JSON:',
                 '{"plant":string|null,"jobNumber":string|null,"date":string|null,"timeIn":string|null,"timeOut":string|null,"truckNumber":string|null,"miles":number|null,"tons":number|null,"ticketNumber":string|null,"rawText":string}',
-                'Known plants: Colorado Materials, Hunter Stone (third plant TBD — do not invent).',
-                'Driver expected truck number: ' + expectedTruck + '.',
-                'Extract truckNumber whenever printed (TRUCK / UNIT / TRK / VEHICLE).',
-                'If a field is missing use null. Do not invent values.',
+                '',
+                'CRITICAL RULES:',
+                '- plant must be exactly "Colorado Materials" or "Hunter Stone" when known. Third plant TBD — do not invent.',
+                '- Martin Marietta ticket with plant line containing Hunter Stone → plant "Hunter Stone" (NOT Colorado Materials).',
+                '- Header "HUNTER STONE" / Division of Colorado Materials → plant "Hunter Stone".',
+                '- tons = NET tons ONLY (never GROSS, TARE, TODAY, Dispatch Totals, Job To Date).',
+                '- truckNumber = unit digits from VEHICLE/TRUCK only (e.g. 1205 from "RST1205 - ROLLING STONE" or "1205 JLP AGGREGATE").',
+                '- jobNumber = Order No / ORDER / JOB — never Customer No, Carrier, Dispatch, Scale, or PO.',
+                '- Single TIME field → timeIn set, timeOut null. Time In + Time Out → both.',
+                '- Driver expected truck: ' + expectedTruck + '.',
+                '- Missing/unreadable → null. Do not invent.',
                 '',
                 '===== scanner.md =====',
                 guide,
                 '===== end scanner.md ====='
             ].join('\n');
 
-            console.log('[scan] Grok OCR request (with scanner.md memory)…');
+            console.log('[scan] Grok OCR request (with scanner.md plant memory)…');
             const res = await fetch('https://api.x.ai/v1/chat/completions', {
                 method: 'POST',
                 headers: {
@@ -2174,7 +2211,7 @@
                 body: JSON.stringify({
                     model: GROK_CHAT_MODEL,
                     temperature: 0,
-                    max_tokens: 1200,
+                    max_tokens: 1400,
                     messages: [{
                         role: 'user',
                         content: [

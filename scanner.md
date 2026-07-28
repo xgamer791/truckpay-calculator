@@ -6,29 +6,23 @@
 
 ## Default Grok models (cheapest that get the job done)
 
-DriverPay Pro defaults to the lowest-cost xAI models that still handle ticket cleanup + OCR. Do **not** switch to premium variants unless quality fails in the field.
-
 | Job | Model ID | Why |
 |---|---|---|
-| **Image cleanup** (background remove, B&W, upright, sharpen) | `grok-imagine-image` | Cheapest Imagine edit model at **$0.02 / image**. Do **not** use `grok-imagine-image-quality` ($0.05) or pro aliases unless standard cleanup is unreadable. |
-| **Ticket OCR / field extract** (Chat with image input) | `grok-build-0.1` | Cheapest Text+Image chat model (~$1.00 / $2.00 per 1M tokens). Alias: `grok-code-fast`. Next step up if OCR quality slips: `grok-4.3`. |
+| **Image cleanup** | `grok-imagine-image` | $0.02/image (edits bill input+output ≈ $0.04). Not `grok-imagine-image-quality` ($0.05). |
+| **Ticket OCR** | `grok-build-0.1` | Cheapest Text+Image chat (~$1/$2 per 1M). Alias `grok-code-fast`. Upgrade to `grok-4.3` only if OCR fails. |
 
-**ACL on the API key:** enable **Chat** (for `grok-build-0.1`) and **Image** (for `grok-imagine-image`). The Settings **Test Key** button checks both.
+Enable **Chat** + **Image** on the API key. Settings → **Test Key** checks both.
 
-**Cost ballpark per scan:** ~$0.02 for Imagine cleanup + a fraction of a cent for Chat OCR → roughly **$0.02–$0.03 per ticket**.
-
-These IDs are hardcoded in `index.html` as `GROK_IMAGINE_MODEL` and `GROK_CHAT_MODEL`. Keep this section in sync when changing defaults.
+Hardcoded in `index.html` as `GROK_IMAGINE_MODEL` / `GROK_CHAT_MODEL`.
 
 ---
 
 ## Mission
 
-For each photographed load ticket:
-
-1. Clean the image (remove background, B&W, upright, sharp text).
-2. Identify which **plant** issued the ticket.
-3. Extract the structured fields below.
-4. Never invent values — use `null` when a field is missing or unreadable.
+1. Clean the ticket photo (background out, B&W, upright, sharp text).
+2. Identify the **plant** using LEARNED layouts below.
+3. Extract JSON fields using the plant’s field map — do not guess from unlabeled nearby text.
+4. Never invent values — use `null` when missing or unreadable.
 
 ---
 
@@ -51,94 +45,181 @@ For each photographed load ticket:
 
 | Field | Meaning |
 |---|---|
-| `plant` | Quarry / materials plant the load was pulled from |
-| `jobNumber` | Job / project / customer job number on the ticket |
+| `plant` | Exact known-plant string when identified |
+| `jobNumber` | Order / Job / project number used for the haul (not Customer No, not PO unless no Order/Job exists) |
 | `date` | Ticket date as printed |
-| `timeIn` | Time in / arrive / start time as printed |
-| `timeOut` | Time out / leave / finish time as printed |
-| `truckNumber` | Truck / unit / vehicle number printed on the ticket |
-| `miles` | Haul miles if printed |
-| `tons` | Net tons (convert lb → tons ÷ 2000 when needed) |
-| `ticketNumber` | Ticket / scale / load ID if present |
-| `rawText` | All readable text on the ticket |
+| `timeIn` | Time in / arrive / first time as printed |
+| `timeOut` | Time out / leave — `null` if the form only has one TIME |
+| `truckNumber` | Digits of the truck/unit from Vehicle/Truck (see truck rules) |
+| `miles` | Haul miles if printed (number) |
+| `tons` | **NET tons only** (never GROSS, TARE, TODAY, Job To Date, or Dispatch Totals) |
+| `ticketNumber` | Ticket # |
+| `rawText` | Readable text enough to re-check plant + key fields |
 
 ---
 
 ## Driver truck number
 
-The driver’s truck is **1205** (configurable in Settings as `expectedTruckNumber`).
+Expected truck: **1205** (Settings `expectedTruckNumber`).
 
-- Always extract `truckNumber` from the ticket when printed (labels like TRUCK, UNIT, TRK, VEHICLE, TRUCK #).
-- Normalize by stripping spaces and leading zeros only for comparison (keep original string in JSON).
-- The app compares against **1205**. If it does not match, the app shows a warning popup before save.
+- Read from **VEHICLE** or **TRUCK** (not Carrier / Hauler).
+- Return the truck unit digits in `truckNumber` (e.g. `1205` from `RST1205 - ROLLING STONE` or `1205 JLP AGGREGATE`).
+- Keep leading zeros only if they are meaningful; otherwise normalize to the unit number the driver would recognize.
+- App warns if ticket truck ≠ expected.
 
 ---
 
 ## Known plants
 
-Currently active plants the driver pulls from:
-
 1. **Colorado Materials**
 2. **Hunter Stone**
 
-A third plant will be added later — do **not** invent a third plant name unless the ticket clearly names one. If the plant is unclear, set `"plant": null` and explain clues in `rawText`.
+Do **not** invent a third plant. If unclear → `"plant": null` and put clues in `rawText`.
+
+**Important:** Hunter Stone tickets may be branded **Martin Marietta** (plant line contains “Hunter Stone”) **or** **Hunter Stone / A Division of Colorado Materials, Ltd.** Both are plant = `"Hunter Stone"`. Do not label Martin Marietta Hunter Stone tickets as Colorado Materials.
 
 ---
 
 ## Plant identification rules
 
-Use logos, letterheads, addresses, phone numbers, and distinctive layout to identify the plant.
-
 ### Colorado Materials — layout (LEARNED)
 
-> Status: **pending sample ticket.**  
-> When a Colorado Materials ticket is provided, record here: where the logo sits, where job number / date / time in / time out appear, and any unique headers or codes.
+> Status: **learned from sample ticket** (Colorado Materials, Ltd. scale ticket).
 
-- Logo / header:
-- Job number location:
-- Date location:
-- Time in location:
-- Time out location:
-- Distinguishing marks:
+**Identify by:**
+- Header left: Texas outline + star “CM” logo + **Colorado Materials, Ltd.**
+- Address: P.O. Box 2109, San Marcos, TX 78667 · (512) 396-1555
+- Faint Texas watermark in the main info box
+- Footer often says `COPY 2 CARRIER`
 
-### Hunter Stone — layout (LEARNED)
+**Field map:**
 
-> Status: **pending sample ticket.**  
-> When a Hunter Stone ticket is provided, record the same layout map here.
+| JSON field | Where on ticket | Sample / notes |
+|---|---|---|
+| `plant` | Header company name | `"Colorado Materials"` |
+| `ticketNumber` | Top-right **TICKET #** | e.g. `3518898` |
+| `date` | Top-right under ticket #, **DATE** | e.g. `7/24/2026` |
+| `timeIn` | Top-right **TIME** (single time only) | e.g. `6:47:49AM` — put here |
+| `timeOut` | *(not on this form)* | always `null` |
+| `truckNumber` | Main box **VEHICLE** left ID | `1205` from `1205 JLP AGGREGATE` |
+| `jobNumber` | Main box **ORDER** left ID | e.g. `02476475` (not CUSTOMER, not PO) |
+| `miles` | *(usually absent)* | `null` if not printed |
+| `tons` | Right weights box **NET** → **TONS** | e.g. `24.02` — ignore GROSS/TARE/TODAY |
 
-- Logo / header:
-- Job number location:
-- Date location:
-- Time in location:
-- Time out location:
-- Distinguishing marks:
+**Other labeled rows (do not map to jobNumber):** CUSTOMER, PO, PRODUCT, SCALE #, WEIGHMASTER, DESCRIPTION, SUGGESTED DELIVERY INFO.
 
-### Plant #3 — TBD
-
-> Not configured yet. Leave empty until the driver names it and provides a sample.
+**Layout sketch:**
+```
+[CM logo + Colorado Materials, Ltd. ...]     TICKET #  ########
+                                             DATE  TIME
++---------------------------+  +------------------+
+| VEHICLE / CARRIER / ...   |  | GROSS  lbs tons  |
+| ORDER / PO / PRODUCT      |  | TARE             |
+| SCALE # / WEIGHMASTER     |  | NET   ← tons     |
++---------------------------+  | TODAY           |
+DESCRIPTION | SUGGESTED DELIVERY INFO
+```
 
 ---
 
-## Extraction rules
+### Hunter Stone — layout (LEARNED)
 
-- Prefer printed labels near values (JOB, JOB #, DATE, TIME IN, TIME OUT, IN, OUT, TARE, GROSS, NET).
-- Keep times exactly as printed (include AM/PM if shown).
-- Keep dates as printed; do not reformat aggressively if ambiguous.
-- If two times appear, earlier → `timeIn`, later → `timeOut` unless labels say otherwise.
-- Plant name must match a **Known plants** entry when possible (exact string).
-- `rawText` should include enough context to re-check plant ID later.
+Hunter Stone appears in **two form families**. Detect which one, then use that map. Always set `"plant": "Hunter Stone"`.
+
+#### Variant A — Martin Marietta plant ticket (common)
+
+> Status: **learned from sample tickets** (Martin Marietta · plant SK249 / 51269 Hunter Stone, New Braunfels).
+
+**Identify by:**
+- **Martin Marietta** logo top-left
+- Plant line like `SK249 Hunter Stone` or `51269 Hunter Stone`
+- Address on FM 1102, New Braunfels, TX 78132
+- Top barcode + **Ticket** number top-right
+- Vertical **WARNING / PRECAUCION** strip on the right edge
+- Separate **Time In** and **Time Out** columns
+- **Miles** column in the logistics grid
+
+**Field map:**
+
+| JSON field | Where on ticket | Sample / notes |
+|---|---|---|
+| `plant` | Plant line containing Hunter Stone | `"Hunter Stone"` (not “Martin Marietta”) |
+| `ticketNumber` | Top-right **Ticket** | e.g. `23680341` |
+| `date` | Logistics grid **Date** | e.g. `7/31/2024` |
+| `timeIn` | Grid **Time In** | e.g. `8:18` |
+| `timeOut` | Grid **Time Out** | e.g. `8:31` |
+| `miles` | Grid **Miles** | e.g. `49` |
+| `truckNumber` | **Vehicle** line | `1205` from `RST1205 - ROLLING STONE` |
+| `jobNumber` | Row **Order No** | e.g. `66016029` — not Customer No, not Dispatch, not PO No |
+| `tons` | Weight box **NET** → **TONS** | e.g. `25.61` — ignore GROSS/TARE, Dispatch Totals, Job To Date |
+
+**Layout sketch:**
+```
+[Martin Marietta]  SK249 Hunter Stone     [barcode]
+                   address...             Ticket ########
+Vehicle: RST1205 - ...   Carrier: ...
+Date | Dispatch | Scale | Time In | Time Out | Miles
+Customer No | Order No | PO No | Product | Dispatch Totals | Job To Date
+Ship To / Dest / Instructions     |  GROSS/TARE/NET  lbs|tons|metric
+Weigh Master ...                  |  WARNING strip →
+```
+
+#### Variant B — Hunter Stone / Division of Colorado Materials
+
+> Status: **learned from sample ticket** (header **HUNTER STONE**, subtitle “A Division of Colorado Materials, Ltd.”).
+
+**Identify by:**
+- Large **HUNTER STONE** title (not Martin Marietta)
+- Subtitle: A Division of Colorado Materials, Ltd.
+- Texas star logo
+- Labels **TRUCK** / **HAULER** (not Vehicle/Carrier wording of Variant A)
+- Single **Time** (like CM) rather than Time In/Out
+- Often no Miles field
+
+**Field map:**
+
+| JSON field | Where on ticket | Sample / notes |
+|---|---|---|
+| `plant` | Header HUNTER STONE | `"Hunter Stone"` |
+| `ticketNumber` | Top-right **Ticket #** | e.g. `437651` |
+| `date` | Top-right **Date** | e.g. `06/25/2026` |
+| `timeIn` | Top-right **Time** | e.g. `9:48 am` |
+| `timeOut` | *(not on this form)* | `null` |
+| `truckNumber` | **TRUCK** | e.g. `1205` |
+| `jobNumber` | **JOB** (prefer) or order-like id | e.g. job name/code as printed; if only descriptive JOB text, still return it; prefer a numeric job/order id if both exist |
+| `miles` | *(usually absent)* | `null` |
+| `tons` | Weights **NET** → **TONS** | e.g. `26.42` |
+
+**Do not** set plant to Colorado Materials just because the subtitle mentions Colorado Materials, Ltd.
+
+### Plant #3 — TBD
+
+Not configured yet.
+
+---
+
+## Extraction rules (global)
+
+1. **Identify plant first** using logos / plant lines, then apply that plant’s LEARNED map.
+2. **Tons = NET tons only.** Never GROSS, TARE, TODAY, LOADS, Dispatch Totals, or Job To Date.
+3. **Truck** from VEHICLE / TRUCK only — strip fleet prefixes (`RST`) and trailing names (`ROLLING STONE`, `JLP AGGREGATE`).
+4. **Job number** = Order No / ORDER / JOB — never Customer No, Carrier, Dispatch, Scale, or PO (unless Order/Job missing).
+5. Keep times/dates **as printed** (AM/PM, leading zeros).
+6. One TIME only → `timeIn` set, `timeOut` null. Labeled Time In/Out → both.
+7. If two unlabeled times, earlier → `timeIn`, later → `timeOut`.
+8. `rawText` must include plant name clues, ticket #, vehicle/truck line, order/job, and NET tons line.
+9. If a field is blurry, set `null` — do not invent.
 
 ---
 
 ## Memory updates
 
-When the driver (or Cursor agent) supplies a sample ticket for a plant, update that plant’s **LEARNED** section in this file with precise field locations so future scans stay accurate. Keep this file as the single source of truth for plant ticket layouts.
+When the driver or Cursor agent supplies a new sample (or a misread), update the matching LEARNED section. Keep maps concise — field location tables beat prose. This file is the single source of truth for plant layouts.
 
 ---
 
 ## App wiring notes
 
-- Loaded by the live app from `./scanner.md` (same origin / GitHub Pages root).
-- Injected into Grok OCR prompts as system context.
-- Cached in memory after first successful fetch when a Grok API key is present.
-- Default models (see section above): `GROK_CHAT_MODEL = grok-build-0.1`, `GROK_IMAGINE_MODEL = grok-imagine-image`.
+- Loaded from `./scanner.md` (GitHub Pages root) when a Grok key is present.
+- Injected into every Grok OCR prompt.
+- Defaults: `GROK_CHAT_MODEL = grok-build-0.1`, `GROK_IMAGINE_MODEL = grok-imagine-image`.
