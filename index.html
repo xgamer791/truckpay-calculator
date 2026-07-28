@@ -6,8 +6,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="driverpay-build" content="2.12.12">
-    <title>DriverPay Pro v2.12.12</title>
+    <meta name="driverpay-build" content="2.12.13">
+    <title>DriverPay Pro v2.12.13</title>
     <script>
     (function () {
         var meta = document.querySelector('meta[name="driverpay-build"]');
@@ -272,11 +272,11 @@
         .doc-review.active { display: flex; }
         .doc-review-header { display: flex; justify-content: space-between; align-items: center; padding: calc(12px + env(safe-area-inset-top, 0px)) 16px 8px; border-bottom: 1px solid rgba(255,255,255,0.08); flex-shrink: 0; }
         .doc-review-title { font-size: 15px; font-weight: 900; letter-spacing: -0.01em; }
-        /* Tight wrap around ticket — no tall empty black band under the image */
-        .doc-review-stage { position: relative; flex: 0 0 auto; background: #020617; overflow: hidden; display: block; padding: 8px 12px 0; max-height: min(46vh, 420px); }
-        .doc-review-zoom { position: relative; width: 100%; overflow: hidden; border-radius: 12px; background: #020617; touch-action: none; -webkit-user-select: none; user-select: none; }
-        .doc-review-zoom img { display: block; width: 100%; height: auto; max-height: min(44vh, 400px); object-fit: contain; object-position: center top; border-radius: 12px; background: #111; box-shadow: 0 8px 28px rgba(0,0,0,0.4); transform-origin: 0 0; will-change: transform; }
-        .doc-review-zoom-hint { position: absolute; right: 10px; bottom: 10px; z-index: 2; padding: 5px 8px; border-radius: 8px; background: rgba(15,23,42,0.78); color: #94a3b8; font-size: 9px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; pointer-events: none; }
+        /* Image on top, fields below — preview wraps the ticket tightly */
+        .doc-review-stage { position: relative; flex: 0 0 auto; background: #020617; overflow: hidden; display: block; padding: 8px 12px 0; }
+        .doc-review-zoom { position: relative; width: 100%; overflow: hidden; border-radius: 12px; background: #020617; cursor: zoom-in; -webkit-tap-highlight-color: transparent; }
+        .doc-review-zoom img { display: block; width: 100%; height: auto; max-height: min(36vh, 340px); object-fit: contain; object-position: center top; border-radius: 12px; background: #111; box-shadow: 0 8px 28px rgba(0,0,0,0.4); }
+        .doc-review-zoom-hint { position: absolute; right: 10px; bottom: 10px; z-index: 2; padding: 5px 8px; border-radius: 8px; background: rgba(15,23,42,0.78); color: #93c5fd; font-size: 9px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; pointer-events: none; }
         .doc-ocr-panel { padding: 10px 16px 8px; border-top: 1px solid rgba(255,255,255,0.08); background: rgba(15,23,42,0.96); flex: 1 1 auto; min-height: 0; overflow-y: auto; }
         .doc-ocr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px; }
         .doc-ocr-field label { display: block; font-size: 10px; font-weight: 900; color: #64748b; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 6px; }
@@ -293,6 +293,15 @@
         .doc-btn-danger { background: rgba(239,68,68,0.18); color: #fca5a5 !important; }
         .doc-btn-primary { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
 
+        /* Fullscreen gallery lightbox for ticket zoom */
+        .ticket-lightbox { position: fixed; inset: 0; z-index: 10070; background: rgba(0,0,0,0.97); display: none; flex-direction: column; color: white; }
+        .ticket-lightbox.active { display: flex; }
+        .ticket-lightbox-top { display: flex; justify-content: space-between; align-items: center; padding: calc(10px + env(safe-area-inset-top, 0px)) 14px 10px; flex-shrink: 0; }
+        .ticket-lightbox-title { font-size: 12px; font-weight: 900; letter-spacing: 0.14em; text-transform: uppercase; color: #94a3b8; }
+        .ticket-lightbox-stage { position: relative; flex: 1; min-height: 0; overflow: hidden; touch-action: none; display: flex; align-items: center; justify-content: center; }
+        .ticket-lightbox-stage img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; transform-origin: center center; will-change: transform; user-select: none; -webkit-user-select: none; pointer-events: none; }
+        .ticket-lightbox-hint { position: absolute; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 2; padding: 6px 10px; border-radius: 999px; background: rgba(15,23,42,0.75); color: #94a3b8; font-size: 10px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; pointer-events: none; white-space: nowrap; }
+
         .doc-viewer { position: fixed; inset: 0; z-index: 10025; background: rgba(2,6,23,0.98); display: none; flex-direction: column; }
         .doc-viewer.active { display: flex; }
         .doc-viewer-header { padding: calc(12px + env(safe-area-inset-top, 0px)) 16px 12px; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; border-bottom: 1px solid rgba(255,255,255,0.08); }
@@ -300,8 +309,8 @@
         .doc-viewer-eyebrow { font-size: 10px; font-weight: 900; color: #3b82f6; letter-spacing: 0.18em; margin-bottom: 4px; }
         .doc-viewer-title { font-size: 16px; font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .doc-viewer-sub { font-size: 12px; font-weight: 700; color: #64748b; margin-top: 4px; }
-        .doc-viewer-stage { flex: 1; min-height: 0; overflow: auto; display: flex; align-items: center; justify-content: center; padding: 16px; touch-action: pan-x pan-y pinch-zoom; }
-        .doc-viewer-stage img { max-width: 100%; max-height: 100%; border-radius: 12px; box-shadow: 0 12px 40px rgba(0,0,0,0.45); background: #111; }
+        .doc-viewer-stage { flex: 1; min-height: 0; overflow: auto; display: flex; align-items: center; justify-content: center; padding: 16px; touch-action: pan-x pan-y pinch-zoom; cursor: zoom-in; -webkit-tap-highlight-color: transparent; }
+        .doc-viewer-stage img { max-width: 100%; max-height: 100%; border-radius: 12px; box-shadow: 0 12px 40px rgba(0,0,0,0.45); background: #111; pointer-events: none; }
         .doc-viewer-thumbs { display: none; gap: 8px; overflow-x: auto; padding: 10px 16px; border-top: 1px solid rgba(255,255,255,0.06); }
         .doc-viewer-thumbs.show { display: flex; }
         .doc-viewer-thumb { width: 56px; height: 72px; border-radius: 8px; object-fit: cover; border: 2px solid transparent; cursor: pointer; flex: 0 0 auto; opacity: 0.7; }
@@ -370,7 +379,7 @@
     <header class="app-header">
         <div class="header-title">
             <h1>DriverPay <span>Pro</span></h1>
-            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v2.12.12</p>
+            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v2.12.13</p>
         </div>
         <div class="menu-container">
             <button class="menu-btn" onclick="toggleMenu(event)" aria-label="Menu">
@@ -464,7 +473,7 @@
             </div>
             <div class="footer-tagline">Built for the long haul</div>
             <div class="footer-meta">
-                <span class="footer-version">v2.12.12</span>
+                <span class="footer-version">v2.12.13</span>
                 <span class="footer-meta-dot"></span>
                 <span>© 2026</span>
                 <span class="footer-meta-dot"></span>
@@ -768,7 +777,7 @@
         <button type="button" class="scan-cancel-btn" id="scanCancelBtn">Cancel</button>
     </div>
 
-    <!-- driverpay-scanner:2.12.12 -->
+    <!-- driverpay-scanner:2.12.13 -->
     <div class="doc-scanner" id="docScanner" aria-hidden="true" role="dialog" aria-label="Grok ticket scanner">
         <div class="doc-scanner-stage">
             <video id="docScannerVideo" class="doc-scanner-video" playsinline muted autoplay></video>
@@ -824,11 +833,11 @@
         <div class="doc-review-stage" id="docReviewStage">
             <div class="doc-review-zoom" id="docReviewZoom">
                 <img id="docReviewImg" alt="Grok cleaned ticket">
-                <div class="doc-review-zoom-hint">Pinch to zoom</div>
+                <div class="doc-review-zoom-hint">Tap to expand</div>
             </div>
         </div>
         <div class="doc-ocr-panel">
-            <div class="doc-ocr-note">Grok cleaned this ticket using scanner.md plant rules. Confirm the fields below before saving.</div>
+            <div class="doc-ocr-note">Confirm the fields below before saving.</div>
             <div class="doc-ocr-grid">
                 <div class="doc-ocr-field"><label for="ocrPlant">Plant</label><input type="text" id="ocrPlant" list="ocrPlantList" placeholder="—" autocomplete="off"></div>
                 <div class="doc-ocr-field"><label for="ocrJob">Job number</label><input type="text" id="ocrJob" placeholder="—" autocomplete="off"></div>
@@ -853,6 +862,19 @@
             <button type="button" class="doc-btn-muted" id="docReviewRetake">Retake</button>
             <button type="button" class="doc-btn-primary" id="docReviewSave">Save to Load</button>
             <button type="button" class="doc-btn-danger" id="docReviewCancel">Cancel</button>
+        </div>
+    </div>
+
+    <div class="ticket-lightbox" id="ticketLightbox" aria-hidden="true" role="dialog" aria-label="Ticket gallery">
+        <div class="ticket-lightbox-top">
+            <div class="ticket-lightbox-title">Ticket</div>
+            <button type="button" class="doc-btn" id="ticketLightboxClose" aria-label="Close gallery">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <div class="ticket-lightbox-stage" id="ticketLightboxStage">
+            <img id="ticketLightboxImg" alt="Ticket full view">
+            <div class="ticket-lightbox-hint">Pinch to zoom · double-tap · swipe down to close</div>
         </div>
     </div>
 
@@ -1045,7 +1067,7 @@
 
         function applySettingsToHeader() {
             const sub = document.getElementById('headerSubtitle');
-            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v2.12.12`;
+            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v2.12.13`;
         }
 
         let savedScrollY = 0;
@@ -1904,133 +1926,197 @@
             wrongTruckAck: null // { ticketTruck, note } after immediate mismatch confirm
         };
 
-        const reviewZoom = {
+        const lightboxZoom = {
             scale: 1, x: 0, y: 0,
-            min: 1, max: 4,
+            min: 1, max: 5,
             pointers: new Map(),
             lastTap: 0,
-            bound: false
+            bound: false,
+            _pinch: null,
+            _dragStartX: 0,
+            _dragStartY: 0,
+            _swipePid: null
         };
 
-        function applyReviewZoom() {
-            const img = document.getElementById('docReviewImg');
+        function isTicketLightboxOpen() {
+            const root = document.getElementById('ticketLightbox');
+            return !!(root && root.classList.contains('active'));
+        }
+
+        function applyLightboxZoom() {
+            const img = document.getElementById('ticketLightboxImg');
             if (!img) return;
-            img.style.transform = 'translate(' + reviewZoom.x + 'px,' + reviewZoom.y + 'px) scale(' + reviewZoom.scale + ')';
-            const hint = document.querySelector('.doc-review-zoom-hint');
-            if (hint) hint.style.opacity = reviewZoom.scale > 1.01 ? '0' : '1';
+            img.style.transform = 'translate(' + lightboxZoom.x + 'px,' + lightboxZoom.y + 'px) scale(' + lightboxZoom.scale + ')';
+            const hint = document.querySelector('.ticket-lightbox-hint');
+            if (hint) hint.style.opacity = lightboxZoom.scale > 1.05 ? '0' : '1';
         }
 
-        function resetReviewZoom() {
-            reviewZoom.scale = 1;
-            reviewZoom.x = 0;
-            reviewZoom.y = 0;
-            reviewZoom.pointers.clear();
-            applyReviewZoom();
+        function resetLightboxZoom() {
+            lightboxZoom.scale = 1;
+            lightboxZoom.x = 0;
+            lightboxZoom.y = 0;
+            lightboxZoom.pointers.clear();
+            lightboxZoom._pinch = null;
+            lightboxZoom._swipePid = null;
+            applyLightboxZoom();
         }
 
-        function clampReviewPan() {
-            const viewport = document.getElementById('docReviewZoom');
-            const img = document.getElementById('docReviewImg');
-            if (!viewport || !img) return;
-            const vw = viewport.clientWidth || 1;
-            const vh = viewport.clientHeight || 1;
-            const iw = img.offsetWidth * reviewZoom.scale;
-            const ih = img.offsetHeight * reviewZoom.scale;
-            const maxX = Math.max(0, (iw - vw) / 2 + vw * 0.15);
-            const maxY = Math.max(0, (ih - vh) / 2 + vh * 0.15);
-            reviewZoom.x = Math.max(-maxX, Math.min(maxX, reviewZoom.x));
-            reviewZoom.y = Math.max(-maxY, Math.min(maxY, reviewZoom.y));
+        function openTicketLightbox(url) {
+            const root = document.getElementById('ticketLightbox');
+            const img = document.getElementById('ticketLightboxImg');
+            if (!root || !img || !url) return;
+            img.src = url;
+            resetLightboxZoom();
+            root.classList.add('active');
+            root.setAttribute('aria-hidden', 'false');
+            lockBodyScroll();
+            bindLightboxZoomOnce();
         }
 
-        function bindReviewZoomOnce() {
-            if (reviewZoom.bound) return;
-            const viewport = document.getElementById('docReviewZoom');
-            if (!viewport) return;
-            reviewZoom.bound = true;
+        function closeTicketLightbox() {
+            const root = document.getElementById('ticketLightbox');
+            if (!root || !root.classList.contains('active')) return;
+            root.classList.remove('active');
+            root.setAttribute('aria-hidden', 'true');
+            resetLightboxZoom();
+            // Keep body locked if a parent modal is still open
+            const viewerOpen = document.getElementById('docViewer') && document.getElementById('docViewer').classList.contains('active');
+            if (docReview.active || viewerOpen) lockBodyScroll();
+            else unlockBodyScroll();
+        }
+
+        function bindLightboxZoomOnce() {
+            if (lightboxZoom.bound) return;
+            const stage = document.getElementById('ticketLightboxStage');
+            const closeBtn = document.getElementById('ticketLightboxClose');
+            if (!stage) return;
+            lightboxZoom.bound = true;
+            if (closeBtn) closeBtn.onclick = () => closeTicketLightbox();
 
             const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
             const midpoint = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
 
-            viewport.addEventListener('pointerdown', (e) => {
-                viewport.setPointerCapture(e.pointerId);
-                reviewZoom.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-                if (reviewZoom.pointers.size === 1) {
+            stage.addEventListener('pointerdown', (e) => {
+                try { stage.setPointerCapture(e.pointerId); } catch (_) {}
+                lightboxZoom.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+                if (lightboxZoom.pointers.size === 1) {
+                    lightboxZoom._dragStartX = e.clientX;
+                    lightboxZoom._dragStartY = e.clientY;
+                    lightboxZoom._swipePid = e.pointerId;
                     const now = Date.now();
-                    if (now - reviewZoom.lastTap < 280) {
-                        if (reviewZoom.scale > 1.05) resetReviewZoom();
+                    if (now - lightboxZoom.lastTap < 280) {
+                        if (lightboxZoom.scale > 1.05) resetLightboxZoom();
                         else {
-                            reviewZoom.scale = 2.2;
-                            const rect = viewport.getBoundingClientRect();
-                            reviewZoom.x = (rect.width / 2 - (e.clientX - rect.left)) * 0.6;
-                            reviewZoom.y = (rect.height / 2 - (e.clientY - rect.top)) * 0.6;
-                            clampReviewPan();
-                            applyReviewZoom();
+                            lightboxZoom.scale = 2.4;
+                            applyLightboxZoom();
                         }
-                        reviewZoom.lastTap = 0;
+                        lightboxZoom.lastTap = 0;
                     } else {
-                        reviewZoom.lastTap = now;
+                        lightboxZoom.lastTap = now;
                     }
+                } else {
+                    lightboxZoom._swipePid = null;
+                    lightboxZoom._pinch = null;
                 }
             });
-            viewport.addEventListener('pointermove', (e) => {
-                if (!reviewZoom.pointers.has(e.pointerId)) return;
-                const prev = reviewZoom.pointers.get(e.pointerId);
+            stage.addEventListener('pointermove', (e) => {
+                if (!lightboxZoom.pointers.has(e.pointerId)) return;
+                const prev = lightboxZoom.pointers.get(e.pointerId);
                 const next = { x: e.clientX, y: e.clientY };
-                reviewZoom.pointers.set(e.pointerId, next);
-                const pts = Array.from(reviewZoom.pointers.values());
-                if (pts.length === 1 && reviewZoom.scale > 1.01) {
-                    reviewZoom.x += next.x - prev.x;
-                    reviewZoom.y += next.y - prev.y;
-                    clampReviewPan();
-                    applyReviewZoom();
+                lightboxZoom.pointers.set(e.pointerId, next);
+                const pts = Array.from(lightboxZoom.pointers.values());
+                if (pts.length === 1) {
+                    if (lightboxZoom.scale > 1.05) {
+                        lightboxZoom.x += next.x - prev.x;
+                        lightboxZoom.y += next.y - prev.y;
+                        applyLightboxZoom();
+                    }
                 } else if (pts.length >= 2) {
-                    const ids = Array.from(reviewZoom.pointers.keys());
-                    const a = reviewZoom.pointers.get(ids[0]);
-                    const b = reviewZoom.pointers.get(ids[1]);
-                    // Approximate: use movement of current pointer vs stored — better keep start pinch state
-                    if (!reviewZoom._pinch) {
-                        reviewZoom._pinch = {
-                            startDist: dist(pts[0], pts[1]),
-                            startScale: reviewZoom.scale,
+                    if (!lightboxZoom._pinch) {
+                        lightboxZoom._pinch = {
+                            startDist: dist(pts[0], pts[1]) || 1,
+                            startScale: lightboxZoom.scale,
                             startMid: midpoint(pts[0], pts[1]),
-                            startX: reviewZoom.x,
-                            startY: reviewZoom.y
+                            startX: lightboxZoom.x,
+                            startY: lightboxZoom.y
                         };
                     } else {
-                        // Update second point already in map; recompute from current two points
-                        const curPts = Array.from(reviewZoom.pointers.values());
+                        const curPts = Array.from(lightboxZoom.pointers.values());
                         const d = dist(curPts[0], curPts[1]);
                         const mid = midpoint(curPts[0], curPts[1]);
-                        const p = reviewZoom._pinch;
+                        const p = lightboxZoom._pinch;
                         let nextScale = p.startScale * (d / (p.startDist || 1));
-                        nextScale = Math.max(reviewZoom.min, Math.min(reviewZoom.max, nextScale));
-                        reviewZoom.scale = nextScale;
-                        reviewZoom.x = p.startX + (mid.x - p.startMid.x);
-                        reviewZoom.y = p.startY + (mid.y - p.startMid.y);
-                        clampReviewPan();
-                        applyReviewZoom();
+                        nextScale = Math.max(lightboxZoom.min, Math.min(lightboxZoom.max, nextScale));
+                        lightboxZoom.scale = nextScale;
+                        lightboxZoom.x = p.startX + (mid.x - p.startMid.x);
+                        lightboxZoom.y = p.startY + (mid.y - p.startMid.y);
+                        applyLightboxZoom();
                     }
                 }
             });
             const endPointer = (e) => {
-                reviewZoom.pointers.delete(e.pointerId);
-                if (reviewZoom.pointers.size < 2) reviewZoom._pinch = null;
-                if (reviewZoom.scale < 1.05) resetReviewZoom();
+                lightboxZoom.pointers.delete(e.pointerId);
+                if (lightboxZoom.pointers.size < 2) lightboxZoom._pinch = null;
+                if (lightboxZoom.pointers.size === 0) {
+                    if (lightboxZoom.scale <= 1.05 && lightboxZoom._swipePid === e.pointerId) {
+                        const dy = e.clientY - lightboxZoom._dragStartY;
+                        const dx = Math.abs(e.clientX - lightboxZoom._dragStartX);
+                        lightboxZoom._swipePid = null;
+                        if (dy > 110 && dx < 90) {
+                            closeTicketLightbox();
+                            return;
+                        }
+                    }
+                    lightboxZoom._swipePid = null;
+                    if (lightboxZoom.scale < 1.05) resetLightboxZoom();
+                } else {
+                    lightboxZoom._swipePid = null;
+                }
             };
-            viewport.addEventListener('pointerup', endPointer);
-            viewport.addEventListener('pointercancel', endPointer);
-            viewport.addEventListener('pointerleave', (e) => {
-                if (reviewZoom.pointers.has(e.pointerId)) endPointer(e);
-            });
-            // Desktop wheel zoom
-            viewport.addEventListener('wheel', (e) => {
+            stage.addEventListener('pointerup', endPointer);
+            stage.addEventListener('pointercancel', endPointer);
+            stage.addEventListener('wheel', (e) => {
                 e.preventDefault();
                 const delta = e.deltaY > 0 ? 0.9 : 1.1;
-                reviewZoom.scale = Math.max(reviewZoom.min, Math.min(reviewZoom.max, reviewZoom.scale * delta));
-                if (reviewZoom.scale <= 1.01) resetReviewZoom();
-                else { clampReviewPan(); applyReviewZoom(); }
+                lightboxZoom.scale = Math.max(lightboxZoom.min, Math.min(lightboxZoom.max, lightboxZoom.scale * delta));
+                if (lightboxZoom.scale <= 1.01) resetLightboxZoom();
+                else applyLightboxZoom();
             }, { passive: false });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && isTicketLightboxOpen()) {
+                    e.preventDefault();
+                    closeTicketLightbox();
+                }
+            });
         }
+
+        function bindReviewImageTapOnce() {
+            const preview = document.getElementById('docReviewZoom');
+            if (!preview || preview.dataset.bound) return;
+            preview.dataset.bound = '1';
+            preview.addEventListener('click', () => {
+                const url = docReview.processedUrl || docReview.originalUrl ||
+                    (document.getElementById('docReviewImg') && document.getElementById('docReviewImg').src);
+                if (url) openTicketLightbox(url);
+            });
+        }
+
+        function bindViewerImageTapOnce() {
+            const stage = document.getElementById('docViewerStage');
+            if (!stage || stage.dataset.lightboxBound) return;
+            stage.dataset.lightboxBound = '1';
+            stage.style.cursor = 'zoom-in';
+            stage.addEventListener('click', (e) => {
+                if (e.target && e.target.closest && e.target.closest('.doc-viewer-thumbs')) return;
+                const img = document.getElementById('docViewerImg');
+                const url = (img && img.src) || (docViewer.docs[docViewer.index] && (docViewer.docs[docViewer.index].processed || docViewer.docs[docViewer.index].original));
+                if (url) openTicketLightbox(url);
+            });
+        }
+
+        // Kept for call-site compatibility — preview tap opens gallery lightbox.
+        function bindReviewZoomOnce() { bindReviewImageTapOnce(); bindLightboxZoomOnce(); }
+        function resetReviewZoom() { /* preview no longer transforms */ }
 
         async function dataUrlToJpegFile(dataUrl, filename) {
             const res = await fetch(dataUrl);
@@ -2885,6 +2971,7 @@
         }
 
         function closeDocReview() {
+            closeTicketLightbox();
             const root = document.getElementById('docReview');
             if (root) {
                 root.classList.remove('active');
@@ -3217,6 +3304,7 @@
         }
 
         function closeDocViewer() {
+            closeTicketLightbox();
             docViewer.active = false;
             const root = document.getElementById('docViewer');
             if (root) {
@@ -3250,6 +3338,8 @@
                 closeDocViewer();
             };
             document.getElementById('docViewerShare').onclick = () => shareCurrentDoc();
+            bindViewerImageTapOnce();
+            bindLightboxZoomOnce();
         }
 
         function renderDocViewer(load) {
