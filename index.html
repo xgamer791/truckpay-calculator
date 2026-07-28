@@ -6,8 +6,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="driverpay-build" content="2.12.0">
-    <title>DriverPay Pro v2.12.0</title>
+    <meta name="driverpay-build" content="2.12.1">
+    <title>DriverPay Pro v2.12.1</title>
     <script>
     (function () {
         var meta = document.querySelector('meta[name="driverpay-build"]');
@@ -124,6 +124,13 @@
         .grok-credits-link { display: block; margin-top: 12px; font-size: 13px; font-weight: 800; color: #60a5fa; text-decoration: none; letter-spacing: 0.01em; }
         .grok-credits-link:active { opacity: 0.7; }
         .grok-credits-link + .grok-credits-link { margin-top: 8px; }
+        .grok-key-actions { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+        .grok-test-btn { flex-shrink: 0; padding: 10px 14px; border-radius: 12px; border: 1px solid rgba(96,165,250,0.35); background: rgba(59,130,246,0.15); color: #93c5fd; font-weight: 800; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; font-family: inherit; cursor: pointer; }
+        .grok-test-btn:active { opacity: 0.75; }
+        .grok-test-btn:disabled { opacity: 0.5; cursor: wait; }
+        .grok-test-status { font-size: 12px; font-weight: 700; color: #94a3b8; line-height: 1.35; }
+        .grok-test-status.ok { color: #4ade80; }
+        .grok-test-status.err { color: #f87171; }
         .settings-ext-link { color: #60a5fa; text-decoration: underline; text-underline-offset: 2px; font-weight: 800; }
         .browser-chooser-list { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
         .browser-chooser-btn { width: 100%; padding: 14px 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.10); background: rgba(255,255,255,0.05); color: #e2e8f0; font-weight: 800; font-size: 15px; font-family: inherit; text-align: left; cursor: pointer; }
@@ -348,7 +355,7 @@
     <header class="app-header">
         <div class="header-title">
             <h1>DriverPay <span>Pro</span></h1>
-            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v2.12.0</p>
+            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v2.12.1</p>
         </div>
         <div class="menu-container">
             <button class="menu-btn" onclick="toggleMenu(event)" aria-label="Menu">
@@ -442,7 +449,7 @@
             </div>
             <div class="footer-tagline">Built for the long haul</div>
             <div class="footer-meta">
-                <span class="footer-version">v2.12.0</span>
+                <span class="footer-version">v2.12.1</span>
                 <span class="footer-meta-dot"></span>
                 <span>© 2026</span>
                 <span class="footer-meta-dot"></span>
@@ -578,6 +585,10 @@
                 <div class="edit-title" style="font-size: 18px; margin: 6px 0 4px;">Grok API Key</div>
                 <div class="edit-subtitle" style="margin-bottom: 14px;">xAI Grok key used to clean tickets (background removal, B&amp;W, clarity, upright orientation) and read miles/tons text. Stored locally on this device only. Images are sent only to api.x.ai when you scan. Enable <strong style="color:#cbd5e1;">Chat</strong> (e.g. grok-4.3) and <strong style="color:#cbd5e1;">Image</strong> (grok-imagine-image) on the key. Get a key at <a href="https://console.x.ai/team/default/api-keys" class="settings-ext-link" data-ext-title="Get a Grok API key">console.x.ai</a>.</div>
                 <input type="password" id="grokKeyInput" class="edit-input" placeholder="xai-..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+                <div class="grok-key-actions">
+                    <button type="button" class="grok-test-btn" id="grokKeyTestBtn" onclick="testGrokApiKey()">Test Key</button>
+                    <span class="grok-test-status" id="grokKeyTestStatus"></span>
+                </div>
                 <a href="https://console.x.ai/team/default/billing" class="grok-credits-link settings-ext-link" data-ext-title="Top up Grok API credits">Top up Grok API credits →</a>
                 <a href="https://console.x.ai/team/default/api-keys" class="grok-credits-link settings-ext-link" data-ext-title="Grok API keys">Create & view API keys →</a>
             </div>
@@ -740,7 +751,7 @@
         <div class="scan-sublabel" id="scanSublabel">Cleaning ticket and reading text</div>
     </div>
 
-    <!-- driverpay-scanner:2.12.0 -->
+    <!-- driverpay-scanner:2.12.1 -->
     <div class="doc-scanner" id="docScanner" aria-hidden="true" role="dialog" aria-label="Grok ticket scanner">
         <div class="doc-scanner-stage">
             <video id="docScannerVideo" class="doc-scanner-video" playsinline muted autoplay></video>
@@ -1004,7 +1015,7 @@
 
         function applySettingsToHeader() {
             const sub = document.getElementById('headerSubtitle');
-            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v2.12.0`;
+            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v2.12.1`;
         }
 
         let savedScrollY = 0;
@@ -1322,6 +1333,11 @@
             if (keyInput) keyInput.value = settings.grokApiKey || '';
             const truckInput = document.getElementById('truckNumberInput');
             if (truckInput) truckInput.value = settings.expectedTruckNumber || '1205';
+            const testStatus = document.getElementById('grokKeyTestStatus');
+            if (testStatus) {
+                testStatus.textContent = '';
+                testStatus.className = 'grok-test-status';
+            }
             const settingsOverlay = document.getElementById('settingsOverlay');
             settingsOverlay.classList.add('active');
             if (!settingsOverlay.dataset.extLinksBound) {
@@ -1364,6 +1380,112 @@
             applySettingsToHeader();
             if (settings.grokApiKey) loadScannerGuide();
             closeSettings();
+        }
+
+        function tinyTestImageDataUrl() {
+            const c = document.createElement('canvas');
+            c.width = 64; c.height = 64;
+            const ctx = c.getContext('2d');
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, 64, 64);
+            ctx.fillStyle = '#000000';
+            ctx.font = 'bold 14px sans-serif';
+            ctx.fillText('TEST', 14, 38);
+            return c.toDataURL('image/jpeg', 0.8);
+        }
+
+        async function testGrokApiKey() {
+            const input = document.getElementById('grokKeyInput');
+            const key = ((input && input.value) || '').trim() || getGrokApiKey();
+            const btn = document.getElementById('grokKeyTestBtn');
+            const status = document.getElementById('grokKeyTestStatus');
+            const setStatus = (text, cls) => {
+                if (!status) return;
+                status.textContent = text;
+                status.className = 'grok-test-status' + (cls ? ' ' + cls : '');
+            };
+            if (!key) {
+                setStatus('Paste a key first.', 'err');
+                await appAlert('Paste your xAI Grok API key above, then tap Test Key.', { title: 'No API Key' });
+                return;
+            }
+            if (key.indexOf('sk-ant-') === 0) {
+                setStatus('That looks like Anthropic, not Grok.', 'err');
+                await appAlert('That key looks like Anthropic’s. Paste an xAI Grok key (usually starts with xai-).', { title: 'Wrong API Key' });
+                return;
+            }
+            if (btn) btn.disabled = true;
+            setStatus('Testing Chat…');
+            let chatOk = false;
+            let imageOk = false;
+            let chatErr = '';
+            let imageErr = '';
+            try {
+                const chatRes = await fetch('https://api.x.ai/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'content-type': 'application/json',
+                        'Authorization': 'Bearer ' + key
+                    },
+                    body: JSON.stringify({
+                        model: GROK_CHAT_MODEL,
+                        temperature: 0,
+                        max_tokens: 8,
+                        messages: [{ role: 'user', content: 'Reply with exactly: OK' }]
+                    })
+                });
+                if (!chatRes.ok) {
+                    let body = '';
+                    try { body = await chatRes.text(); } catch (_) {}
+                    chatErr = 'Chat HTTP ' + chatRes.status + (body ? ': ' + body.slice(0, 160) : '');
+                } else {
+                    chatOk = true;
+                }
+            } catch (err) {
+                chatErr = (err && err.message) ? err.message : String(err);
+            }
+
+            setStatus(chatOk ? 'Chat OK · testing Image…' : 'Chat failed · testing Image…');
+            try {
+                const imgRes = await fetch('https://api.x.ai/v1/images/edits', {
+                    method: 'POST',
+                    headers: {
+                        'content-type': 'application/json',
+                        'Authorization': 'Bearer ' + key
+                    },
+                    body: JSON.stringify({
+                        model: GROK_IMAGINE_MODEL,
+                        prompt: 'Return this image unchanged. Do not add text.',
+                        image: { url: tinyTestImageDataUrl(), type: 'image_url' },
+                        response_format: 'url'
+                    })
+                });
+                if (!imgRes.ok) {
+                    let body = '';
+                    try { body = await imgRes.text(); } catch (_) {}
+                    imageErr = 'Image HTTP ' + imgRes.status + (body ? ': ' + body.slice(0, 160) : '');
+                } else {
+                    imageOk = true;
+                }
+            } catch (err) {
+                imageErr = (err && err.message) ? err.message : String(err);
+            }
+
+            if (btn) btn.disabled = false;
+
+            if (chatOk && imageOk) {
+                setStatus('Chat + Image OK', 'ok');
+                await appAlert('Grok key works. Chat (' + GROK_CHAT_MODEL + ') and Image (' + GROK_IMAGINE_MODEL + ') both responded.', { title: 'API Key OK' });
+                return;
+            }
+
+            const parts = [];
+            parts.push(chatOk ? '✓ Chat OK' : '✗ Chat failed — enable Chat / ' + GROK_CHAT_MODEL + ' on the key.');
+            parts.push(imageOk ? '✓ Image OK' : '✗ Image failed — enable Image / ' + GROK_IMAGINE_MODEL + ' on the key.');
+            if (chatErr) parts.push('\nChat detail: ' + chatErr);
+            if (imageErr) parts.push('\nImage detail: ' + imageErr);
+            setStatus(chatOk || imageOk ? 'Partial — see details' : 'Key test failed', 'err');
+            await appAlert(parts.join('\n'), { title: 'API Key Test' });
         }
 
         function openHelp() {
