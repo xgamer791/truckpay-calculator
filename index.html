@@ -6,8 +6,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="driverpay-build" content="2.12.11">
-    <title>DriverPay Pro v2.12.11</title>
+    <meta name="driverpay-build" content="2.12.10">
+    <title>DriverPay Pro v2.12.10</title>
     <script>
     (function () {
         var meta = document.querySelector('meta[name="driverpay-build"]');
@@ -370,7 +370,7 @@
     <header class="app-header">
         <div class="header-title">
             <h1>DriverPay <span>Pro</span></h1>
-            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v2.12.11</p>
+            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v2.12.10</p>
         </div>
         <div class="menu-container">
             <button class="menu-btn" onclick="toggleMenu(event)" aria-label="Menu">
@@ -464,7 +464,7 @@
             </div>
             <div class="footer-tagline">Built for the long haul</div>
             <div class="footer-meta">
-                <span class="footer-version">v2.12.11</span>
+                <span class="footer-version">v2.12.10</span>
                 <span class="footer-meta-dot"></span>
                 <span>© 2026</span>
                 <span class="footer-meta-dot"></span>
@@ -768,7 +768,7 @@
         <button type="button" class="scan-cancel-btn" id="scanCancelBtn">Cancel</button>
     </div>
 
-    <!-- driverpay-scanner:2.12.11 -->
+    <!-- driverpay-scanner:2.12.10 -->
     <div class="doc-scanner" id="docScanner" aria-hidden="true" role="dialog" aria-label="Grok ticket scanner">
         <div class="doc-scanner-stage">
             <video id="docScannerVideo" class="doc-scanner-video" playsinline muted autoplay></video>
@@ -1045,7 +1045,7 @@
 
         function applySettingsToHeader() {
             const sub = document.getElementById('headerSubtitle');
-            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v2.12.11`;
+            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v2.12.10`;
         }
 
         let savedScrollY = 0;
@@ -2917,7 +2917,7 @@
                 miles: (miles != null && !isNaN(miles)) ? miles : null,
                 tons: (tons != null && !isNaN(tons)) ? tons : null,
                 ticketNumber: val('ocrTicketNo'),
-                rawText: val('ocrRaw') || ''
+                rawText: (docReview.ocr && docReview.ocr.rawText) ? docReview.ocr.rawText : ''
             };
         }
 
