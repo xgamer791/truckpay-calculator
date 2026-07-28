@@ -103,6 +103,8 @@
         .edit-input, .edit-select { width: 100%; background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.2); color: white; padding: 14px 16px; border-radius: 12px; font-size: 18px; font-weight: 700; font-family: inherit; }
         .edit-select { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>"); background-repeat: no-repeat; background-position: right 16px center; padding-right: 44px; }
         .edit-input:focus, .edit-select:focus { outline: none; border-color: #3b82f6; }
+        .grok-credits-link { display: inline-block; margin-top: 12px; font-size: 13px; font-weight: 800; color: #60a5fa; text-decoration: none; letter-spacing: 0.01em; }
+        .grok-credits-link:active { opacity: 0.7; }
         .edit-textarea { width: 100%; background: rgba(0, 0, 0, 0.5) !important; border: 1px solid rgba(255, 255, 255, 0.2) !important; color: #fff !important; padding: 14px 16px; border-radius: 12px; font-size: 15px !important; font-weight: 600; font-family: inherit; resize: vertical; min-height: 60px; }
         .edit-row { margin-bottom: 18px; }
         .mode-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; background: rgba(0,0,0,0.4); border-radius: 12px; padding: 4px; }
@@ -550,6 +552,7 @@
                 <div class="edit-title" style="font-size: 18px; margin: 6px 0 4px;">Grok API Key</div>
                 <div class="edit-subtitle" style="margin-bottom: 14px;">xAI Grok key used for AI auto-rotation of scanned tickets. Stored locally on this device only — never sent with your ticket images except to api.x.ai for orientation. Get a key at console.x.ai.</div>
                 <input type="password" id="grokKeyInput" class="edit-input" placeholder="xai-..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+                <a href="https://console.x.ai/team/default/billing" target="_blank" rel="noopener noreferrer" class="grok-credits-link">Top up Grok API credits →</a>
             </div>
 
             <div class="edit-actions" style="margin-top: 28px;">
