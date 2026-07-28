@@ -21,10 +21,16 @@ The `npm` scripts (`dev`/`build`/`preview`) and the `.github/workflows/deploy.ym
 
 Single-file SPA. No framework. State lives entirely in `localStorage` under two keys:
 
-- `driver_history` — array of **settlements** (one per payout week). Each settlement is `{ id, payoutDate, loads: [...] }`. Each load is `{ id, miles, tons, day, pricingMode?, customTotal?, customRate?, note?, ticket? }`. `ticket` is a base64 JPEG data URL.
-- `driverpay_settings` — `{ avgTons }`, clamped to [17, 30].
+- `driver_history` — array of **settlements** (one per payout week). Each settlement is `{ id, payoutDate, loads: [...] }`. Each load is `{ id, miles, tons, day, pricingMode?, customTotal?, customRate?, note?, ticket?, documents? }`. `ticket` is a base64 JPEG data URL (primary preview); `documents[]` holds Grok-cleaned tickets plus OCR fields.
+- `driverpay_settings` — `{ avgTons, grokApiKey, expectedTruckNumber, localUserId }`. `avgTons` clamped to [17, 30]. `expectedTruckNumber` defaults to **1205**.
 
 `sanitizeHistory()` runs on startup and repairs malformed loads (missing tons/day, NaN miles, missing IDs). Preserve this contract when modifying load shape — if you add a field, add validation here too.
+
+### Ticket scanner (`scanner.md`)
+
+`scanner.md` at the repo root is the plant/layout memory for Grok. When a Grok API key is present, the live app fetches it on startup / before each scan and injects it into OCR prompts. **LEARNED** sections for Colorado Materials and Hunter Stone (Martin Marietta + CM-division variants) are filled from sample tickets — update them when forms change or misreads appear. Do not invent a third plant.
+
+OCR extracts: plant, jobNumber, date, timeIn, timeOut, truckNumber, miles, tons, ticketNumber, rawText. If `truckNumber` ≠ `expectedTruckNumber`, the app pops a warning immediately and, if the driver stores anyway, appends a note like `Wrong truck number on ticket: … (expected 1205).`
 
 ### Settlement week (non-obvious)
 

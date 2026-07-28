@@ -6,8 +6,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="driverpay-build" content="2.11.1">
-    <title>DriverPay Pro v2.11.1</title>
+    <meta name="driverpay-build" content="2.12.5">
+    <title>DriverPay Pro v2.12.5</title>
     <script>
     (function () {
         var meta = document.querySelector('meta[name="driverpay-build"]');
@@ -55,18 +55,18 @@
         .day-section.collapsed .day-loads { max-height: 0; opacity: 0; }
         .day-header { cursor: pointer; -webkit-user-select: none; user-select: none; }
         .ticket-icon, .note-icon { display: inline-flex; align-items: center; justify-content: center; margin-left: 8px; padding: 4px; cursor: pointer; flex-shrink: 0; }
-        .ticket-icon.saved, .ticket-icon.has-ticket { color: #22c55e; }
-        .ticket-icon.no-ticket { color: #64748b; }
+        .ticket-icon.saved, .ticket-icon.has-ticket, .ticket-icon.has-info { color: #60a5fa; }
+        .ticket-icon.no-ticket { color: #ef4444; }
         .note-icon { color: #fbbf24; }
         .ticket-icon:active, .note-icon:active { opacity: 0.6; }
-        /* Ticket capture states (scanner flow / save-state):
-           default grey camera = no ticket · camera + blue ticket icon = captured pending save · green camera = saved to load */
+        /* Ticket capture states:
+           red camera = no ticket · blue info icon = ticket + OCR saved */
         .ticket-pending-icon { display: inline-flex; align-items: center; justify-content: center; margin-left: 4px; padding: 2px; color: #3b82f6; flex-shrink: 0; }
         .ticket-control { display: flex; align-items: center; gap: 12px; }
         .ticket-control-btn { display: inline-flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.10); border-radius: 12px; padding: 10px 14px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
         .ticket-control-btn:active { opacity: 0.7; }
-        .tc-camera { display: inline-flex; color: #64748b; transition: color 0.15s; }
-        .tc-camera.tc-saved { color: #22c55e; }
+        .tc-camera { display: inline-flex; color: #ef4444; transition: color 0.15s; }
+        .tc-camera.tc-saved { color: #60a5fa; }
         .ticket-control-status { font-size: 12px; font-weight: 700; color: #94a3b8; }
         .ticket-control-view { background: none; border: none; color: #60a5fa; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; padding: 6px 4px; margin-left: auto; }
         .ticket-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
@@ -124,6 +124,13 @@
         .grok-credits-link { display: block; margin-top: 12px; font-size: 13px; font-weight: 800; color: #60a5fa; text-decoration: none; letter-spacing: 0.01em; }
         .grok-credits-link:active { opacity: 0.7; }
         .grok-credits-link + .grok-credits-link { margin-top: 8px; }
+        .grok-key-actions { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+        .grok-test-btn { flex-shrink: 0; padding: 10px 14px; border-radius: 12px; border: 1px solid rgba(96,165,250,0.35); background: rgba(59,130,246,0.15); color: #93c5fd; font-weight: 800; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; font-family: inherit; cursor: pointer; }
+        .grok-test-btn:active { opacity: 0.75; }
+        .grok-test-btn:disabled { opacity: 0.5; cursor: wait; }
+        .grok-test-status { font-size: 12px; font-weight: 700; color: #94a3b8; line-height: 1.35; }
+        .grok-test-status.ok { color: #4ade80; }
+        .grok-test-status.err { color: #f87171; }
         .settings-ext-link { color: #60a5fa; text-decoration: underline; text-underline-offset: 2px; font-weight: 800; }
         .browser-chooser-list { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
         .browser-chooser-btn { width: 100%; padding: 14px 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.10); background: rgba(255,255,255,0.05); color: #e2e8f0; font-weight: 800; font-size: 15px; font-family: inherit; text-align: left; cursor: pointer; }
@@ -242,6 +249,11 @@
         .doc-capture:active::after { transform: scale(0.9); }
         .doc-capture:disabled { opacity: 0.45; }
         .doc-gallery-thumb { width: 48px; height: 48px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.18); background: rgba(15,23,42,0.72); display: inline-flex; align-items: center; justify-content: center; color: #cbd5e1; cursor: pointer; }
+        .doc-photos-btn { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-width: 64px; padding: 8px 10px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.18); background: rgba(15,23,42,0.78); color: #e2e8f0; cursor: pointer; -webkit-tap-highlight-color: transparent; font-family: inherit; }
+        .doc-photos-btn:active { transform: scale(0.94); background: rgba(30,41,59,0.92); }
+        .doc-photos-btn span { font-size: 10px; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; color: #93c5fd; }
+        /* Visually hidden — display:none breaks iOS photo-library open via label/JS */
+        .doc-file-input { position: fixed; left: 0; top: 0; width: 1px; height: 1px; opacity: 0; overflow: hidden; z-index: 10050; }
         .doc-perm { position: absolute; inset: 0; z-index: 6; display: none; align-items: center; justify-content: center; padding: 28px; background: rgba(15,23,42,0.96); text-align: center; }
         .doc-perm.show { display: flex; }
         .doc-perm-card { max-width: 360px; }
@@ -289,9 +301,16 @@
         .doc-viewer-actions .danger { color: #fca5a5; border-color: rgba(239,68,68,0.3); }
         .ticket-icon.processing { color: #60a5fa; position: relative; }
         .ticket-icon.processing::after { content: ''; position: absolute; inset: -2px; border: 2px solid rgba(96,165,250,0.35); border-top-color: #60a5fa; border-radius: 50%; animation: scan-spin 0.8s linear infinite; }
-        .ticket-icon .ticket-count { position: absolute; top: -4px; right: -6px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 999px; background: #22c55e; color: #052e16; font-size: 9px; font-weight: 900; display: inline-flex; align-items: center; justify-content: center; }
+        .ticket-icon .ticket-count { position: absolute; top: -4px; right: -6px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 999px; background: #3b82f6; color: #eff6ff; font-size: 9px; font-weight: 900; display: inline-flex; align-items: center; justify-content: center; }
         .ticket-icon.pending-sync { color: #fbbf24; }
         .ticket-icon { position: relative; }
+
+        .doc-viewer-info { padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,0.08); background: rgba(15,23,42,0.98); }
+        .doc-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; }
+        .doc-info-item { min-width: 0; }
+        .doc-info-item.full { grid-column: 1 / -1; }
+        .doc-info-label { font-size: 9px; font-weight: 900; color: #64748b; letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 3px; }
+        .doc-info-value { font-size: 14px; font-weight: 800; color: #e2e8f0; word-break: break-word; }
 
         .debug-log { background: rgba(0,0,0,0.55); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 14px; font-family: 'SF Mono', Menlo, Consolas, ui-monospace, monospace; font-size: 11px; line-height: 1.5; color: #cbd5e1; max-height: 55vh; overflow-y: auto; white-space: pre-wrap; word-break: break-word; margin: 12px 0 18px; }
         .debug-meta { font-size: 10px; font-weight: 800; color: #64748b; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 4px; }
@@ -341,7 +360,7 @@
     <header class="app-header">
         <div class="header-title">
             <h1>DriverPay <span>Pro</span></h1>
-            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v2.11.1</p>
+            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v2.12.5</p>
         </div>
         <div class="menu-container">
             <button class="menu-btn" onclick="toggleMenu(event)" aria-label="Menu">
@@ -435,7 +454,7 @@
             </div>
             <div class="footer-tagline">Built for the long haul</div>
             <div class="footer-meta">
-                <span class="footer-version">v2.11.1</span>
+                <span class="footer-version">v2.12.5</span>
                 <span class="footer-meta-dot"></span>
                 <span>© 2026</span>
                 <span class="footer-meta-dot"></span>
@@ -560,10 +579,21 @@
             <div class="ton-range-labels"><span>17</span><span>30</span></div>
 
             <div style="margin-top: 28px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.06);">
+                <div class="edit-eyebrow">TRUCK</div>
+                <div class="edit-title" style="font-size: 18px; margin: 6px 0 4px;">My Truck Number</div>
+                <div class="edit-subtitle" style="margin-bottom: 14px;">If a scanned ticket shows a different truck number, DriverPay warns you before saving.</div>
+                <input type="text" id="truckNumberInput" class="edit-input" inputmode="numeric" placeholder="1205" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+            </div>
+
+            <div style="margin-top: 28px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.06);">
                 <div class="edit-eyebrow">SCANNER · OPTIONAL</div>
                 <div class="edit-title" style="font-size: 18px; margin: 6px 0 4px;">Grok API Key</div>
-                <div class="edit-subtitle" style="margin-bottom: 14px;">xAI Grok key used to clean tickets (background removal, B&amp;W, clarity, upright orientation) and read miles/tons text. Stored locally on this device only. Images are sent only to api.x.ai when you scan. Enable <strong style="color:#cbd5e1;">Chat</strong> (e.g. grok-4.3) and <strong style="color:#cbd5e1;">Image</strong> (grok-imagine-image) on the key. Get a key at <a href="https://console.x.ai/team/default/api-keys" class="settings-ext-link" data-ext-title="Get a Grok API key">console.x.ai</a>.</div>
+                <div class="edit-subtitle" style="margin-bottom: 14px;">xAI Grok key used to clean tickets (background removal, B&amp;W, clarity, upright orientation) and read ticket text. Stored locally on this device only. Images are sent only to api.x.ai when you scan. Defaults use the cheapest models that get the job done: <strong style="color:#cbd5e1;">Chat</strong> <code style="color:#93c5fd;">grok-build-0.1</code> and <strong style="color:#cbd5e1;">Image</strong> <code style="color:#93c5fd;">grok-imagine-image</code> ($0.02/image — not the quality variant). Enable both on the key. Get a key at <a href="https://console.x.ai/team/default/api-keys" class="settings-ext-link" data-ext-title="Get a Grok API key">console.x.ai</a>.</div>
                 <input type="password" id="grokKeyInput" class="edit-input" placeholder="xai-..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+                <div class="grok-key-actions">
+                    <button type="button" class="grok-test-btn" id="grokKeyTestBtn" onclick="testGrokApiKey()">Test Key</button>
+                    <span class="grok-test-status" id="grokKeyTestStatus"></span>
+                </div>
                 <a href="https://console.x.ai/team/default/billing" class="grok-credits-link settings-ext-link" data-ext-title="Top up Grok API credits">Top up Grok API credits →</a>
                 <a href="https://console.x.ai/team/default/api-keys" class="grok-credits-link settings-ext-link" data-ext-title="Grok API keys">Create & view API keys →</a>
             </div>
@@ -608,7 +638,7 @@
                         <span class="help-section-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span>
                         Load Tickets
                     </div>
-                    <p>Every load has a camera icon. <strong style="color:#64748b;">Grey</strong> = no ticket yet. <strong style="color:#22c55e;">Green</strong> = document saved to the load. Tap grey to open the Grok ticket scanner; tap green to view, share, replace, add another, or delete. Snap the ticket (or pick from gallery) — Grok removes the background, makes it black &amp; white, fixes orientation, sharpens text, and reads miles/tons for you to confirm before saving.</p>
+                    <p>Every load has a camera icon. <strong style="color:#ef4444;">Red</strong> = no ticket yet. <strong style="color:#60a5fa;">Blue info</strong> = ticket + info saved. Tap to open the Grok ticket scanner — snap with the shutter, or tap <strong>Photos</strong> to add an image from your library. Grok cleans the ticket, reads the fields, and lets you confirm before saving.</p>
                     <div class="help-tip"><strong>Tip:</strong> Scans are saved on your phone first so they work offline. Scanning inside Edit shows a <strong style="color:#3b82f6;">blue ticket icon</strong> until you tap Save.</div>
                 </div>
                 <div class="help-section">
@@ -726,7 +756,7 @@
         <div class="scan-sublabel" id="scanSublabel">Cleaning ticket and reading text</div>
     </div>
 
-    <!-- driverpay-scanner:2.11.1 -->
+    <!-- driverpay-scanner:2.12.5 -->
     <div class="doc-scanner" id="docScanner" aria-hidden="true" role="dialog" aria-label="Grok ticket scanner">
         <div class="doc-scanner-stage">
             <video id="docScannerVideo" class="doc-scanner-video" playsinline muted autoplay></video>
@@ -739,12 +769,13 @@
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg>
                 </button>
             </div>
-            <div class="doc-scanner-status" id="docScannerStatus">Center the ticket · Grok cleans it up</div>
+            <div class="doc-scanner-status" id="docScannerStatus">Center ticket · or add from Photos</div>
             <div class="doc-scanner-bottom">
                 <div class="doc-scanner-side">
-                    <button type="button" class="doc-gallery-thumb" id="docScannerGallery" aria-label="Choose photo from gallery">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-                    </button>
+                    <label class="doc-photos-btn" id="docScannerGallery" for="docScannerFile" role="button" aria-label="Add image from Photos" title="Add from Photos">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                        <span>Photos</span>
+                    </label>
                 </div>
                 <button type="button" class="doc-capture" id="docScannerCapture" aria-label="Capture ticket"></button>
                 <div class="doc-scanner-side right"></div>
@@ -752,17 +783,23 @@
             <div class="doc-perm" id="docScannerPerm">
                 <div class="doc-perm-card">
                     <div class="doc-perm-title" id="docScannerPermTitle">Camera access needed</div>
-                    <div class="doc-perm-msg" id="docScannerPermMsg">Allow camera access to photograph load tickets. You can also pick a photo from your gallery — Grok handles the rest.</div>
+                    <div class="doc-perm-msg" id="docScannerPermMsg">Allow camera access to photograph load tickets. You can also add an image from Photos — Grok handles the rest.</div>
                     <div class="doc-perm-actions">
                         <button type="button" class="doc-perm-primary" id="docScannerRetryCam">Try Again</button>
-                        <button type="button" class="doc-perm-secondary" id="docScannerOpenGallery">Choose from Gallery</button>
+                        <label class="doc-perm-secondary" id="docScannerOpenGallery" for="docScannerFile" style="display:block; text-align:center; box-sizing:border-box; cursor:pointer;">Add from Photos</label>
                         <button type="button" class="doc-perm-secondary" id="docScannerPermClose">Close</button>
                     </div>
                 </div>
             </div>
         </div>
-        <input type="file" id="docScannerFile" accept="image/*" capture="environment" style="display:none" aria-hidden="true">
     </div>
+    <!-- Outside .doc-scanner: never trapped in display:none.
+         iOS gallery force: NO capture attribute, NO accept=image/* wildcard (that prefers Camera),
+         and multiple=true so Photos library opens instead of the camera shutter. -->
+    <input type="file" id="docScannerFile" class="doc-file-input"
+        accept="image/jpeg,image/png,image/heic,image/heif,.jpg,.jpeg,.png,.heic,.heif"
+        multiple
+        aria-hidden="true" tabindex="-1">
 
     <div class="doc-review" id="docReview" aria-hidden="true" role="dialog" aria-label="Review Grok scan">
         <div class="doc-review-header">
@@ -776,14 +813,23 @@
             <img id="docReviewImg" alt="Grok cleaned ticket">
         </div>
         <div class="doc-ocr-panel">
-            <div class="doc-ocr-note">Grok cleaned this ticket and read the fields below. Edit anything that’s wrong before saving.</div>
+            <div class="doc-ocr-note">Grok cleaned this ticket using scanner.md plant rules. Confirm the fields below before saving.</div>
             <div class="doc-ocr-grid">
-                <div class="doc-ocr-field"><label for="ocrMiles">Miles</label><input type="number" id="ocrMiles" inputmode="decimal" step="0.1" placeholder="—"></div>
-                <div class="doc-ocr-field"><label for="ocrTons">Tons</label><input type="number" id="ocrTons" inputmode="decimal" step="0.01" placeholder="—"></div>
+                <div class="doc-ocr-field"><label for="ocrPlant">Plant</label><input type="text" id="ocrPlant" list="ocrPlantList" placeholder="—" autocomplete="off"></div>
+                <div class="doc-ocr-field"><label for="ocrJob">Job number</label><input type="text" id="ocrJob" placeholder="—" autocomplete="off"></div>
                 <div class="doc-ocr-field"><label for="ocrDate">Date</label><input type="text" id="ocrDate" placeholder="—" autocomplete="off"></div>
                 <div class="doc-ocr-field"><label for="ocrTicketNo">Ticket #</label><input type="text" id="ocrTicketNo" placeholder="—" autocomplete="off"></div>
+                <div class="doc-ocr-field"><label for="ocrTimeIn">Time in</label><input type="text" id="ocrTimeIn" placeholder="—" autocomplete="off"></div>
+                <div class="doc-ocr-field"><label for="ocrTimeOut">Time out</label><input type="text" id="ocrTimeOut" placeholder="—" autocomplete="off"></div>
+                <div class="doc-ocr-field"><label for="ocrTruck">Truck #</label><input type="text" id="ocrTruck" placeholder="—" autocomplete="off"></div>
+                <div class="doc-ocr-field"><label for="ocrMiles">Miles</label><input type="number" id="ocrMiles" inputmode="decimal" step="0.1" placeholder="—"></div>
+                <div class="doc-ocr-field"><label for="ocrTons">Tons</label><input type="number" id="ocrTons" inputmode="decimal" step="0.01" placeholder="—"></div>
                 <div class="doc-ocr-field full"><label for="ocrRaw">Full text</label><textarea id="ocrRaw" placeholder="Raw OCR text from Grok"></textarea></div>
             </div>
+            <datalist id="ocrPlantList">
+                <option value="Colorado Materials"></option>
+                <option value="Hunter Stone"></option>
+            </datalist>
         </div>
         <div class="doc-review-actions">
             <button type="button" class="doc-btn-muted" id="docReviewRetake">Retake</button>
@@ -795,13 +841,16 @@
     <div class="doc-viewer" id="docViewer" aria-hidden="true" role="dialog" aria-label="Saved document">
         <div class="doc-viewer-header">
             <div class="doc-viewer-meta">
-                <div class="doc-viewer-eyebrow">LOAD DOCUMENT</div>
+                <div class="doc-viewer-eyebrow">TICKET INFO</div>
                 <div class="doc-viewer-title" id="docViewerTitle">Ticket</div>
                 <div class="doc-viewer-sub" id="docViewerSub"></div>
             </div>
             <button type="button" class="doc-btn" id="docViewerClose" aria-label="Close viewer">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
             </button>
+        </div>
+        <div class="doc-viewer-info hidden" id="docViewerInfo">
+            <div class="doc-info-grid" id="docViewerInfoGrid"></div>
         </div>
         <div class="doc-viewer-stage" id="docViewerStage">
             <img id="docViewerImg" alt="Saved load document">
@@ -941,7 +990,7 @@
         const rateData = [[2,3.84],[3,3.97],[6,4.38],[8,4.65],[11,5.06],[13,5.46],[14,5.43],[16,6.03],[17,6.00],[21,6.75],[25,7.32],[27,7.36],[30,8.01],[39,10.26],[45,11.24],[49,10.15],[61,14.40],[62,14.72],[65,15.42],[92,16.07]];
         const SETTINGS_KEY = 'driverpay_settings';
         const DOC_SYNC_KEY = 'driverpay_doc_sync_queue';
-        const DEFAULT_SETTINGS = { avgTons: 25, grokApiKey: '', localUserId: '' };
+        const DEFAULT_SETTINGS = { avgTons: 25, grokApiKey: '', expectedTruckNumber: '1205', localUserId: '' };
 
         function loadSettings() {
             try {
@@ -957,10 +1006,13 @@
                 if (avg > 30) avg = 30;
                 // Prefer grokApiKey; do not migrate Anthropic keys (different provider).
                 const key = (typeof parsed.grokApiKey === 'string') ? parsed.grokApiKey : '';
+                const truck = (typeof parsed.expectedTruckNumber === 'string' && parsed.expectedTruckNumber.trim())
+                    ? parsed.expectedTruckNumber.trim()
+                    : '1205';
                 let localUserId = (typeof parsed.localUserId === 'string' && parsed.localUserId) ? parsed.localUserId : genLocalUserId();
-                const out = { avgTons: avg, grokApiKey: key, localUserId };
-                // Rewrite settings if missing localUserId or still carrying the old Anthropic field.
-                if (!parsed.localUserId || Object.prototype.hasOwnProperty.call(parsed, 'anthropicApiKey') || typeof parsed.grokApiKey !== 'string') {
+                const out = { avgTons: avg, grokApiKey: key, expectedTruckNumber: truck, localUserId };
+                // Rewrite settings if missing fields or still carrying the old Anthropic field.
+                if (!parsed.localUserId || Object.prototype.hasOwnProperty.call(parsed, 'anthropicApiKey') || typeof parsed.grokApiKey !== 'string' || typeof parsed.expectedTruckNumber !== 'string') {
                     try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(out)); } catch (_) {}
                 }
                 return out;
@@ -975,7 +1027,7 @@
 
         function applySettingsToHeader() {
             const sub = document.getElementById('headerSubtitle');
-            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v2.11.1`;
+            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v2.12.5`;
         }
 
         let savedScrollY = 0;
@@ -1291,6 +1343,13 @@
             document.getElementById('tonValueDisplay').textContent = formatTons(settings.avgTons);
             const keyInput = document.getElementById('grokKeyInput');
             if (keyInput) keyInput.value = settings.grokApiKey || '';
+            const truckInput = document.getElementById('truckNumberInput');
+            if (truckInput) truckInput.value = settings.expectedTruckNumber || '1205';
+            const testStatus = document.getElementById('grokKeyTestStatus');
+            if (testStatus) {
+                testStatus.textContent = '';
+                testStatus.className = 'grok-test-status';
+            }
             const settingsOverlay = document.getElementById('settingsOverlay');
             settingsOverlay.classList.add('active');
             if (!settingsOverlay.dataset.extLinksBound) {
@@ -1319,11 +1378,126 @@
             settings.avgTons = v;
             const keyInput = document.getElementById('grokKeyInput');
             if (keyInput) settings.grokApiKey = keyInput.value.trim();
+            const truckInput = document.getElementById('truckNumberInput');
+            const truckVal = truckInput ? truckInput.value.trim() : '';
+            settings.expectedTruckNumber = truckVal || '1205';
             // Persist only current schema — drops any leftover anthropicApiKey.
-            settings = { avgTons: settings.avgTons, grokApiKey: settings.grokApiKey || '', localUserId: settings.localUserId || genLocalUserId() };
+            settings = {
+                avgTons: settings.avgTons,
+                grokApiKey: settings.grokApiKey || '',
+                expectedTruckNumber: settings.expectedTruckNumber || '1205',
+                localUserId: settings.localUserId || genLocalUserId()
+            };
             saveSettingsObj(settings);
             applySettingsToHeader();
+            if (settings.grokApiKey) loadScannerGuide();
             closeSettings();
+        }
+
+        function tinyTestImageDataUrl() {
+            const c = document.createElement('canvas');
+            c.width = 64; c.height = 64;
+            const ctx = c.getContext('2d');
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, 64, 64);
+            ctx.fillStyle = '#000000';
+            ctx.font = 'bold 14px sans-serif';
+            ctx.fillText('TEST', 14, 38);
+            return c.toDataURL('image/jpeg', 0.8);
+        }
+
+        async function testGrokApiKey() {
+            const input = document.getElementById('grokKeyInput');
+            const key = ((input && input.value) || '').trim() || getGrokApiKey();
+            const btn = document.getElementById('grokKeyTestBtn');
+            const status = document.getElementById('grokKeyTestStatus');
+            const setStatus = (text, cls) => {
+                if (!status) return;
+                status.textContent = text;
+                status.className = 'grok-test-status' + (cls ? ' ' + cls : '');
+            };
+            if (!key) {
+                setStatus('Paste a key first.', 'err');
+                await appAlert('Paste your xAI Grok API key above, then tap Test Key.', { title: 'No API Key' });
+                return;
+            }
+            if (key.indexOf('sk-ant-') === 0) {
+                setStatus('That looks like Anthropic, not Grok.', 'err');
+                await appAlert('That key looks like Anthropic’s. Paste an xAI Grok key (usually starts with xai-).', { title: 'Wrong API Key' });
+                return;
+            }
+            if (btn) btn.disabled = true;
+            setStatus('Testing Chat…');
+            let chatOk = false;
+            let imageOk = false;
+            let chatErr = '';
+            let imageErr = '';
+            try {
+                const chatRes = await fetch('https://api.x.ai/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'content-type': 'application/json',
+                        'Authorization': 'Bearer ' + key
+                    },
+                    body: JSON.stringify({
+                        model: GROK_CHAT_MODEL,
+                        temperature: 0,
+                        max_tokens: 8,
+                        messages: [{ role: 'user', content: 'Reply with exactly: OK' }]
+                    })
+                });
+                if (!chatRes.ok) {
+                    let body = '';
+                    try { body = await chatRes.text(); } catch (_) {}
+                    chatErr = 'Chat HTTP ' + chatRes.status + (body ? ': ' + body.slice(0, 160) : '');
+                } else {
+                    chatOk = true;
+                }
+            } catch (err) {
+                chatErr = (err && err.message) ? err.message : String(err);
+            }
+
+            setStatus(chatOk ? 'Chat OK · testing Image…' : 'Chat failed · testing Image…');
+            try {
+                const imgRes = await fetch('https://api.x.ai/v1/images/edits', {
+                    method: 'POST',
+                    headers: {
+                        'content-type': 'application/json',
+                        'Authorization': 'Bearer ' + key
+                    },
+                    body: JSON.stringify({
+                        model: GROK_IMAGINE_MODEL,
+                        prompt: 'Return this image unchanged. Do not add text.',
+                        image: { url: tinyTestImageDataUrl(), type: 'image_url' },
+                        response_format: 'url'
+                    })
+                });
+                if (!imgRes.ok) {
+                    let body = '';
+                    try { body = await imgRes.text(); } catch (_) {}
+                    imageErr = 'Image HTTP ' + imgRes.status + (body ? ': ' + body.slice(0, 160) : '');
+                } else {
+                    imageOk = true;
+                }
+            } catch (err) {
+                imageErr = (err && err.message) ? err.message : String(err);
+            }
+
+            if (btn) btn.disabled = false;
+
+            if (chatOk && imageOk) {
+                setStatus('Chat + Image OK', 'ok');
+                await appAlert('Grok key works. Chat (' + GROK_CHAT_MODEL + ') and Image (' + GROK_IMAGINE_MODEL + ') both responded.', { title: 'API Key OK' });
+                return;
+            }
+
+            const parts = [];
+            parts.push(chatOk ? '✓ Chat OK' : '✗ Chat failed — enable Chat / ' + GROK_CHAT_MODEL + ' on the key.');
+            parts.push(imageOk ? '✓ Image OK' : '✗ Image failed — enable Image / ' + GROK_IMAGINE_MODEL + ' on the key.');
+            if (chatErr) parts.push('\nChat detail: ' + chatErr);
+            if (imageErr) parts.push('\nImage detail: ' + imageErr);
+            setStatus(chatOk || imageOk ? 'Partial — see details' : 'Key test failed', 'err');
+            await appAlert(parts.join('\n'), { title: 'API Key Test' });
         }
 
         function openHelp() {
@@ -1600,8 +1774,8 @@
         }
 
         // ---- Load ticket, staged inside the Edit modal --------------------------------
-        // States: default grey camera = no ticket · camera + blue ticket icon = captured,
-        // pending save · green camera = saved to load. Nothing persists until Save is tapped.
+        // Red camera = no ticket · blue camera = ticket saved · blue info = ticket + OCR info.
+        // Nothing persists until Save is tapped.
         function updateEditTicketUI() {
             if (!editingLoad) return;
             const cam = document.getElementById('editTicketCamera');
@@ -1611,10 +1785,13 @@
             if (!cam || !pending || !status || !viewBtn) return;
             const staged = !!editingLoad.stagedTicket;
             const saved = !!editingLoad.savedTicket && !editingLoad.removeTicket;
-            // Green means "saved to load" only — a fresh unsaved capture is pending, not green.
-            cam.classList.toggle('tc-saved', saved && !staged);
+            const hasInfo = !!(editingLoad.stagedDocument && docHasOcrInfo(editingLoad.stagedDocument)) ||
+                (!!editingLoad.savedDocuments && editingLoad.savedDocuments.some(docHasOcrInfo) && !editingLoad.removeTicket && !staged);
+            cam.classList.toggle('tc-saved', (saved && !staged) || (staged && hasInfo));
+            cam.innerHTML = (hasInfo && ((saved && !staged) || staged)) ? INFO_ICON_SVG : CAMERA_ICON_SVG;
             pending.style.display = staged ? 'inline-flex' : 'none';
             if (staged) status.textContent = saved ? 'New photo — Save to replace' : 'Captured — Save to keep';
+            else if (saved && hasInfo) status.textContent = 'Ticket + info saved';
             else if (saved) status.textContent = 'Saved to load';
             else if (editingLoad.removeTicket) status.textContent = 'Will remove on Save';
             else status.textContent = 'No ticket — tap to scan';
@@ -1677,8 +1854,8 @@
             overlay.onclick = (e) => { if (e.target === overlay) close(); };
         }
 
-        const GROK_CHAT_MODEL = 'grok-4.3';
-        const GROK_IMAGINE_MODEL = 'grok-imagine-image';
+        const GROK_CHAT_MODEL = 'grok-build-0.1'; // cheapest Text+Image chat model that can OCR tickets
+        const GROK_IMAGINE_MODEL = 'grok-imagine-image'; // cheapest Imagine edit model ($0.02) — not -quality ($0.05)
         const SCAN_UPLOAD_EDGE = 1600;
         const SCAN_JPEG_QUALITY = 0.72;
 
@@ -1700,8 +1877,35 @@
             active: false,
             originalUrl: null,
             processedUrl: null,
-            ocr: null
+            ocr: null,
+            wrongTruckAck: null // { ticketTruck, note } after immediate mismatch confirm
         };
+
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function docHasOcrInfo(doc) {
+            const o = doc && doc.ocr;
+            if (!o) return false;
+            return !!(
+                o.ticketNumber || o.jobNumber || o.plant || o.date ||
+                o.timeIn || o.timeOut || o.truckNumber ||
+                (o.miles != null && o.miles !== '') ||
+                (o.tons != null && o.tons !== '')
+            );
+        }
+
+        function loadHasOcrInfo(load) {
+            return getLoadDocs(load).some(docHasOcrInfo);
+        }
+
+        const CAMERA_ICON_SVG = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>';
+        const INFO_ICON_SVG = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="10" x2="12" y2="16"/><circle cx="12" cy="7.25" r="0.9" fill="currentColor" stroke="none"/></svg>';
 
         let processingLoads = new Set();
         const docViewer = { sId: null, lId: null, docs: [], index: 0 };
@@ -1761,6 +1965,60 @@
             return (settings && typeof settings.grokApiKey === 'string') ? settings.grokApiKey.trim() : '';
         }
 
+        function getExpectedTruckNumber() {
+            const v = (settings && typeof settings.expectedTruckNumber === 'string') ? settings.expectedTruckNumber.trim() : '';
+            return v || '1205';
+        }
+
+        function normalizeTruckNumber(v) {
+            if (v == null) return '';
+            return String(v).replace(/[^0-9a-zA-Z]/g, '').replace(/^0+/, '') || String(v).trim();
+        }
+
+        function truckNumbersMatch(a, b) {
+            const na = normalizeTruckNumber(a);
+            const nb = normalizeTruckNumber(b);
+            if (!na || !nb) return true; // missing ticket truck = no mismatch flag
+            return na.toLowerCase() === nb.toLowerCase();
+        }
+
+        let scannerGuideText = '';
+        let scannerGuideLoaded = false;
+        let scannerGuideLoading = null;
+
+        async function loadScannerGuide(force) {
+            if (!getGrokApiKey()) return '';
+            if (scannerGuideLoaded && !force && scannerGuideText) return scannerGuideText;
+            if (scannerGuideLoading && !force) return scannerGuideLoading;
+            scannerGuideLoading = (async () => {
+                try {
+                    const res = await fetch('./scanner.md?v=' + Date.now(), { cache: 'no-store' });
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    scannerGuideText = await res.text();
+                    scannerGuideLoaded = true;
+                    console.log('[scan] scanner.md loaded (' + scannerGuideText.length + ' chars) — kept in memory for Grok');
+                    return scannerGuideText;
+                } catch (err) {
+                    console.warn('[scan] scanner.md load failed:', err);
+                    if (!scannerGuideText) {
+                        scannerGuideText = [
+                            '# scanner.md fallback',
+                            'Known plants: Colorado Materials, Hunter Stone.',
+                            'Hunter Stone may be Martin Marietta (plant line Hunter Stone) or HUNTER STONE division of Colorado Materials.',
+                            'tons = NET tons only. truckNumber = digits from VEHICLE/TRUCK (e.g. 1205 from RST1205).',
+                            'jobNumber = Order No / ORDER / JOB. Single TIME → timeIn only.',
+                            'Extract plant, jobNumber, date, timeIn, timeOut, truckNumber, miles, tons, ticketNumber, rawText.',
+                            'Driver truck number is 1205.'
+                        ].join('\n');
+                    }
+                    return scannerGuideText;
+                } finally {
+                    scannerGuideLoading = null;
+                }
+            })();
+            return scannerGuideLoading;
+        }
+
         async function ensureGrokReadyForScan() {
             const key = getGrokApiKey();
             if (!key) {
@@ -1779,6 +2037,7 @@
                 if (go) openSettings();
                 return false;
             }
+            await loadScannerGuide();
             return true;
         }
 
@@ -1845,7 +2104,8 @@
                 '- Deskew / straighten and auto-rotate so text is upright and readable',
                 '- Convert to high-contrast black & white scanner look',
                 '- Improve clarity and sharpness of printed text and numbers',
-                '- Keep all ticket text fully legible; do not invent or erase numbers',
+                '- Keep ALL ticket text, numbers, barcodes, and box borders fully legible; do not invent or erase values',
+                '- Preserve the rectangular form layout (headers, grids, weight tables)',
                 '- Output a flat rectangular document filling the frame'
             ].join('\n');
 
@@ -1877,21 +2137,86 @@
             return await urlToDataUrl(outUrl);
         }
 
+        function emptyOcr(rawText) {
+            return {
+                plant: null, jobNumber: null, date: null, timeIn: null, timeOut: null,
+                truckNumber: null, miles: null, tons: null, ticketNumber: null,
+                rawText: rawText || ''
+            };
+        }
+
+        function normalizePlantName(v) {
+            if (v == null || v === '') return null;
+            const s = String(v).trim();
+            const lower = s.toLowerCase();
+            if (lower.indexOf('hunter') >= 0) return 'Hunter Stone';
+            if (lower.indexOf('colorado materials') >= 0 || lower === 'colorado' || lower.indexOf('colorado mat') >= 0) return 'Colorado Materials';
+            // Martin Marietta alone is not enough — need Hunter Stone in plant line (handled in prompt).
+            if (lower.indexOf('martin marietta') >= 0 && lower.indexOf('hunter') < 0) return null;
+            return s;
+        }
+
+        function extractTruckUnit(v) {
+            if (v == null || v === '') return null;
+            const s = String(v).trim();
+            // Prefer a 3–5 digit unit, optionally prefixed (RST1205, TRK-1205, 1205 JLP…).
+            const prefixed = s.match(/\b(?:RST|TRK|TRUCK|UNIT)?[\s#-]*([0-9]{3,5})\b/i);
+            if (prefixed) return prefixed[1].replace(/^0+/, '') || prefixed[1];
+            const digits = s.match(/([0-9]{3,5})/);
+            return digits ? (digits[1].replace(/^0+/, '') || digits[1]) : s;
+        }
+
+        function normalizeOcr(parsed, fallbackText) {
+            const numOrNull = (v) => {
+                if (v == null || v === '') return null;
+                const n = Number(String(v).replace(/,/g, ''));
+                return isNaN(n) ? null : n;
+            };
+            const plant = normalizePlantName(parsed.plant || parsed.Plant || null);
+            let truckRaw = parsed.truckNumber != null ? parsed.truckNumber
+                : (parsed.vehicle != null ? parsed.vehicle : (parsed.truck != null ? parsed.truck : null));
+            const truckNumber = extractTruckUnit(truckRaw);
+            return {
+                plant,
+                jobNumber: parsed.jobNumber || parsed.job || parsed.orderNumber || parsed.orderNo || null,
+                date: parsed.date || null,
+                timeIn: parsed.timeIn || parsed.time || null,
+                timeOut: parsed.timeOut || null,
+                truckNumber: truckNumber ? String(truckNumber) : null,
+                miles: numOrNull(parsed.miles),
+                tons: numOrNull(parsed.tons != null ? parsed.tons : parsed.netTons),
+                ticketNumber: parsed.ticketNumber || parsed.ticket || null,
+                rawText: parsed.rawText || fallbackText || ''
+            };
+        }
+
         async function grokReadTicket(dataUrl) {
             const key = getGrokApiKey();
+            const guide = await loadScannerGuide();
+            const expectedTruck = getExpectedTruckNumber();
             const prompt = [
-                'Read this trucking load / scale / delivery ticket.',
-                'Return ONLY valid JSON with these keys:',
-                '{"miles": number|null, "tons": number|null, "date": string|null, "ticketNumber": string|null, "rawText": string}',
-                'miles = haul distance / miles if present.',
-                'tons = net weight in tons if present (convert from pounds / 2000 if needed).',
-                'date = ticket date as printed.',
-                'ticketNumber = ticket/load ID if present.',
-                'rawText = all readable text on the ticket.',
-                'If a field is missing use null. Do not invent values.'
-            ].join(' ');
+                'You are DriverPay Pro ticket OCR. Follow scanner.md LEARNED layouts EXACTLY (included below).',
+                'Steps: (1) identify plant from logo/header/plant line (2) apply that plant field map (3) return JSON only.',
+                'Return ONLY valid JSON:',
+                '{"plant":string|null,"jobNumber":string|null,"date":string|null,"timeIn":string|null,"timeOut":string|null,"truckNumber":string|null,"miles":number|null,"tons":number|null,"ticketNumber":string|null,"rawText":string}',
+                '',
+                'CRITICAL RULES:',
+                '- plant must be exactly "Colorado Materials" or "Hunter Stone" when known. Third plant TBD — do not invent.',
+                '- Martin Marietta ticket with plant line containing Hunter Stone → plant "Hunter Stone" (NOT Colorado Materials).',
+                '- Header "HUNTER STONE" / Division of Colorado Materials → plant "Hunter Stone".',
+                '- tons = NET tons ONLY (never GROSS, TARE, TODAY, Dispatch Totals, Job To Date).',
+                '- truckNumber = unit digits from VEHICLE/TRUCK only (e.g. 1205 from "RST1205 - ROLLING STONE" or "1205 JLP AGGREGATE").',
+                '- jobNumber = Order No / ORDER / JOB — never Customer No, Carrier, Dispatch, Scale, or PO.',
+                '- Single TIME field → timeIn set, timeOut null. Time In + Time Out → both.',
+                '- Driver expected truck: ' + expectedTruck + '.',
+                '- Missing/unreadable → null. Do not invent.',
+                '',
+                '===== scanner.md =====',
+                guide,
+                '===== end scanner.md ====='
+            ].join('\n');
 
-            console.log('[scan] Grok OCR request…');
+            console.log('[scan] Grok OCR request (with scanner.md plant memory)…');
             const res = await fetch('https://api.x.ai/v1/chat/completions', {
                 method: 'POST',
                 headers: {
@@ -1901,7 +2226,7 @@
                 body: JSON.stringify({
                     model: GROK_CHAT_MODEL,
                     temperature: 0,
-                    max_tokens: 800,
+                    max_tokens: 1400,
                     messages: [{
                         role: 'user',
                         content: [
@@ -1915,25 +2240,18 @@
                 let body = '';
                 try { body = await res.text(); } catch (_) {}
                 console.error('[scan] OCR error', res.status, body.slice(0, 400));
-                throw new Error('Grok text read failed (HTTP ' + res.status + '). Enable Chat models (e.g. grok-4.3) on your API key.');
+                throw new Error('Grok text read failed (HTTP ' + res.status + '). Enable Chat models (e.g. grok-build-0.1) on your API key.');
             }
             const json = await res.json();
             const text = (json && json.choices && json.choices[0] && json.choices[0].message && json.choices[0].message.content)
                 ? String(json.choices[0].message.content).trim()
                 : '';
             const m = text.match(/\{[\s\S]*\}/);
-            if (!m) return { miles: null, tons: null, date: null, ticketNumber: null, rawText: text };
+            if (!m) return emptyOcr(text);
             try {
-                const parsed = JSON.parse(m[0]);
-                return {
-                    miles: (parsed.miles == null || parsed.miles === '') ? null : Number(parsed.miles),
-                    tons: (parsed.tons == null || parsed.tons === '') ? null : Number(parsed.tons),
-                    date: parsed.date || null,
-                    ticketNumber: parsed.ticketNumber || null,
-                    rawText: parsed.rawText || text
-                };
+                return normalizeOcr(JSON.parse(m[0]), text);
             } catch (_) {
-                return { miles: null, tons: null, date: null, ticketNumber: null, rawText: text };
+                return emptyOcr(text);
             }
         }
 
@@ -1948,8 +2266,8 @@
                 await appAlert((err && err.message) ? err.message : String(err), { title: 'Grok Cleanup Issue' });
             }
 
-            showScanOverlay('Grok Reading Ticket…', 'Extracting miles, tons, and ticket text');
-            let ocr = { miles: null, tons: null, date: null, ticketNumber: null, rawText: '' };
+            showScanOverlay('Grok Reading Ticket…', 'Plant · job · times · truck · miles/tons');
+            let ocr = emptyOcr('');
             try {
                 ocr = await grokReadTicket(cleaned);
             } catch (err) {
@@ -2043,15 +2361,40 @@
             if (document.getElementById('editOverlay') && document.getElementById('editOverlay').classList.contains('active')) lockBodyScroll();
         }
 
+        const PHOTOS_ACCEPT = 'image/jpeg,image/png,image/heic,image/heif,.jpg,.jpeg,.png,.heic,.heif';
+
+        function preparePhotosInput(fileInput) {
+            if (!fileInput) return;
+            // capture=environment forces iOS Camera — always strip it.
+            fileInput.removeAttribute('capture');
+            // image/* makes iOS prefer Camera; use explicit types instead.
+            fileInput.setAttribute('accept', PHOTOS_ACCEPT);
+            // multiple is the reliable iOS trick to open the Photos library UI.
+            fileInput.setAttribute('multiple', '');
+        }
+
+        function openPhotosPicker() {
+            const fileInput = document.getElementById('docScannerFile');
+            if (!fileInput) return;
+            preparePhotosInput(fileInput);
+            try { fileInput.value = ''; } catch (_) {}
+            try { fileInput.click(); } catch (_) {}
+        }
+
         function bindScannerControlsOnce() {
             if (docScan.bound) return;
             docScan.bound = true;
             const fileInput = document.getElementById('docScannerFile');
+            preparePhotosInput(fileInput);
             document.getElementById('docScannerClose').onclick = () => closeDocScanner();
             document.getElementById('docScannerPermClose').onclick = () => closeDocScanner();
             document.getElementById('docScannerRetryCam').onclick = () => startScannerCamera();
-            document.getElementById('docScannerGallery').onclick = () => fileInput && fileInput.click();
-            document.getElementById('docScannerOpenGallery').onclick = () => fileInput && fileInput.click();
+            // Native <label for="docScannerFile"> opens the picker; keep capture stripped on tap.
+            ['docScannerGallery', 'docScannerOpenGallery'].forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.addEventListener('click', () => preparePhotosInput(fileInput), true);
+            });
             document.getElementById('docScannerCapture').onclick = () => captureFromScanner();
             document.getElementById('docScannerFlash').onclick = async () => {
                 if (!docScan.track || typeof docScan.track.applyConstraints !== 'function') {
@@ -2067,12 +2410,13 @@
                 }
             };
             if (fileInput) {
-                fileInput.onchange = async () => {
+                fileInput.addEventListener('change', async () => {
                     const file = fileInput.files && fileInput.files[0];
-                    fileInput.value = '';
+                    try { fileInput.value = ''; } catch (_) {}
                     if (!file) return;
+                    console.log('[scan] photo selected from library:', file.name || '(unnamed)', file.type || 'unknown', file.size);
                     await ingestScannerFile(file);
-                };
+                });
             }
             document.getElementById('docReviewClose').onclick = () => closeDocReview();
             document.getElementById('docReviewCancel').onclick = () => closeDocReview();
@@ -2122,7 +2466,7 @@
         async function runGrokPipeline(originalDataUrl) {
             try {
                 const { cleaned, ocr } = await processWithGrok(originalDataUrl);
-                openDocReview(originalDataUrl, cleaned, ocr);
+                await openDocReview(originalDataUrl, cleaned, ocr);
             } catch (err) {
                 hideScanOverlay();
                 console.error('[scan] pipeline failed:', err);
@@ -2130,24 +2474,49 @@
             }
         }
 
-        function openDocReview(originalUrl, processedUrl, ocr) {
+        function setOcrField(id, value) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.value = (value == null || value === '') ? '' : value;
+        }
+
+        async function openDocReview(originalUrl, processedUrl, ocr) {
             docReview.active = true;
             docReview.originalUrl = originalUrl;
             docReview.processedUrl = processedUrl;
-            docReview.ocr = ocr || {};
+            docReview.ocr = ocr || emptyOcr('');
+            docReview.wrongTruckAck = null;
             const root = document.getElementById('docReview');
             const img = document.getElementById('docReviewImg');
             if (img) img.src = processedUrl || originalUrl;
-            document.getElementById('ocrMiles').value = (ocr && ocr.miles != null && !isNaN(ocr.miles)) ? ocr.miles : '';
-            document.getElementById('ocrTons').value = (ocr && ocr.tons != null && !isNaN(ocr.tons)) ? ocr.tons : '';
-            document.getElementById('ocrDate').value = (ocr && ocr.date) ? ocr.date : '';
-            document.getElementById('ocrTicketNo').value = (ocr && ocr.ticketNumber) ? ocr.ticketNumber : '';
-            document.getElementById('ocrRaw').value = (ocr && ocr.rawText) ? ocr.rawText : '';
+            setOcrField('ocrPlant', ocr && ocr.plant);
+            setOcrField('ocrJob', ocr && ocr.jobNumber);
+            setOcrField('ocrDate', ocr && ocr.date);
+            setOcrField('ocrTicketNo', ocr && ocr.ticketNumber);
+            setOcrField('ocrTimeIn', ocr && ocr.timeIn);
+            setOcrField('ocrTimeOut', ocr && ocr.timeOut);
+            setOcrField('ocrTruck', ocr && ocr.truckNumber);
+            setOcrField('ocrMiles', (ocr && ocr.miles != null && !isNaN(ocr.miles)) ? ocr.miles : '');
+            setOcrField('ocrTons', (ocr && ocr.tons != null && !isNaN(ocr.tons)) ? ocr.tons : '');
+            setOcrField('ocrRaw', ocr && ocr.rawText);
             if (root) {
                 root.classList.add('active');
                 root.setAttribute('aria-hidden', 'false');
             }
             lockBodyScroll();
+
+            // Flag wrong truck immediately after OCR — before the driver taps Save.
+            const expected = getExpectedTruckNumber();
+            const ticketTruck = ocr && ocr.truckNumber;
+            if (ticketTruck && !truckNumbersMatch(ticketTruck, expected)) {
+                const check = await confirmWrongTruckIfNeeded(ocr);
+                if (!check.proceed) {
+                    closeDocReview();
+                    return false;
+                }
+                docReview.wrongTruckAck = { ticketTruck: String(ticketTruck), note: check.note };
+            }
+            return true;
         }
 
         function closeDocReview() {
@@ -2157,6 +2526,7 @@
                 root.setAttribute('aria-hidden', 'true');
             }
             docReview.active = false;
+            docReview.wrongTruckAck = null;
             unlockBodyScroll();
             if (document.getElementById('editOverlay') && document.getElementById('editOverlay').classList.contains('active')) lockBodyScroll();
         }
@@ -2166,13 +2536,39 @@
             const tonsRaw = document.getElementById('ocrTons').value.trim();
             const miles = milesRaw === '' ? null : parseFloat(milesRaw);
             const tons = tonsRaw === '' ? null : parseFloat(tonsRaw);
+            const val = (id) => {
+                const el = document.getElementById(id);
+                const v = el ? el.value.trim() : '';
+                return v || null;
+            };
             return {
+                plant: val('ocrPlant'),
+                jobNumber: val('ocrJob'),
+                date: val('ocrDate'),
+                timeIn: val('ocrTimeIn'),
+                timeOut: val('ocrTimeOut'),
+                truckNumber: val('ocrTruck'),
                 miles: (miles != null && !isNaN(miles)) ? miles : null,
                 tons: (tons != null && !isNaN(tons)) ? tons : null,
-                date: document.getElementById('ocrDate').value.trim() || null,
-                ticketNumber: document.getElementById('ocrTicketNo').value.trim() || null,
-                rawText: document.getElementById('ocrRaw').value.trim() || ''
+                ticketNumber: val('ocrTicketNo'),
+                rawText: val('ocrRaw') || ''
             };
+        }
+
+        function wrongTruckNote(ticketTruck, expectedTruck) {
+            return 'Wrong truck number on ticket: ' + ticketTruck + ' (expected ' + expectedTruck + ').';
+        }
+
+        async function confirmWrongTruckIfNeeded(ocr) {
+            const expected = getExpectedTruckNumber();
+            const ticketTruck = ocr && ocr.truckNumber;
+            if (!ticketTruck) return { proceed: true, note: null };
+            if (truckNumbersMatch(ticketTruck, expected)) return { proceed: true, note: null };
+            const ok = await appConfirm(
+                'This ticket shows truck #' + ticketTruck + ', but your truck is #' + expected + '. Store it anyway?',
+                { title: 'Wrong Truck Number', variant: 'warn', confirmText: 'Store Anyway', cancelText: 'Cancel' }
+            );
+            return { proceed: !!ok, note: ok ? wrongTruckNote(ticketTruck, expected) : null };
         }
 
         async function saveDocReview() {
@@ -2183,6 +2579,24 @@
                 return;
             }
             const ocr = readOcrFieldsFromForm();
+            // Re-check on save. If the driver already approved this same wrong truck at OCR time, skip a second popup.
+            let truckCheck;
+            const expected = getExpectedTruckNumber();
+            if (ocr.truckNumber && !truckNumbersMatch(ocr.truckNumber, expected)) {
+                const ack = docReview.wrongTruckAck;
+                if (ack && ack.note && truckNumbersMatch(ocr.truckNumber, ack.ticketTruck)) {
+                    truckCheck = { proceed: true, note: ack.note };
+                } else {
+                    truckCheck = await confirmWrongTruckIfNeeded(ocr);
+                }
+            } else {
+                truckCheck = { proceed: true, note: null };
+            }
+            if (!truckCheck.proceed) return;
+            if (truckCheck.note) {
+                ocr.wrongTruck = true;
+                ocr.wrongTruckNote = truckCheck.note;
+            }
             const now = new Date().toISOString();
             const doc = {
                 id: 'doc_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
@@ -2218,6 +2632,12 @@
                     const note = document.getElementById('editNote');
                     if (note && !note.value.trim()) note.value = ocr.rawText.slice(0, 400);
                 }
+                if (truckCheck.note) {
+                    const note = document.getElementById('editNote');
+                    if (note) {
+                        note.value = (note.value ? (note.value.trim() + '\n') : '') + truckCheck.note;
+                    }
+                }
                 try { if (typeof updatePayPreview === 'function') updatePayPreview(); } catch (_) {}
                 updateEditTicketUI();
                 closeDocReview();
@@ -2243,6 +2663,10 @@
                         if (lIdx >= 0) {
                             if (ocr.miles != null) h[sIdx].loads[lIdx].miles = ocr.miles;
                             if (ocr.tons != null) h[sIdx].loads[lIdx].tons = ocr.tons;
+                            if (truckCheck.note) {
+                                const prev = h[sIdx].loads[lIdx].note ? String(h[sIdx].loads[lIdx].note).trim() : '';
+                                h[sIdx].loads[lIdx].note = prev ? (prev + '\n' + truckCheck.note) : truckCheck.note;
+                            }
                             localStorage.setItem('driver_history', JSON.stringify(h));
                         }
                     }
@@ -2302,7 +2726,7 @@
                 else docs[docs.length - 1] = doc;
             }
             load.documents = docs;
-            load.ticket = doc.processed; // primary preview + green icon source of truth
+            load.ticket = doc.processed; // primary preview / ticket-present source of truth
             h[sIdx].loads[lIdx] = load;
             try {
                 localStorage.setItem('driver_history', JSON.stringify(h));
@@ -2474,6 +2898,34 @@
             const when = doc.createdAt ? new Date(doc.createdAt).toLocaleString() : 'Saved on device';
             const sync = doc.syncStatus === 'failed' ? ' · Upload failed' : (doc.syncStatus === 'pending' ? ' · Pending sync' : ' · Saved locally');
             sub.textContent = when + sync;
+
+            const infoWrap = document.getElementById('docViewerInfo');
+            const infoGrid = document.getElementById('docViewerInfoGrid');
+            const o = doc.ocr || {};
+            const rows = [
+                ['Plant', o.plant],
+                ['Job #', o.jobNumber],
+                ['Date', o.date],
+                ['Ticket #', o.ticketNumber],
+                ['Truck #', o.truckNumber],
+                ['Time In', o.timeIn],
+                ['Time Out', o.timeOut],
+                ['Miles', (o.miles != null && o.miles !== '') ? o.miles : ''],
+                ['Tons', (o.tons != null && o.tons !== '') ? o.tons : ''],
+            ].filter(([, v]) => v != null && String(v).trim() !== '');
+            if (o.wrongTruckNote) rows.push(['Note', o.wrongTruckNote]);
+            if (infoWrap && infoGrid) {
+                if (rows.length) {
+                    infoGrid.innerHTML = rows.map(([label, val]) =>
+                        `<div class="doc-info-item${label === 'Note' ? ' full' : ''}"><div class="doc-info-label">${escapeHtml(label)}</div><div class="doc-info-value">${escapeHtml(String(val))}</div></div>`
+                    ).join('');
+                    infoWrap.classList.remove('hidden');
+                } else {
+                    infoGrid.innerHTML = '';
+                    infoWrap.classList.add('hidden');
+                }
+            }
+
             const thumbs = document.getElementById('docViewerThumbs');
             if (docViewer.docs.length > 1) {
                 thumbs.classList.add('show');
@@ -2543,7 +2995,8 @@
                     if(!grouped[dayKey]) grouped[dayKey] = [];
                     grouped[dayKey].push({ ...l, pay });
                 });
-                const cameraSvg = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`;
+                const cameraSvg = CAMERA_ICON_SVG;
+                const infoSvg = INFO_ICON_SVG;
                 const noteSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`;
                 let breakdownHtml = '';
                 const sortedDays = Object.keys(grouped).sort((a, b) => {
@@ -2556,12 +3009,15 @@
                         const isCustom = l.pricingMode === 'fixed' || l.pricingMode === 'perton';
                         const docs = getLoadDocs(l);
                         const hasTicket = docs.length > 0 || !!l.ticket;
+                        const hasInfo = hasTicket && loadHasOcrInfo(l);
                         const pKey = loadKey(entry.id, l.id);
                         const isProcessing = processingLoads.has(pKey);
-                        const iconClass = isProcessing ? 'processing' : (hasTicket ? 'saved' : 'no-ticket');
+                        const iconClass = isProcessing ? 'processing' : (hasInfo ? 'has-info' : (hasTicket ? 'saved' : 'no-ticket'));
+                        const iconSvg = hasInfo ? infoSvg : cameraSvg;
                         const countBadge = (!isProcessing && docs.length > 1) ? `<span class="ticket-count" aria-label="${docs.length} documents">${docs.length}</span>` : '';
                         const tapAction = hasTicket ? `viewTicket('${entry.id}','${l.id}')` : `uploadTicket('${entry.id}','${l.id}')`;
-                        return `<div class="swipe-container" id="container-${l.id}" ontouchstart="ts(event, '${l.id}')" ontouchmove="tm(event, '${l.id}')" ontouchend="te(event, '${l.id}')"><div class="edit-box-flat" onclick="openEditModal('${entry.id}','${l.id}')">EDIT</div><div class="delete-box-flat" onclick="removeLoad('${entry.id}', '${l.id}')">DELETE</div><div class="swipe-content"><div class="flex flex-col"><div class="flex items-center"><span class="text-lg font-bold text-gray-100">${l.miles} miles</span><span class="ticket-icon ${iconClass}" role="button" aria-label="${hasTicket ? 'View saved document' : 'Scan document'}" onclick="event.stopPropagation();${tapAction}">${cameraSvg}${countBadge}</span>${l.note ? `<span class="note-icon" onclick="event.stopPropagation();viewNote('${entry.id}','${l.id}')">${noteSvg}</span>` : ''}</div><div class="flex items-center text-[10px] text-gray-500 font-bold uppercase"><span>${l.tons} TONS</span>${isCustom ? '<span class="custom-badge">· CUSTOM</span>' : ''}</div></div><span class="mileage-pay-text">$${l.pay.toFixed(2)}</span></div></div>`;
+                        const aria = hasInfo ? 'View ticket and info' : (hasTicket ? 'View saved document' : 'Scan document');
+                        return `<div class="swipe-container" id="container-${l.id}" ontouchstart="ts(event, '${l.id}')" ontouchmove="tm(event, '${l.id}')" ontouchend="te(event, '${l.id}')"><div class="edit-box-flat" onclick="openEditModal('${entry.id}','${l.id}')">EDIT</div><div class="delete-box-flat" onclick="removeLoad('${entry.id}', '${l.id}')">DELETE</div><div class="swipe-content"><div class="flex flex-col"><div class="flex items-center"><span class="text-lg font-bold text-gray-100">${l.miles} miles</span><span class="ticket-icon ${iconClass}" role="button" aria-label="${aria}" onclick="event.stopPropagation();${tapAction}">${iconSvg}${countBadge}</span>${l.note ? `<span class="note-icon" onclick="event.stopPropagation();viewNote('${entry.id}','${l.id}')">${noteSvg}</span>` : ''}</div><div class="flex items-center text-[10px] text-gray-500 font-bold uppercase"><span>${l.tons} TONS</span>${isCustom ? '<span class="custom-badge">· CUSTOM</span>' : ''}</div></div><span class="mileage-pay-text">$${l.pay.toFixed(2)}</span></div></div>`;
                     }).join('')}</div></div>`;
                 }
                 const card = document.createElement('div');
@@ -2934,6 +3390,7 @@
             sanitizeHistory();
             loadScanLog();
             applySettingsToHeader();
+            if (getGrokApiKey()) loadScannerGuide();
             ['chartOverlay','editOverlay','addOverlay','settingsOverlay','helpOverlay','debugOverlay','settlementOptionsOverlay','exportPickerOverlay'].forEach(id => {
                 const ov = document.getElementById(id);
                 if (!ov) return;
