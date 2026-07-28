@@ -6,8 +6,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="driverpay-build" content="2.12.2">
-    <title>DriverPay Pro v2.12.2</title>
+    <meta name="driverpay-build" content="2.12.5">
+    <title>DriverPay Pro v2.12.5</title>
     <script>
     (function () {
         var meta = document.querySelector('meta[name="driverpay-build"]');
@@ -253,7 +253,7 @@
         .doc-photos-btn:active { transform: scale(0.94); background: rgba(30,41,59,0.92); }
         .doc-photos-btn span { font-size: 10px; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; color: #93c5fd; }
         /* Visually hidden — display:none breaks iOS photo-library open via label/JS */
-        .doc-file-input { position: fixed; left: 0; top: 0; width: 1px; height: 1px; opacity: 0; overflow: hidden; z-index: -1; pointer-events: none; }
+        .doc-file-input { position: fixed; left: 0; top: 0; width: 1px; height: 1px; opacity: 0; overflow: hidden; z-index: 10050; }
         .doc-perm { position: absolute; inset: 0; z-index: 6; display: none; align-items: center; justify-content: center; padding: 28px; background: rgba(15,23,42,0.96); text-align: center; }
         .doc-perm.show { display: flex; }
         .doc-perm-card { max-width: 360px; }
@@ -360,7 +360,7 @@
     <header class="app-header">
         <div class="header-title">
             <h1>DriverPay <span>Pro</span></h1>
-            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v2.12.2</p>
+            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v2.12.5</p>
         </div>
         <div class="menu-container">
             <button class="menu-btn" onclick="toggleMenu(event)" aria-label="Menu">
@@ -454,7 +454,7 @@
             </div>
             <div class="footer-tagline">Built for the long haul</div>
             <div class="footer-meta">
-                <span class="footer-version">v2.12.2</span>
+                <span class="footer-version">v2.12.5</span>
                 <span class="footer-meta-dot"></span>
                 <span>© 2026</span>
                 <span class="footer-meta-dot"></span>
@@ -756,7 +756,7 @@
         <div class="scan-sublabel" id="scanSublabel">Cleaning ticket and reading text</div>
     </div>
 
-    <!-- driverpay-scanner:2.12.2 -->
+    <!-- driverpay-scanner:2.12.5 -->
     <div class="doc-scanner" id="docScanner" aria-hidden="true" role="dialog" aria-label="Grok ticket scanner">
         <div class="doc-scanner-stage">
             <video id="docScannerVideo" class="doc-scanner-video" playsinline muted autoplay></video>
@@ -793,8 +793,13 @@
             </div>
         </div>
     </div>
-    <!-- Outside .doc-scanner so it is never trapped in display:none; no capture= so Photos/library opens -->
-    <input type="file" id="docScannerFile" class="doc-file-input" accept="image/*,.heic,.heif,image/jpeg,image/png,image/webp" aria-hidden="true" tabindex="-1">
+    <!-- Outside .doc-scanner: never trapped in display:none.
+         iOS gallery force: NO capture attribute, NO accept=image/* wildcard (that prefers Camera),
+         and multiple=true so Photos library opens instead of the camera shutter. -->
+    <input type="file" id="docScannerFile" class="doc-file-input"
+        accept="image/jpeg,image/png,image/heic,image/heif,.jpg,.jpeg,.png,.heic,.heif"
+        multiple
+        aria-hidden="true" tabindex="-1">
 
     <div class="doc-review" id="docReview" aria-hidden="true" role="dialog" aria-label="Review Grok scan">
         <div class="doc-review-header">
@@ -1022,7 +1027,7 @@
 
         function applySettingsToHeader() {
             const sub = document.getElementById('headerSubtitle');
-            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v2.12.2`;
+            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v2.12.5`;
         }
 
         let savedScrollY = 0;
@@ -2356,14 +2361,23 @@
             if (document.getElementById('editOverlay') && document.getElementById('editOverlay').classList.contains('active')) lockBodyScroll();
         }
 
+        const PHOTOS_ACCEPT = 'image/jpeg,image/png,image/heic,image/heif,.jpg,.jpeg,.png,.heic,.heif';
+
+        function preparePhotosInput(fileInput) {
+            if (!fileInput) return;
+            // capture=environment forces iOS Camera — always strip it.
+            fileInput.removeAttribute('capture');
+            // image/* makes iOS prefer Camera; use explicit types instead.
+            fileInput.setAttribute('accept', PHOTOS_ACCEPT);
+            // multiple is the reliable iOS trick to open the Photos library UI.
+            fileInput.setAttribute('multiple', '');
+        }
+
         function openPhotosPicker() {
             const fileInput = document.getElementById('docScannerFile');
             if (!fileInput) return;
-            // Must NOT use capture= — that forces the camera on iOS/Android instead of Photos.
-            fileInput.removeAttribute('capture');
-            fileInput.setAttribute('accept', 'image/*,.heic,.heif,image/jpeg,image/png,image/webp');
+            preparePhotosInput(fileInput);
             try { fileInput.value = ''; } catch (_) {}
-            // Prefer native label activation; JS click is a fallback (some WebViews need it).
             try { fileInput.click(); } catch (_) {}
         }
 
@@ -2371,23 +2385,16 @@
             if (docScan.bound) return;
             docScan.bound = true;
             const fileInput = document.getElementById('docScannerFile');
+            preparePhotosInput(fileInput);
             document.getElementById('docScannerClose').onclick = () => closeDocScanner();
             document.getElementById('docScannerPermClose').onclick = () => closeDocScanner();
             document.getElementById('docScannerRetryCam').onclick = () => startScannerCamera();
-            // Labels already open #docScannerFile via `for=` — keep JS backup for stubborn WebViews.
-            const gallery = document.getElementById('docScannerGallery');
-            const galleryPerm = document.getElementById('docScannerOpenGallery');
-            if (gallery) {
-                gallery.addEventListener('click', (e) => {
-                    // Let the native label→input activation run; also force-clear capture.
-                    if (fileInput) fileInput.removeAttribute('capture');
-                }, true);
-            }
-            if (galleryPerm) {
-                galleryPerm.addEventListener('click', (e) => {
-                    if (fileInput) fileInput.removeAttribute('capture');
-                }, true);
-            }
+            // Native <label for="docScannerFile"> opens the picker; keep capture stripped on tap.
+            ['docScannerGallery', 'docScannerOpenGallery'].forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.addEventListener('click', () => preparePhotosInput(fileInput), true);
+            });
             document.getElementById('docScannerCapture').onclick = () => captureFromScanner();
             document.getElementById('docScannerFlash').onclick = async () => {
                 if (!docScan.track || typeof docScan.track.applyConstraints !== 'function') {
@@ -2403,7 +2410,6 @@
                 }
             };
             if (fileInput) {
-                fileInput.removeAttribute('capture');
                 fileInput.addEventListener('change', async () => {
                     const file = fileInput.files && fileInput.files[0];
                     try { fileInput.value = ''; } catch (_) {}
