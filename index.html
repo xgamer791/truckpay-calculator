@@ -6,8 +6,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="driverpay-build" content="2.10.0">
-    <title>DriverPay Pro v2.10.0</title>
+    <meta name="driverpay-build" content="2.10.1">
+    <title>DriverPay Pro v2.10.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -327,7 +327,7 @@
     <header class="app-header">
         <div class="header-title">
             <h1>DriverPay <span>Pro</span></h1>
-            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v2.10.0</p>
+            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v2.10.1</p>
         </div>
         <div class="menu-container">
             <button class="menu-btn" onclick="toggleMenu(event)" aria-label="Menu">
@@ -421,7 +421,7 @@
             </div>
             <div class="footer-tagline">Built for the long haul</div>
             <div class="footer-meta">
-                <span class="footer-version">v2.10.0</span>
+                <span class="footer-version">v2.10.1</span>
                 <span class="footer-meta-dot"></span>
                 <span>© 2026</span>
                 <span class="footer-meta-dot"></span>
@@ -710,7 +710,7 @@
         <div class="scan-sublabel" id="scanSublabel">Locking onto edges and cleaning up</div>
     </div>
 
-    <!-- driverpay-scanner:2.10.0 -->
+    <!-- driverpay-scanner:2.10.1 -->
     <div class="doc-scanner" id="docScanner" aria-hidden="true" role="dialog" aria-label="Document scanner">
         <div class="doc-scanner-stage">
             <video id="docScannerVideo" class="doc-scanner-video" playsinline muted autoplay></video>
@@ -969,7 +969,7 @@
 
         function applySettingsToHeader() {
             const sub = document.getElementById('headerSubtitle');
-            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v2.10.0`;
+            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v2.10.1`;
         }
 
         let savedScrollY = 0;
@@ -2583,7 +2583,53 @@
             return scanner;
         }
 
+        function getGrokApiKey() {
+            return (settings && typeof settings.grokApiKey === 'string') ? settings.grokApiKey.trim() : '';
+        }
+
+        /** Returns true if scanning may proceed. Blocks with a prompt when no usable Grok key is set. */
+        async function ensureGrokReadyForScan() {
+            const key = getGrokApiKey();
+            if (!key) {
+                const go = await appConfirm(
+                    'Add your Grok API key in Settings before scanning tickets. Get one at console.x.ai, paste it under Menu → Settings, then try again.',
+                    { title: 'Grok API Key Needed', variant: 'warn', confirmText: 'Open Settings', cancelText: 'Cancel' }
+                );
+                if (go) openSettings();
+                return false;
+            }
+            if (key.indexOf('sk-ant-') === 0) {
+                const go = await appConfirm(
+                    'That key looks like Anthropic’s, not Grok. Replace it with an xAI Grok key (usually starts with xai-) in Settings.',
+                    { title: 'Wrong API Key', variant: 'warn', confirmText: 'Open Settings', cancelText: 'Cancel' }
+                );
+                if (go) openSettings();
+                return false;
+            }
+            // Soft-check: if xAI rejects the key, stop here. Network/CORS failures are ignored so scanning still works.
+            try {
+                const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+                const timer = ctrl ? setTimeout(() => { try { ctrl.abort(); } catch (_) {} }, 4000) : null;
+                const res = await fetch('https://api.x.ai/v1/models', {
+                    method: 'GET',
+                    headers: { 'Authorization': 'Bearer ' + key },
+                    signal: ctrl ? ctrl.signal : undefined
+                });
+                if (timer) clearTimeout(timer);
+                if (res.status === 401 || res.status === 403) {
+                    const go = await appConfirm(
+                        'Your Grok API key was rejected by xAI. Double-check it in Settings, or create a new key at console.x.ai.',
+                        { title: 'Grok API Key Invalid', variant: 'warn', confirmText: 'Open Settings', cancelText: 'Cancel' }
+                    );
+                    if (go) openSettings();
+                    return false;
+                }
+            } catch (_) { /* CORS/offline/timeout — allow scan; rotation will no-op if the key fails later */ }
+            return true;
+        }
+
         async function openDocScanner(opts) {
+            if (!(await ensureGrokReadyForScan())) return;
             opts = opts || {};
             docScan.mode = opts.mode || 'direct';
             docScan.sId = opts.sId != null ? opts.sId : (editingLoad && editingLoad.sId);
