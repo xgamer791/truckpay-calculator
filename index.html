@@ -6,8 +6,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="driverpay-build" content="2.12.39">
-    <title>DriverPay Pro v2.12.39</title>
+    <meta name="driverpay-build" content="2.12.42">
+    <title>DriverPay Pro v2.12.42</title>
     <script>
     (function () {
         var meta = document.querySelector('meta[name="driverpay-build"]');
@@ -217,72 +217,9 @@
         @keyframes scan-spin { to { transform: rotate(360deg); } }
         .doc-btn { width: 48px; height: 48px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.16); background: rgba(15,23,42,0.72); color: white; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; -webkit-tap-highlight-color: transparent; }
         .doc-btn:active { transform: scale(0.94); background: rgba(30,41,59,0.9); }
-
-        /* Custom CamScanner-style document capture */
-        .doc-scanner { position: fixed; inset: 0; z-index: 10040; background: #000; display: none; flex-direction: column; color: white; }
-        .doc-scanner.active { display: flex; }
-        .doc-scanner-stage { position: relative; flex: 1; min-height: 0; background: #000; overflow: hidden; }
-        .doc-scanner-stage video, .doc-scanner-stage canvas.doc-scanner-overlay {
-            position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
-        }
-        .doc-scanner-stage canvas.doc-scanner-overlay { pointer-events: none; }
-        .doc-scanner-top {
-            position: absolute; top: 0; left: 0; right: 0; z-index: 3;
-            display: flex; justify-content: space-between; align-items: center; gap: 10px;
-            padding: calc(10px + env(safe-area-inset-top, 0px)) 14px 10px;
-            background: linear-gradient(180deg, rgba(0,0,0,0.65), transparent);
-        }
-        .doc-scanner-status {
-            position: absolute; left: 50%; top: calc(64px + env(safe-area-inset-top, 0px));
-            transform: translateX(-50%); z-index: 3;
-            padding: 7px 12px; border-radius: 999px; background: rgba(15,23,42,0.72);
-            font-size: 11px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
-            color: #e2e8f0; white-space: nowrap; pointer-events: none;
-        }
-        .doc-scanner-status.locked { color: #86efac; background: rgba(22,101,52,0.55); }
-        .doc-scanner-bottom {
-            position: absolute; left: 0; right: 0; bottom: 0; z-index: 3;
-            display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px;
-            padding: 18px 22px calc(22px + env(safe-area-inset-bottom, 0px));
-            background: linear-gradient(0deg, rgba(0,0,0,0.78), transparent);
-        }
-        .doc-scanner-bottom .doc-photos-btn {
-            justify-self: start; display: inline-flex; flex-direction: column; align-items: center; gap: 6px;
-            background: transparent; border: none; color: #cbd5e1; font-size: 10px; font-weight: 800;
-            letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; font-family: inherit; padding: 0;
-        }
-        .doc-scanner-bottom .doc-photos-btn .doc-photos-icon {
-            width: 44px; height: 44px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.18);
-            background: rgba(15,23,42,0.55); display: flex; align-items: center; justify-content: center; color: white;
-        }
-        .doc-capture {
-            width: 76px; height: 76px; border-radius: 999px; border: 4px solid #2dd4bf;
-            background: white; box-shadow: 0 0 0 4px rgba(45,212,191,0.25); cursor: pointer; justify-self: center;
-        }
-        .doc-capture:active { transform: scale(0.94); }
-        .doc-capture:disabled { opacity: 0.45; }
-        .doc-scanner-corner-hint { justify-self: end; width: 44px; }
-        .doc-perm {
-            position: absolute; inset: 0; z-index: 5; display: none; align-items: center; justify-content: center;
-            padding: 28px; background: rgba(2,6,23,0.92);
-        }
-        .doc-perm.show { display: flex; }
-        .doc-perm-card {
-            width: 100%; max-width: 360px; background: #0f172a; border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 18px; padding: 22px;
-        }
-        .doc-perm-title { font-size: 18px; font-weight: 900; margin-bottom: 8px; }
-        .doc-perm-msg { font-size: 14px; font-weight: 600; color: #94a3b8; line-height: 1.5; margin-bottom: 18px; }
-        .doc-perm-actions { display: flex; flex-direction: column; gap: 10px; }
-        .doc-perm-primary, .doc-perm-secondary {
-            width: 100%; padding: 14px; border-radius: 12px; font-weight: 900; font-size: 13px;
-            letter-spacing: 0.08em; text-transform: uppercase; font-family: inherit; cursor: pointer; border: none;
-        }
-        .doc-perm-primary { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; }
-        .doc-perm-secondary { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); color: #e2e8f0; }
-
         /* Visually hidden — display:none can break iOS file picker */
         .doc-file-input { position: fixed; left: 0; top: 0; width: 1px; height: 1px; opacity: 0; overflow: hidden; z-index: 10050; }
+
 
         /* Fullscreen gallery lightbox for ticket zoom */
         .ticket-lightbox { position: fixed; inset: 0; z-index: 10070; background: rgba(0,0,0,0.97); display: none; flex-direction: column; color: white; }
@@ -384,7 +321,7 @@
     <header class="app-header">
         <div class="header-title">
             <h1>DriverPay <span>Pro</span></h1>
-            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v2.12.39</p>
+            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v2.12.42</p>
         </div>
         <div class="menu-container">
             <button class="menu-btn" onclick="toggleMenu(event)" aria-label="Menu">
@@ -487,7 +424,7 @@
             </div>
             <div class="footer-tagline">Built for the long haul</div>
             <div class="footer-meta">
-                <span class="footer-version">v2.12.39</span>
+                <span class="footer-version">v2.12.42</span>
                 <span class="footer-meta-dot"></span>
                 <span>© 2026</span>
                 <span class="footer-meta-dot"></span>
@@ -658,7 +595,7 @@
                         <span class="help-section-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span>
                         Load Tickets
                     </div>
-                    <p>Every load has a camera icon. <strong style="color:#ef4444;">Red</strong> = no ticket yet. <strong style="color:#60a5fa;">Blue</strong> = photo saved on this device. Tap the camera to open the in-app scanner — it finds a paper ticket outline with OpenCV, locks after a steady hold, then tap capture. Use <strong>Photos</strong> to import from your library. Saved on this device only.</p>
+                    <p>Every load has a camera icon. <strong style="color:#ef4444;">Red</strong> = no ticket yet. <strong style="color:#60a5fa;">Blue</strong> = photo saved on this device. Tap the camera to take a photo or choose one from your gallery — it’s saved with the load. No cloud upload.</p>
                     <div class="help-tip"><strong>Tip:</strong> Capturing inside Edit stages the photo until you tap Save.</div>
                 </div>
                 <div class="help-section">
@@ -794,47 +731,9 @@
     </div>
 
 
-    <div class="doc-scanner" id="docScanner" aria-hidden="true" role="dialog" aria-label="Ticket scanner">
-        <div class="doc-scanner-stage">
-            <video id="docScannerVideo" playsinline muted autoplay></video>
-            <canvas id="docScannerOverlay" class="doc-scanner-overlay"></canvas>
-            <div class="doc-scanner-top">
-                <button type="button" class="doc-btn" id="docScannerClose" aria-label="Close scanner">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-                </button>
-                <button type="button" class="doc-btn" id="docScannerFlash" aria-label="Toggle flash">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                </button>
-            </div>
-            <div class="doc-scanner-status" id="docScannerStatus">Find a document</div>
-            <div class="doc-scanner-bottom">
-                <label class="doc-photos-btn" for="ticketGalleryInput" id="docScannerGallery">
-                    <span class="doc-photos-icon">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-                    </span>
-                    Photos
-                </label>
-                <button type="button" class="doc-capture" id="docScannerCapture" aria-label="Capture ticket"></button>
-                <div class="doc-scanner-corner-hint" aria-hidden="true"></div>
-            </div>
-            <div class="doc-perm" id="docScannerPerm">
-                <div class="doc-perm-card">
-                    <div class="doc-perm-title" id="docScannerPermTitle">Camera access needed</div>
-                    <div class="doc-perm-msg" id="docScannerPermMsg">Allow camera access to scan load tickets with live edge detection. You can also add a photo from your library.</div>
-                    <div class="doc-perm-actions">
-                        <button type="button" class="doc-perm-primary" id="docScannerRetryCam">Try Again</button>
-                        <label class="doc-perm-secondary" for="ticketGalleryInput" style="display:block; text-align:center; box-sizing:border-box;">Add from Photos</label>
-                        <button type="button" class="doc-perm-secondary" id="docScannerPermClose">Close</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <input type="file" id="ticketGalleryInput" class="doc-file-input"
-        accept="image/jpeg,image/png,image/heic,image/heif,.jpg,.jpeg,.png,.heic,.heif"
+    <input type="file" id="ticketFileInput" class="doc-file-input"
+        accept="image/*" capture="environment"
         aria-hidden="true" tabindex="-1">
-
 
     <div class="ticket-lightbox" id="ticketLightbox" aria-hidden="true" role="dialog" aria-label="Ticket gallery">
         <div class="ticket-lightbox-top">
@@ -1037,7 +936,7 @@
 
         function applySettingsToHeader() {
             const sub = document.getElementById('headerSubtitle');
-            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v2.12.39`;
+            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v2.12.42`;
         }
 
         let savedScrollY = 0;
@@ -2392,944 +2291,10 @@
             };
         }
 
-        // ---- OpenCV.js document contour scanner (Web Worker) -------------------------
-        // Browser JS only. Contour → approxPolyDP(exactly 4) → convex. No Hough-line quads.
-        const OPENCV_JS_SRC = 'https://docs.opencv.org/4.7.0/opencv.js';
-        const DOC_DETECT_W = 640;
-        const DOC_DETECT_INTERVAL_MS = 90;
-        const DOC_MIN_AREA_RATIO = 0.12;
-        const DOC_MAX_AREA_RATIO = 0.92;
-        const DOC_LOCK_HITS = 6;
-        const DOC_UNLOCK_MISSES = 2;
-        const DOC_MAX_CORNER_SHIFT_RATIO = 0.045;
-        const DOC_MIN_IOU = 0.72;
-        const DOC_LOST_GRACE_MS = 180;
-        const DOC_MIN_SCORE = 82;
-        const DOC_SMOOTH = 0.45;
-
-        const liveScanner = {
-            active: false,
-            stream: null,
-            track: null,
-            flashOn: false,
-            raf: 0,
-            detectBusy: false,
-            lastDetectAt: 0,
-            detectW: DOC_DETECT_W,
-            detectH: 1,
-            targetPts: null,
-            displayPts: null,
-            lastGood: null,
-            hitStreak: 0,
-            missStreak: 0,
-            confidence: 0,
-            lastTrackAt: 0,
-            lostAt: 0,
-            videoReady: false,
-            capturing: false,
-            uiBound: false,
-            galleryBound: false,
-            engineReady: false,
-            engineError: null,
-            pageHidden: false
-        };
-
-        let docScanWorker = null;
-        let docScanWorkerReq = 0;
-        const docScanWaiters = new Map();
-
-        function orderQuadPoints(pts) {
-            if (!pts || pts.length !== 4) return null;
-            const sorted = pts.slice().sort((a, b) => a.y - b.y);
-            const top = sorted.slice(0, 2).sort((a, b) => a.x - b.x);
-            const bottom = sorted.slice(2).sort((a, b) => a.x - b.x);
-            if (!top[0] || !top[1] || !bottom[0] || !bottom[1]) return null;
-            return [
-                { x: top[0].x, y: top[0].y },
-                { x: top[1].x, y: top[1].y },
-                { x: bottom[1].x, y: bottom[1].y },
-                { x: bottom[0].x, y: bottom[0].y }
-            ];
-        }
-
-        function quadArea(pts) {
-            let a = 0;
-            for (let i = 0; i < 4; i++) {
-                const j = (i + 1) % 4;
-                a += pts[i].x * pts[j].y - pts[j].x * pts[i].y;
-            }
-            return Math.abs(a) / 2;
-        }
-
-        function dist2(a, b) {
-            const dx = a.x - b.x, dy = a.y - b.y;
-            return dx * dx + dy * dy;
-        }
-
-        function quadCentroid(pts) {
-            return {
-                x: (pts[0].x + pts[1].x + pts[2].x + pts[3].x) / 4,
-                y: (pts[0].y + pts[1].y + pts[2].y + pts[3].y) / 4
-            };
-        }
-
-        function cloneQuad(pts) { return pts.map(p => ({ x: p.x, y: p.y })); }
-
-        function segmentsIntersect(a, b, c, d) {
-            const cross = (p, q, r) => (q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x);
-            const d1 = cross(a, b, c), d2 = cross(a, b, d), d3 = cross(c, d, a), d4 = cross(c, d, b);
-            return (((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) && ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0)));
-        }
-
-        function hasCrossingEdges(pts) {
-            return segmentsIntersect(pts[0], pts[1], pts[2], pts[3]) ||
-                segmentsIntersect(pts[1], pts[2], pts[3], pts[0]);
-        }
-
-        function cornerAngles(pts) {
-            const out = [];
-            for (let i = 0; i < 4; i++) {
-                const p0 = pts[(i + 3) % 4], p1 = pts[i], p2 = pts[(i + 1) % 4];
-                const ax = p0.x - p1.x, ay = p0.y - p1.y;
-                const bx = p2.x - p1.x, by = p2.y - p1.y;
-                const la = Math.hypot(ax, ay), lb = Math.hypot(bx, by);
-                if (la < 1e-6 || lb < 1e-6) return null;
-                const cos = Math.max(-1, Math.min(1, (ax * bx + ay * by) / (la * lb)));
-                out.push(Math.acos(cos) * 180 / Math.PI);
-            }
-            return out;
-        }
-
-        function diagonalRatio(pts) {
-            const d1 = Math.sqrt(dist2(pts[0], pts[2]));
-            const d2 = Math.sqrt(dist2(pts[1], pts[3]));
-            return Math.min(d1, d2) / Math.max(d1, d2);
-        }
-
-        function rectangularity(pts) {
-            const area = quadArea(pts);
-            let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-            for (const p of pts) {
-                if (p.x < minX) minX = p.x; if (p.x > maxX) maxX = p.x;
-                if (p.y < minY) minY = p.y; if (p.y > maxY) maxY = p.y;
-            }
-            return area / Math.max(1, (maxX - minX) * (maxY - minY));
-        }
-
-        function oppositeSideBalance(pts) {
-            const sides = [
-                Math.sqrt(dist2(pts[0], pts[1])),
-                Math.sqrt(dist2(pts[1], pts[2])),
-                Math.sqrt(dist2(pts[2], pts[3])),
-                Math.sqrt(dist2(pts[3], pts[0]))
-            ];
-            return {
-                sides,
-                balW: Math.min(sides[0], sides[2]) / Math.max(sides[0], sides[2]),
-                balH: Math.min(sides[1], sides[3]) / Math.max(sides[1], sides[3]),
-                avgW: (sides[0] + sides[2]) / 2,
-                avgH: (sides[1] + sides[3]) / 2
-            };
-        }
-
-        function parallelError(pts) {
-            const ang = (a, b) => Math.atan2(b.y - a.y, b.x - a.x);
-            const norm = (a) => { while (a > Math.PI / 2) a -= Math.PI; while (a < -Math.PI / 2) a += Math.PI; return a; };
-            const dW = Math.abs(norm(ang(pts[0], pts[1]) - ang(pts[3], pts[2])));
-            const dH = Math.abs(norm(ang(pts[1], pts[2]) - ang(pts[0], pts[3])));
-            return (dW + dH) / 2;
-        }
-
-        /** Final safety gate. Prefer false negative over false positive. */
-        function isValidDocumentQuad(pts, w, h) {
-            if (!pts || pts.length !== 4) return false;
-            for (const p of pts) {
-                if (!p || !isFinite(p.x) || !isFinite(p.y)) return false;
-                if (p.x < -2 || p.y < -2 || p.x > w + 2 || p.y > h + 2) return false;
-            }
-            const ordered = orderQuadPoints(pts);
-            if (!ordered) return false;
-            for (let i = 0; i < 4; i++) {
-                for (let j = i + 1; j < 4; j++) {
-                    if (dist2(ordered[i], ordered[j]) < 100) return false;
-                }
-            }
-            if (hasCrossingEdges(ordered)) return false;
-            const c = quadCentroid(ordered);
-            let sign = 0;
-            for (let i = 0; i < 4; i++) {
-                const a = ordered[i], b = ordered[(i + 1) % 4];
-                const cross = (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
-                const s = cross >= 0 ? 1 : -1;
-                if (!sign) sign = s;
-                else if (s !== sign) return false;
-            }
-            const area = quadArea(ordered);
-            const ratio = area / Math.max(1, w * h);
-            if (ratio < DOC_MIN_AREA_RATIO || ratio > DOC_MAX_AREA_RATIO) return false;
-            const bal = oppositeSideBalance(ordered);
-            const minSide = Math.min(w, h) * 0.08;
-            if (Math.min(...bal.sides) < minSide) return false;
-            if (bal.balW < 0.55 || bal.balH < 0.55) return false;
-            const aspect = bal.avgW / Math.max(1, bal.avgH);
-            if (aspect < 0.45 || aspect > 2.6) return false;
-            const angles = cornerAngles(ordered);
-            if (!angles) return false;
-            for (const deg of angles) if (deg < 65 || deg > 115) return false;
-            if (diagonalRatio(ordered) < 0.72) return false;
-            if (rectangularity(ordered) < 0.72) return false;
-            if (parallelError(ordered) > 0.28) return false;
-            return true;
-        }
-
-        function scoreDocumentQuad(pts, w, h) {
-            if (!isValidDocumentQuad(pts, w, h)) return 0;
-            const ordered = orderQuadPoints(pts);
-            const areaRatio = quadArea(ordered) / (w * h);
-            const rect = rectangularity(ordered);
-            const bal = oppositeSideBalance(ordered);
-            const aspect = bal.avgW / Math.max(1, bal.avgH);
-            const c = quadCentroid(ordered);
-            const centerDist = Math.hypot(c.x - w / 2, c.y - h / 2) / Math.hypot(w / 2, h / 2);
-            let score = 0;
-            score += Math.max(0, 1 - Math.abs(areaRatio - 0.35) / 0.35) * 30;
-            score += rect * 34;
-            score += ((bal.balW + bal.balH) / 2) * 20;
-            score += Math.min(aspect, 1 / aspect) * 14;
-            score += Math.max(0, 1 - centerDist) * 12;
-            score += diagonalRatio(ordered) * 10;
-            return score;
-        }
-
-        function polygonIoU(a, b) {
-            if (!a || !b) return 0;
-            const box = (pts) => {
-                let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-                for (const p of pts) {
-                    if (p.x < minX) minX = p.x; if (p.x > maxX) maxX = p.x;
-                    if (p.y < minY) minY = p.y; if (p.y > maxY) maxY = p.y;
-                }
-                return { minX, maxX, minY, maxY, area: Math.max(0, maxX - minX) * Math.max(0, maxY - minY) };
-            };
-            const A = box(a), B = box(b);
-            const ix = Math.max(0, Math.min(A.maxX, B.maxX) - Math.max(A.minX, B.minX));
-            const iy = Math.max(0, Math.min(A.maxY, B.maxY) - Math.max(A.minY, B.minY));
-            const inter = ix * iy;
-            const uni = A.area + B.area - inter;
-            return uni > 0 ? inter / uni : 0;
-        }
-
-        function normalizedCornerShift(prev, next, w, h) {
-            const scale = Math.hypot(w, h);
-            let s = 0;
-            for (let i = 0; i < 4; i++) s += Math.hypot(prev[i].x - next[i].x, prev[i].y - next[i].y);
-            return (s / 4) / Math.max(1, scale);
-        }
-
-        function matchSameDocument(prev, next, w, h) {
-            const ordered = orderQuadPoints(next);
-            if (!ordered || !isValidDocumentQuad(ordered, w, h)) return false;
-            const iou = polygonIoU(prev, ordered);
-            const shift = normalizedCornerShift(prev, ordered, w, h);
-            const c0 = quadCentroid(prev), c1 = quadCentroid(ordered);
-            const centerMove = Math.hypot(c0.x - c1.x, c0.y - c1.y) / Math.hypot(w, h);
-            const areaChange = Math.abs(quadArea(prev) - quadArea(ordered)) / Math.max(quadArea(prev), quadArea(ordered), 1);
-            return iou >= DOC_MIN_IOU && shift <= DOC_MAX_CORNER_SHIFT_RATIO * 3.5 && centerMove < 0.12 && areaChange < 0.28;
-        }
-
-        function clearScannerTrack(statusText) {
-            liveScanner.targetPts = null;
-            liveScanner.displayPts = null;
-            liveScanner.lastGood = null;
-            liveScanner.hitStreak = 0;
-            liveScanner.missStreak = 0;
-            liveScanner.confidence = 0;
-            liveScanner.lastTrackAt = 0;
-            liveScanner.lostAt = 0;
-            if (statusText != null) setScannerStatus(statusText, false);
-        }
-
-        function buildDocScanWorkerSource() {
-            return [
-                "var cvReady=false,initError=null;",
-                "var DOC_DETECT_W=" + DOC_DETECT_W + ",DOC_MIN_AREA_RATIO=" + DOC_MIN_AREA_RATIO + ",DOC_MAX_AREA_RATIO=" + DOC_MAX_AREA_RATIO + ",DOC_MIN_SCORE=" + DOC_MIN_SCORE + ";",
-                "function postReady(){self.postMessage({type:'ready'});}",
-                "function postErr(m){self.postMessage({type:'error',message:String(m||'OpenCV error')});}",
-                "try{",
-                "self.Module={onRuntimeInitialized:function(){cvReady=true;postReady();}};",
-                "importScripts('" + OPENCV_JS_SRC + "');",
-                "if(typeof cv!=='undefined'&&cv&&cv.Mat){cvReady=true;postReady();}",
-                "}catch(e){initError=e;postErr(e&&e.message?e.message:e);}",
-                "function orderCorners(pts){var s=pts.slice().sort(function(a,b){return a.y-b.y;});var t=s.slice(0,2).sort(function(a,b){return a.x-b.x;});var btm=s.slice(2).sort(function(a,b){return a.x-b.x;});return [t[0],t[1],btm[1],btm[0]];}",
-                "function areaOf(pts){var a=0;for(var i=0;i<4;i++){var j=(i+1)%4;a+=pts[i].x*pts[j].y-pts[j].x*pts[i].y;}return Math.abs(a)/2;}",
-                "function dist2(a,b){var dx=a.x-b.x,dy=a.y-b.y;return dx*dx+dy*dy;}",
-                "function validateQuad(pts,w,h){if(!pts||pts.length!==4)return false;for(var i=0;i<4;i++){if(!isFinite(pts[i].x)||!isFinite(pts[i].y))return false;if(pts[i].x<-2||pts[i].y<-2||pts[i].x>w+2||pts[i].y>h+2)return false;}var ratio=areaOf(pts)/(w*h);if(ratio<DOC_MIN_AREA_RATIO||ratio>DOC_MAX_AREA_RATIO)return false;var sides=[Math.sqrt(dist2(pts[0],pts[1])),Math.sqrt(dist2(pts[1],pts[2])),Math.sqrt(dist2(pts[2],pts[3])),Math.sqrt(dist2(pts[3],pts[0]))];var minSide=Math.min(w,h)*0.08;if(Math.min.apply(null,sides)<minSide)return false;var balW=Math.min(sides[0],sides[2])/Math.max(sides[0],sides[2]);var balH=Math.min(sides[1],sides[3])/Math.max(sides[1],sides[3]);if(balW<0.55||balH<0.55)return false;var avgW=(sides[0]+sides[2])/2,avgH=(sides[1]+sides[3])/2;var aspect=avgW/Math.max(1,avgH);if(aspect<0.45||aspect>2.6)return false;for(var i=0;i<4;i++){var p0=pts[(i+3)%4],p1=pts[i],p2=pts[(i+1)%4];var ax=p0.x-p1.x,ay=p0.y-p1.y,bx=p2.x-p1.x,by=p2.y-p1.y;var la=Math.hypot(ax,ay),lb=Math.hypot(bx,by);if(la<1||lb<1)return false;var cos=Math.max(-1,Math.min(1,(ax*bx+ay*by)/(la*lb)));var deg=Math.acos(cos)*180/Math.PI;if(deg<65||deg>115)return false;}var d1=Math.sqrt(dist2(pts[0],pts[2])),d2=Math.sqrt(dist2(pts[1],pts[3]));if(Math.min(d1,d2)/Math.max(d1,d2)<0.72)return false;var minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;for(var i=0;i<4;i++){var p=pts[i];if(p.x<minX)minX=p.x;if(p.x>maxX)maxX=p.x;if(p.y<minY)minY=p.y;if(p.y>maxY)maxY=p.y;}if(areaOf(pts)/Math.max(1,(maxX-minX)*(maxY-minY))<0.72)return false;return true;}",
-                "function scoreQuad(pts,w,h){if(!validateQuad(pts,w,h))return 0;var ratio=areaOf(pts)/(w*h);var minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;for(var i=0;i<4;i++){var p=pts[i];if(p.x<minX)minX=p.x;if(p.x>maxX)maxX=p.x;if(p.y<minY)minY=p.y;if(p.y>maxY)maxY=p.y;}var rect=areaOf(pts)/Math.max(1,(maxX-minX)*(maxY-minY));var cx=(pts[0].x+pts[1].x+pts[2].x+pts[3].x)/4;var cy=(pts[0].y+pts[1].y+pts[2].y+pts[3].y)/4;var center=1-Math.hypot(cx-w/2,cy-h/2)/Math.hypot(w/2,h/2);return Math.max(0,1-Math.abs(ratio-0.35)/0.35)*30+rect*34+Math.max(0,center)*14+20;}",
-                "function detectFromImageData(imageData,width,height){if(!cvReady||typeof cv==='undefined'||!cv.Mat)return null;var mats=[];function track(m){if(m)mats.push(m);return m;}function considerContours(contours,best){var frameArea=width*height;var list=[];for(var i=0;i<contours.size();i++){var cnt=contours.get(i);var area=cv.contourArea(cnt);if(area<frameArea*DOC_MIN_AREA_RATIO||area>frameArea*DOC_MAX_AREA_RATIO)continue;list.push({i:i,area:area});}list.sort(function(a,b){return b.area-a.area;});var epsList=[0.015,0.02,0.025,0.03,0.04];for(var n=0;n<list.length&&n<15;n++){var cnt=contours.get(list[n].i);var peri=cv.arcLength(cnt,true);for(var e=0;e<epsList.length;e++){var approx=track(new cv.Mat());cv.approxPolyDP(cnt,approx,epsList[e]*peri,true);if(approx.rows!==4)continue;if(!cv.isContourConvex(approx))continue;var pts=[];for(var r=0;r<4;r++)pts.push({x:approx.data32S[r*2],y:approx.data32S[r*2+1]});var ordered=orderCorners(pts);if(!validateQuad(ordered,width,height))continue;var sc=scoreQuad(ordered,width,height);if(sc<DOC_MIN_SCORE)continue;if(!best||sc>best.score)best={pts:ordered,score:sc,source:'opencv-contour'};}}return best;}try{var src=track(new cv.Mat(height,width,cv.CV_8UC4));src.data.set(imageData.data);var gray=track(new cv.Mat());cv.cvtColor(src,gray,cv.COLOR_RGBA2GRAY);var blur=track(new cv.Mat());cv.GaussianBlur(gray,blur,new cv.Size(5,5),0);var best=null;var edges=track(new cv.Mat());cv.Canny(blur,edges,40,120);var kernel=track(cv.Mat.ones(5,5,cv.CV_8U));var closed=track(new cv.Mat());cv.morphologyEx(edges,closed,cv.MORPH_CLOSE,kernel);var contours=track(new cv.MatVector());var hierarchy=track(new cv.Mat());cv.findContours(closed,contours,hierarchy,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_SIMPLE);best=considerContours(contours,best);var bw=track(new cv.Mat());cv.threshold(blur,bw,0,255,cv.THRESH_BINARY+cv.THRESH_OTSU);var contours2=track(new cv.MatVector());var hierarchy2=track(new cv.Mat());cv.findContours(bw,contours2,hierarchy2,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_SIMPLE);best=considerContours(contours2,best);var inv=track(new cv.Mat());cv.bitwise_not(bw,inv);var contours3=track(new cv.MatVector());var hierarchy3=track(new cv.Mat());cv.findContours(inv,contours3,hierarchy3,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_SIMPLE);best=considerContours(contours3,best);return best;}catch(e){return null;}finally{for(var k=mats.length-1;k>=0;k--){try{mats[k].delete();}catch(e2){}}}}",
-                "self.onmessage=function(ev){var msg=ev.data||{};if(msg.type==='ping'){self.postMessage({type:cvReady?'ready':'loading',error:initError?String(initError):null});return;}if(msg.type==='detect'){if(!cvReady){self.postMessage({type:'result',id:msg.id,pts:null,score:0,reason:'not-ready'});return;}try{var data=new Uint8ClampedArray(msg.buffer);var imageData=new ImageData(data,msg.width,msg.height);var found=detectFromImageData(imageData,msg.width,msg.height);self.postMessage({type:'result',id:msg.id,pts:found?found.pts:null,score:found?found.score:0,source:found?found.source:null,detectW:msg.width,detectH:msg.height});}catch(e){self.postMessage({type:'result',id:msg.id,pts:null,score:0,reason:String(e&&e.message?e.message:e)});}}};"
-            ].join(String.fromCharCode(10));
-        }
-
-        function ensureDocScanWorker() {
-            if (docScanWorker) return docScanWorker;
-            try {
-                const blob = new Blob([buildDocScanWorkerSource()], { type: 'application/javascript' });
-                const url = URL.createObjectURL(blob);
-                docScanWorker = new Worker(url);
-                docScanWorker.onmessage = (ev) => {
-                    const msg = ev.data || {};
-                    if (msg.type === 'ready') {
-                        liveScanner.engineReady = true;
-                        liveScanner.engineError = null;
-                        console.log('[scan] OpenCV worker ready');
-                        return;
-                    }
-                    if (msg.type === 'error' || (msg.type === 'loading' && msg.error)) {
-                        liveScanner.engineError = msg.message || msg.error || 'OpenCV failed';
-                        console.error('[scan] OpenCV worker error:', liveScanner.engineError);
-                        return;
-                    }
-                    if (msg.type === 'result' && msg.id != null && docScanWaiters.has(msg.id)) {
-                        const { resolve } = docScanWaiters.get(msg.id);
-                        docScanWaiters.delete(msg.id);
-                        resolve(msg);
-                    }
-                };
-                docScanWorker.onerror = (err) => {
-                    liveScanner.engineError = (err && err.message) ? err.message : 'Worker failed';
-                    console.error('[scan] worker onerror:', err);
-                };
-                docScanWorker.postMessage({ type: 'ping' });
-                return docScanWorker;
-            } catch (err) {
-                liveScanner.engineError = err && err.message ? err.message : String(err);
-                return null;
-            }
-        }
-
-        function detectDocumentQuadAsync(canvas) {
-            return new Promise((resolve) => {
-                const worker = ensureDocScanWorker();
-                if (!worker || !liveScanner.engineReady) { resolve(null); return; }
-                const ctx = canvas.getContext('2d', { willReadFrequently: true });
-                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                const id = ++docScanWorkerReq;
-                const timer = setTimeout(() => {
-                    if (docScanWaiters.has(id)) { docScanWaiters.delete(id); resolve(null); }
-                }, 1500);
-                docScanWaiters.set(id, {
-                    resolve: (msg) => {
-                        clearTimeout(timer);
-                        if (!msg || !msg.pts || !isValidDocumentQuad(msg.pts, msg.detectW || canvas.width, msg.detectH || canvas.height)) {
-                            resolve(null); return;
-                        }
-                        const pts = orderQuadPoints(msg.pts);
-                        const score = Math.max(msg.score || 0, scoreDocumentQuad(pts, canvas.width, canvas.height));
-                        if (score < DOC_MIN_SCORE) { resolve(null); return; }
-                        resolve({ pts, score, source: 'opencv-contour', detectW: canvas.width, detectH: canvas.height });
-                    }
-                });
-                worker.postMessage({
-                    type: 'detect', id,
-                    width: canvas.width, height: canvas.height,
-                    buffer: imageData.data.buffer
-                }, [imageData.data.buffer]);
-            });
-        }
-
-        // Live path is async worker-only. Sync stub intentionally returns null.
-        function detectDocumentQuad() { return null; }
-
-        function solveHomography(src, dst) {
-            // src/dst: arrays of 4 {x,y}. Solve for h0..h7 (h8=1).
-            const A = [];
-            const b = [];
-            for (let i = 0; i < 4; i++) {
-                const x = src[i].x, y = src[i].y;
-                const u = dst[i].x, v = dst[i].y;
-                A.push([x, y, 1, 0, 0, 0, -x * u, -y * u]);
-                b.push(u);
-                A.push([0, 0, 0, x, y, 1, -x * v, -y * v]);
-                b.push(v);
-            }
-            // Gaussian elimination
-            const n = 8;
-            const M = A.map((row, i) => row.concat([b[i]]));
-            for (let col = 0; col < n; col++) {
-                let pivot = col;
-                for (let r = col + 1; r < n; r++) {
-                    if (Math.abs(M[r][col]) > Math.abs(M[pivot][col])) pivot = r;
-                }
-                if (Math.abs(M[pivot][col]) < 1e-10) return null;
-                if (pivot !== col) { const tmp = M[col]; M[col] = M[pivot]; M[pivot] = tmp; }
-                const div = M[col][col];
-                for (let c = col; c <= n; c++) M[col][c] /= div;
-                for (let r = 0; r < n; r++) {
-                    if (r === col) continue;
-                    const f = M[r][col];
-                    for (let c = col; c <= n; c++) M[r][c] -= f * M[col][c];
-                }
-            }
-            const h = M.map(row => row[n]);
-            h.push(1);
-            return h;
-        }
-
-        function invertHomography(h) {
-            const m = [
-                [h[0], h[1], h[2]],
-                [h[3], h[4], h[5]],
-                [h[6], h[7], h[8]]
-            ];
-            const det =
-                m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]) -
-                m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]) +
-                m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
-            if (Math.abs(det) < 1e-12) return null;
-            const inv = [
-                [
-                    (m[1][1] * m[2][2] - m[1][2] * m[2][1]) / det,
-                    (m[0][2] * m[2][1] - m[0][1] * m[2][2]) / det,
-                    (m[0][1] * m[1][2] - m[0][2] * m[1][1]) / det
-                ],
-                [
-                    (m[1][2] * m[2][0] - m[1][0] * m[2][2]) / det,
-                    (m[0][0] * m[2][2] - m[0][2] * m[2][0]) / det,
-                    (m[0][2] * m[1][0] - m[0][0] * m[1][2]) / det
-                ],
-                [
-                    (m[1][0] * m[2][1] - m[1][1] * m[2][0]) / det,
-                    (m[0][1] * m[2][0] - m[0][0] * m[2][1]) / det,
-                    (m[0][0] * m[1][1] - m[0][1] * m[1][0]) / det
-                ]
-            ];
-            return [inv[0][0], inv[0][1], inv[0][2], inv[1][0], inv[1][1], inv[1][2], inv[2][0], inv[2][1], inv[2][2]];
-        }
-
-        function warpPerspectiveCanvas(srcCanvas, corners, outW, outH) {
-            const dst = [
-                { x: 0, y: 0 },
-                { x: outW - 1, y: 0 },
-                { x: outW - 1, y: outH - 1 },
-                { x: 0, y: outH - 1 }
-            ];
-            const H = solveHomography(corners, dst);
-            if (!H) return null;
-            const Hi = invertHomography(H);
-            if (!Hi) return null;
-            const sw = srcCanvas.width, sh = srcCanvas.height;
-            const sctx = srcCanvas.getContext('2d', { willReadFrequently: true });
-            const srcData = sctx.getImageData(0, 0, sw, sh).data;
-            const out = document.createElement('canvas');
-            out.width = outW; out.height = outH;
-            const octx = out.getContext('2d');
-            const outImg = octx.createImageData(outW, outH);
-            const od = outImg.data;
-            const sample = (x, y) => {
-                if (x < 0 || y < 0 || x >= sw - 1 || y >= sh - 1) return [0, 0, 0];
-                const x0 = x | 0, y0 = y | 0;
-                const fx = x - x0, fy = y - y0;
-                const i00 = (y0 * sw + x0) * 4;
-                const i10 = i00 + 4;
-                const i01 = i00 + sw * 4;
-                const i11 = i01 + 4;
-                const r = srcData[i00] * (1 - fx) * (1 - fy) + srcData[i10] * fx * (1 - fy) + srcData[i01] * (1 - fx) * fy + srcData[i11] * fx * fy;
-                const g = srcData[i00 + 1] * (1 - fx) * (1 - fy) + srcData[i10 + 1] * fx * (1 - fy) + srcData[i01 + 1] * (1 - fx) * fy + srcData[i11 + 1] * fx * fy;
-                const b = srcData[i00 + 2] * (1 - fx) * (1 - fy) + srcData[i10 + 2] * fx * (1 - fy) + srcData[i01 + 2] * (1 - fx) * fy + srcData[i11 + 2] * fx * fy;
-                return [r, g, b];
-            };
-            for (let y = 0; y < outH; y++) {
-                for (let x = 0; x < outW; x++) {
-                    const denom = Hi[6] * x + Hi[7] * y + Hi[8];
-                    const sx = (Hi[0] * x + Hi[1] * y + Hi[2]) / denom;
-                    const sy = (Hi[3] * x + Hi[4] * y + Hi[5]) / denom;
-                    const [r, g, b] = sample(sx, sy);
-                    const i = (y * outW + x) * 4;
-                    od[i] = r; od[i + 1] = g; od[i + 2] = b; od[i + 3] = 255;
-                }
-            }
-            octx.putImageData(outImg, 0, 0);
-            return out;
-        }
-
-        function targetDimsFromQuad(pts) {
-            const w = (Math.sqrt(dist2(pts[0], pts[1])) + Math.sqrt(dist2(pts[3], pts[2]))) / 2;
-            const h = (Math.sqrt(dist2(pts[0], pts[3])) + Math.sqrt(dist2(pts[1], pts[2]))) / 2;
-            let outW = Math.round(w), outH = Math.round(h);
-            const longEdge = TICKET_JPEG_EDGE;
-            const scale = longEdge / Math.max(outW, outH, 1);
-            if (scale < 1 || scale > 1.5) {
-                outW = Math.max(200, Math.round(outW * Math.min(scale, 1.5)));
-                outH = Math.max(200, Math.round(outH * Math.min(scale, 1.5)));
-            }
-            // Prefer portrait for tickets
-            if (outW > outH) { const t = outW; outW = outH; outH = t; }
-            return { w: outW, h: outH };
-        }
-
-        function enhanceScanCanvas(canvas) {
-            // Light document cleanup: contrast stretch + mild unsharp — keep natural photo look.
-            const ctx = canvas.getContext('2d', { willReadFrequently: true });
-            const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const d = img.data;
-            let min = 255, max = 0;
-            for (let i = 0; i < d.length; i += 4) {
-                const g = d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114;
-                if (g < min) min = g;
-                if (g > max) max = g;
-            }
-            const range = Math.max(1, max - min);
-            for (let i = 0; i < d.length; i += 4) {
-                for (let c = 0; c < 3; c++) {
-                    let v = ((d[i + c] - min) / range) * 255;
-                    // slight gamma toward white paper
-                    v = Math.pow(Math.max(0, Math.min(255, v)) / 255, 0.92) * 255;
-                    d[i + c] = v;
-                }
-            }
-            ctx.putImageData(img, 0, 0);
-            return canvas;
-        }
-
-        function scaleCorners(corners, fromW, fromH, toW, toH) {
-            const sx = toW / fromW, sy = toH / fromH;
-            return corners.map(p => ({ x: p.x * sx, y: p.y * sy }));
-        }
-
-        function mapPtsToOverlay(pts, srcW, srcH, canvasW, canvasH) {
-            const scale = Math.max(canvasW / srcW, canvasH / srcH);
-            const dw = srcW * scale, dh = srcH * scale;
-            const ox = (canvasW - dw) / 2, oy = (canvasH - dh) / 2;
-            return pts.map(p => ({ x: p.x * scale + ox, y: p.y * scale + oy }));
-        }
-
-        function overlayQuadSafe(pts, w, h) {
-            if (!pts || pts.length !== 4) return false;
-            for (const p of pts) if (!p || !isFinite(p.x) || !isFinite(p.y)) return false;
-            if (hasCrossingEdges(pts)) return false;
-            const area = quadArea(pts);
-            if (area < (w * h) * 0.04) return false;
-            if (rectangularity(pts) < 0.65) return false;
-            const c = quadCentroid(pts);
-            let sign = 0;
-            for (let i = 0; i < 4; i++) {
-                const a = pts[i], b = pts[(i + 1) % 4];
-                const cross = (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
-                const s = cross >= 0 ? 1 : -1;
-                if (!sign) sign = s;
-                else if (s !== sign) return false;
-            }
-            const angles = cornerAngles(pts);
-            if (!angles) return false;
-            for (const deg of angles) if (deg < 60 || deg > 120) return false;
-            return true;
-        }
-
-        function drawScannerOverlay(canvas, pts, confidence) {
-            const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            if (!pts || pts.length !== 4) return;
-            if (!overlayQuadSafe(pts, canvas.width, canvas.height)) return;
-            ctx.save();
-            ctx.fillStyle = 'rgba(0,0,0,0.28)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.globalCompositeOperation = 'destination-out';
-            ctx.beginPath();
-            ctx.moveTo(pts[0].x, pts[0].y);
-            for (let i = 1; i < 4; i++) ctx.lineTo(pts[i].x, pts[i].y);
-            ctx.closePath();
-            ctx.fill();
-            ctx.globalCompositeOperation = 'source-over';
-            const locked = confidence >= 0.75;
-            ctx.strokeStyle = locked ? '#4ade80' : '#86efac';
-            ctx.lineWidth = locked ? 3.5 : 2.5;
-            ctx.beginPath();
-            ctx.moveTo(pts[0].x, pts[0].y);
-            for (let i = 1; i < 4; i++) ctx.lineTo(pts[i].x, pts[i].y);
-            ctx.closePath();
-            ctx.stroke();
-            for (const p of pts) {
-                ctx.beginPath();
-                ctx.fillStyle = locked ? '#4ade80' : '#bbf7d0';
-                ctx.arc(p.x, p.y, locked ? 5 : 4, 0, Math.PI * 2);
-                ctx.fill();
-            }
-            ctx.restore();
-        }
-
-        function setScannerStatus(text, locked) {
-            const el = document.getElementById('docScannerStatus');
-            if (!el) return;
-            el.textContent = text || 'Find a document';
-            el.classList.toggle('locked', !!locked);
-        }
-
-        function showCameraPermission(title, msg) {
-            const perm = document.getElementById('docScannerPerm');
-            const t = document.getElementById('docScannerPermTitle');
-            const m = document.getElementById('docScannerPermMsg');
-            if (t && title) t.textContent = title;
-            if (m && msg) m.textContent = msg;
-            if (perm) perm.classList.add('show');
-        }
-
-        function hideCameraPermission() {
-            const perm = document.getElementById('docScannerPerm');
-            if (perm) perm.classList.remove('show');
-        }
-
-        function stopScannerCamera() {
-            if (liveScanner.raf) { cancelAnimationFrame(liveScanner.raf); liveScanner.raf = 0; }
-            const video = document.getElementById('docScannerVideo');
-            if (video) {
-                try { video.pause(); } catch (_) {}
-                try { video.srcObject = null; } catch (_) {}
-            }
-            if (liveScanner.stream) {
-                try { liveScanner.stream.getTracks().forEach(t => t.stop()); } catch (_) {}
-            }
-            liveScanner.stream = null;
-            liveScanner.track = null;
-            liveScanner.videoReady = false;
-            clearScannerTrack(null);
-            liveScanner.flashOn = false;
-            const overlay = document.getElementById('docScannerOverlay');
-            if (overlay) {
-                const ctx = overlay.getContext('2d');
-                if (ctx) ctx.clearRect(0, 0, overlay.width, overlay.height);
-            }
-        }
-
-        function closeDocScanner() {
-            if (!liveScanner.active) return;
-            liveScanner.active = false;
-            liveScanner.capturing = false;
-            stopScannerCamera();
-            hideCameraPermission();
-            const root = document.getElementById('docScanner');
-            if (root) {
-                root.classList.remove('active');
-                root.setAttribute('aria-hidden', 'true');
-            }
-            const editOpen = document.getElementById('editOverlay') && document.getElementById('editOverlay').classList.contains('active');
-            const viewerOpen = document.getElementById('docViewer') && document.getElementById('docViewer').classList.contains('active');
-            if (editOpen || viewerOpen) lockBodyScroll();
-            else unlockBodyScroll();
-        }
-
-        async function startScannerCamera() {
-            hideCameraPermission();
-            const video = document.getElementById('docScannerVideo');
-            if (!video) return;
-            ensureDocScanWorker();
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                showCameraPermission('Camera not supported', 'This browser cannot open a live camera. Use Photos to add a ticket image instead.');
-                return;
-            }
-            try {
-                stopScannerCamera();
-                liveScanner.active = true;
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    audio: false,
-                    video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } }
-                });
-                if (!liveScanner.active) {
-                    try { stream.getTracks().forEach(t => t.stop()); } catch (_) {}
-                    return;
-                }
-                liveScanner.stream = stream;
-                liveScanner.track = stream.getVideoTracks()[0] || null;
-                video.srcObject = stream;
-                await video.play().catch(() => {});
-                liveScanner.videoReady = true;
-                setScannerStatus(liveScanner.engineReady ? 'Find a document' : 'Loading scanner…', false);
-                startDetectLoop();
-            } catch (err) {
-                console.error('[scan] getUserMedia failed:', err);
-                const name = (err && err.name) || '';
-                if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
-                    showCameraPermission('Camera access needed', 'Allow camera access to scan load tickets. You can also add a photo from your library.');
-                } else if (name === 'NotFoundError' || name === 'DevicesNotFoundError') {
-                    showCameraPermission('No camera found', 'No camera is available on this device. Use Photos to add a ticket image.');
-                } else {
-                    showCameraPermission('Camera unavailable', 'Could not open the camera. Use Photos to add a ticket image instead.');
-                }
-            }
-        }
-
-        function onScannerVisibility() {
-            liveScanner.pageHidden = document.hidden;
-            if (document.hidden) liveScanner.detectBusy = false;
-        }
-        document.addEventListener('visibilitychange', onScannerVisibility);
-
-        function startDetectLoop() {
-            const video = document.getElementById('docScannerVideo');
-            const overlay = document.getElementById('docScannerOverlay');
-            if (!video || !overlay) return;
-            const detectCanvas = document.createElement('canvas');
-            const detectCtx = detectCanvas.getContext('2d', { willReadFrequently: true });
-
-            const tick = async () => {
-                if (!liveScanner.active) return;
-                liveScanner.raf = requestAnimationFrame(() => { tick(); });
-
-                const cw = overlay.clientWidth || window.innerWidth;
-                const ch = overlay.clientHeight || window.innerHeight;
-                if (overlay.width !== cw || overlay.height !== ch) {
-                    overlay.width = cw; overlay.height = ch;
-                }
-
-                if (liveScanner.targetPts && !isValidDocumentQuad(liveScanner.targetPts, liveScanner.detectW, liveScanner.detectH)) {
-                    clearScannerTrack('Find a document');
-                }
-
-                if (liveScanner.targetPts && isValidDocumentQuad(liveScanner.targetPts, liveScanner.detectW, liveScanner.detectH)) {
-                    if (!liveScanner.displayPts) liveScanner.displayPts = cloneQuad(liveScanner.targetPts);
-                    else {
-                        for (let i = 0; i < 4; i++) {
-                            liveScanner.displayPts[i].x += (liveScanner.targetPts[i].x - liveScanner.displayPts[i].x) * DOC_SMOOTH;
-                            liveScanner.displayPts[i].y += (liveScanner.targetPts[i].y - liveScanner.displayPts[i].y) * DOC_SMOOTH;
-                        }
-                    }
-                } else {
-                    liveScanner.displayPts = null;
-                }
-
-                const drawPts = (liveScanner.displayPts && isValidDocumentQuad(liveScanner.displayPts, liveScanner.detectW, liveScanner.detectH))
-                    ? mapPtsToOverlay(liveScanner.displayPts, liveScanner.detectW, liveScanner.detectH, overlay.width, overlay.height)
-                    : null;
-                drawScannerOverlay(overlay, drawPts, liveScanner.confidence);
-
-                const now = performance.now();
-                if (liveScanner.pageHidden || liveScanner.detectBusy || liveScanner.capturing) return;
-                if (now - liveScanner.lastDetectAt < DOC_DETECT_INTERVAL_MS) return;
-                if (!liveScanner.videoReady || video.readyState < 2) return;
-                if (!liveScanner.engineReady) {
-                    setScannerStatus(liveScanner.engineError ? 'Scanner unavailable — use Photos' : 'Loading scanner…', false);
-                    return;
-                }
-                const vw = video.videoWidth, vh = video.videoHeight;
-                if (!vw || !vh) return;
-
-                liveScanner.detectBusy = true;
-                liveScanner.lastDetectAt = now;
-                try {
-                    detectCanvas.width = DOC_DETECT_W;
-                    detectCanvas.height = Math.max(1, Math.round(vh * (DOC_DETECT_W / vw)));
-                    liveScanner.detectW = detectCanvas.width;
-                    liveScanner.detectH = detectCanvas.height;
-                    detectCtx.drawImage(video, 0, 0, detectCanvas.width, detectCanvas.height);
-                    const found = await detectDocumentQuadAsync(detectCanvas);
-
-                    if (found && found.pts && isValidDocumentQuad(found.pts, detectCanvas.width, detectCanvas.height)) {
-                        const pts = orderQuadPoints(found.pts);
-                        const prior = liveScanner.targetPts;
-                        if (prior && isValidDocumentQuad(prior, detectCanvas.width, detectCanvas.height)) {
-                            if (!matchSameDocument(prior, pts, detectCanvas.width, detectCanvas.height)) {
-                                liveScanner.missStreak++;
-                                if (liveScanner.missStreak >= DOC_UNLOCK_MISSES) clearScannerTrack('Find a document');
-                            } else {
-                                liveScanner.targetPts = cloneQuad(pts);
-                                liveScanner.hitStreak++;
-                                liveScanner.missStreak = 0;
-                                liveScanner.lostAt = 0;
-                                liveScanner.confidence = Math.min(1, found.score / 110);
-                                liveScanner.lastTrackAt = now;
-                            }
-                        } else {
-                            liveScanner.targetPts = cloneQuad(pts);
-                            liveScanner.displayPts = cloneQuad(pts);
-                            liveScanner.hitStreak = 1;
-                            liveScanner.missStreak = 0;
-                            liveScanner.lostAt = 0;
-                            liveScanner.confidence = Math.min(1, found.score / 110);
-                            liveScanner.lastTrackAt = now;
-                        }
-
-                        if (liveScanner.hitStreak >= DOC_LOCK_HITS &&
-                            liveScanner.targetPts &&
-                            isValidDocumentQuad(liveScanner.targetPts, detectCanvas.width, detectCanvas.height)) {
-                            liveScanner.lastGood = {
-                                corners: cloneQuad(liveScanner.targetPts),
-                                detectW: detectCanvas.width,
-                                detectH: detectCanvas.height,
-                                score: found.score,
-                                at: Date.now()
-                            };
-                            setScannerStatus('Edges locked — tap capture', true);
-                        } else if (liveScanner.targetPts) {
-                            setScannerStatus('Hold on document… (' + liveScanner.hitStreak + '/' + DOC_LOCK_HITS + ')', false);
-                        }
-                    } else {
-                        liveScanner.missStreak++;
-                        if (!liveScanner.lostAt) liveScanner.lostAt = now;
-                        const grace = (now - liveScanner.lostAt) < DOC_LOST_GRACE_MS;
-                        const stillValid = liveScanner.targetPts &&
-                            isValidDocumentQuad(liveScanner.targetPts, liveScanner.detectW, liveScanner.detectH);
-                        if (!(grace && stillValid && liveScanner.missStreak < DOC_UNLOCK_MISSES)) {
-                            clearScannerTrack('Find a document');
-                        } else {
-                            setScannerStatus('Find a document', false);
-                        }
-                    }
-                } catch (err) {
-                    console.warn('[scan] detect tick error:', err);
-                    clearScannerTrack('Find a document');
-                } finally {
-                    liveScanner.detectBusy = false;
-                }
-            };
-
-            if (liveScanner.raf) cancelAnimationFrame(liveScanner.raf);
-            liveScanner.raf = requestAnimationFrame(() => { tick(); });
-        }
-
-        function videoFrameToCanvas(video) {
-            const c = document.createElement('canvas');
-            c.width = video.videoWidth || 1280;
-            c.height = video.videoHeight || 720;
-            c.getContext('2d').drawImage(video, 0, 0, c.width, c.height);
-            return c;
-        }
-
-        async function processScanCanvas(sourceCanvas, hintCorners, hintSize) {
-            let corners = null;
-            if (hintCorners && hintSize) {
-                corners = scaleCorners(hintCorners, hintSize.w, hintSize.h, sourceCanvas.width, sourceCanvas.height);
-                if (!isValidDocumentQuad(corners, sourceCanvas.width, sourceCanvas.height)) corners = null;
-            }
-            try {
-                ensureDocScanWorker();
-                const t0 = performance.now();
-                while (!liveScanner.engineReady && !liveScanner.engineError && performance.now() - t0 < 10000) {
-                    await new Promise(r => setTimeout(r, 120));
-                }
-                const work = document.createElement('canvas');
-                const scale = Math.min(1, DOC_DETECT_W / Math.max(sourceCanvas.width, sourceCanvas.height));
-                work.width = Math.max(1, Math.round(sourceCanvas.width * scale));
-                work.height = Math.max(1, Math.round(sourceCanvas.height * scale));
-                work.getContext('2d').drawImage(sourceCanvas, 0, 0, work.width, work.height);
-                const found = await detectDocumentQuadAsync(work);
-                if (found && found.pts && isValidDocumentQuad(found.pts, work.width, work.height)) {
-                    const scaled = scaleCorners(found.pts, work.width, work.height, sourceCanvas.width, sourceCanvas.height);
-                    if (isValidDocumentQuad(scaled, sourceCanvas.width, sourceCanvas.height)) corners = scaled;
-                }
-            } catch (err) {
-                console.warn('[scan] full-res detect failed:', err);
-            }
-
-            let out = sourceCanvas;
-            if (corners && isValidDocumentQuad(corners, sourceCanvas.width, sourceCanvas.height) && scoreDocumentQuad(corners, sourceCanvas.width, sourceCanvas.height) >= 60) {
-                const dims = targetDimsFromQuad(corners);
-                // If we swapped for portrait, also swap corner order mapping carefully:
-                // targetDims may swap w/h; warp uses corners as TL TR BR BL onto outW x outH.
-                let outW = dims.w, outH = dims.h;
-                const sideW = (Math.sqrt(dist2(corners[0], corners[1])) + Math.sqrt(dist2(corners[3], corners[2]))) / 2;
-                const sideH = (Math.sqrt(dist2(corners[0], corners[3])) + Math.sqrt(dist2(corners[1], corners[2]))) / 2;
-                if (sideW >= sideH) {
-                    // landscape document — keep landscape output then rotate to portrait
-                    outW = Math.max(dims.w, dims.h);
-                    outH = Math.min(dims.w, dims.h);
-                }
-                const warped = warpPerspectiveCanvas(sourceCanvas, corners, outW, outH);
-                if (warped) {
-                    out = warped;
-                    if (out.width > out.height) {
-                        const rot = document.createElement('canvas');
-                        rot.width = out.height; rot.height = out.width;
-                        const rctx = rot.getContext('2d');
-                        rctx.translate(rot.width, 0);
-                        rctx.rotate(Math.PI / 2);
-                        rctx.drawImage(out, 0, 0);
-                        out = rot;
-                    }
-                }
-            } else {
-                // No edges — resize only
-                out = canvasFromImage(sourceCanvas, TICKET_JPEG_EDGE);
-            }
-            enhanceScanCanvas(out);
-            // Cap long edge
-            if (Math.max(out.width, out.height) > TICKET_JPEG_EDGE) {
-                out = canvasFromImage(out, TICKET_JPEG_EDGE);
-            }
-            return out.toDataURL('image/jpeg', TICKET_JPEG_QUALITY);
-        }
-
-        async function captureFromScanner() {
-            if (!liveScanner.active || liveScanner.capturing || ticketCapture.busy) return;
-            const video = document.getElementById('docScannerVideo');
-            const btn = document.getElementById('docScannerCapture');
-            if (!video || !liveScanner.videoReady) {
-                await appAlert('Camera is not ready yet.', { title: 'Scanner' });
-                return;
-            }
-            liveScanner.capturing = true;
-            if (btn) btn.disabled = true;
-            setScannerStatus('Capturing…', true);
-            haptic(18);
-            try {
-                const full = videoFrameToCanvas(video);
-                const hint = liveScanner.lastGood;
-                const dataUrl = await processScanCanvas(
-                    full,
-                    hint ? hint.corners : null,
-                    hint ? { w: hint.detectW, h: hint.detectH } : null
-                );
-                closeDocScanner();
-                await ingestTicketJpegDataUrl(dataUrl, 'scan');
-            } catch (err) {
-                console.error('[scan] capture failed:', err);
-                await appAlert((err && err.message) ? err.message : 'Capture failed.', { title: 'Scan Failed' });
-            } finally {
-                liveScanner.capturing = false;
-                if (btn) btn.disabled = false;
-            }
-        }
-
-        async function toggleScannerFlash() {
-            const track = liveScanner.track;
-            const btn = document.getElementById('docScannerFlash');
-            if (!track || typeof track.getCapabilities !== 'function') {
-                await appAlert('Flash is not available on this camera.', { title: 'Flash' });
-                return;
-            }
-            const caps = track.getCapabilities();
-            if (!caps || !caps.torch) {
-                await appAlert('Flash is not available on this camera.', { title: 'Flash' });
-                return;
-            }
-            try {
-                liveScanner.flashOn = !liveScanner.flashOn;
-                await track.applyConstraints({ advanced: [{ torch: liveScanner.flashOn }] });
-                if (btn) btn.style.color = liveScanner.flashOn ? '#fbbf24' : '';
-            } catch (err) {
-                liveScanner.flashOn = false;
-                if (btn) btn.style.color = '';
-                console.warn('[scan] torch failed:', err);
-            }
-        }
-
-        function bindScannerControlsOnce() {
-            if (liveScanner.uiBound) return;
-            liveScanner.uiBound = true;
-            const closeBtn = document.getElementById('docScannerClose');
-            const permClose = document.getElementById('docScannerPermClose');
-            const retry = document.getElementById('docScannerRetryCam');
-            const capture = document.getElementById('docScannerCapture');
-            const flash = document.getElementById('docScannerFlash');
-            if (closeBtn) closeBtn.onclick = () => closeDocScanner();
-            if (permClose) permClose.onclick = () => closeDocScanner();
-            if (retry) retry.onclick = () => { startScannerCamera(); };
-            if (capture) capture.onclick = () => { captureFromScanner(); };
-            if (flash) flash.onclick = () => { toggleScannerFlash(); };
-        }
-
-        function bindTicketGalleryInputOnce() {
-            if (liveScanner.galleryBound) return;
-            liveScanner.galleryBound = true;
-            const input = document.getElementById('ticketGalleryInput');
+        function bindTicketFileInputOnce() {
+            if (ticketCapture.bound) return;
+            ticketCapture.bound = true;
+            const input = document.getElementById('ticketFileInput');
             if (!input) return;
             input.addEventListener('change', async () => {
                 const file = input.files && input.files[0];
@@ -3339,44 +2304,32 @@
             });
         }
 
-        async function openDocScanner(opts) {
+        function pickTicketPhoto(opts) {
             opts = opts || {};
             ticketCapture.mode = opts.mode || 'direct';
             ticketCapture.sId = opts.sId != null ? opts.sId : (editingLoad && editingLoad.sId);
             ticketCapture.lId = opts.lId != null ? opts.lId : (editingLoad && editingLoad.lId);
             ticketCapture.docId = opts.docId || null;
-
-            bindScannerControlsOnce();
-            bindTicketGalleryInputOnce();
-            ensureDocScanWorker();
-
-            const root = document.getElementById('docScanner');
-            if (!root) {
-                await appAlert('Scanner UI is missing.', { title: 'Scanner' });
+            bindTicketFileInputOnce();
+            const input = document.getElementById('ticketFileInput');
+            if (!input) {
+                appAlert('Photo capture is unavailable in this browser.');
                 return;
             }
-            liveScanner.active = true;
-            liveScanner.capturing = false;
-            clearScannerTrack('Find a document');
-            ensureDocScanWorker();
-            root.classList.add('active');
-            root.setAttribute('aria-hidden', 'false');
-            lockBodyScroll();
-            await startScannerCamera();
+            try { input.value = ''; } catch (_) {}
+            try { input.click(); } catch (_) {
+                appAlert('Could not open the camera or photo library.');
+            }
         }
 
-        function pickTicketPhoto(opts) {
-            // Opens the custom in-app scanner (not the default Apple camera picker).
-            openDocScanner(opts || {});
-        }
-
-        async function ingestTicketJpegDataUrl(dataUrl, filterName) {
+        async function handleTicketFileChosen(file) {
             if (ticketCapture.busy) return;
             ticketCapture.busy = true;
             const key = loadKey(ticketCapture.sId, ticketCapture.lId);
             try {
                 processingLoads.add(key);
                 renderHistory();
+                const dataUrl = await fileToJpegDataUrl(file);
                 const now = new Date().toISOString();
                 const doc = {
                     id: 'doc_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
@@ -3385,7 +2338,7 @@
                     type: 'ticket',
                     original: null,
                     processed: dataUrl,
-                    filter: filterName || 'scan',
+                    filter: 'photo',
                     createdAt: now,
                     modifiedAt: now,
                     syncStatus: 'local',
@@ -3408,7 +2361,7 @@
                 enqueueDocSync(ticketCapture.sId, ticketCapture.lId, doc.id);
                 haptic([12, 40, 12]);
             } catch (err) {
-                console.error('[scan] ticket ingest failed:', err);
+                console.error('[scan] ticket photo failed:', err);
                 await appAlert((err && err.message) ? err.message : 'Could not save that photo.', { title: 'Photo Failed' });
             } finally {
                 ticketCapture.busy = false;
@@ -3416,35 +2369,6 @@
                 renderHistory();
             }
         }
-
-        async function handleTicketFileChosen(file) {
-            if (ticketCapture.busy) return;
-            try {
-                // Try edge-detect + warp for gallery imports too
-                const url = URL.createObjectURL(file);
-                let dataUrl;
-                try {
-                    const img = await loadImageFromUrl(url);
-                    const source = canvasFromImage(img, Math.max(TICKET_JPEG_EDGE, 1600));
-                    dataUrl = await processScanCanvas(source, null, null);
-                } finally {
-                    URL.revokeObjectURL(url);
-                }
-                if (liveScanner.active) closeDocScanner();
-                await ingestTicketJpegDataUrl(dataUrl, 'photo');
-            } catch (err) {
-                console.error('[scan] gallery import failed:', err);
-                // Fallback: simple JPEG resize
-                try {
-                    const dataUrl = await fileToJpegDataUrl(file);
-                    if (liveScanner.active) closeDocScanner();
-                    await ingestTicketJpegDataUrl(dataUrl, 'photo');
-                } catch (err2) {
-                    await appAlert((err2 && err2.message) ? err2.message : 'Could not save that photo.', { title: 'Photo Failed' });
-                }
-            }
-        }
-
 
         function persistLoadDocument(sId, lId, doc, mode, replaceId) {
             let h = JSON.parse(localStorage.getItem('driver_history') || '[]');
@@ -4234,9 +3158,7 @@
             sanitizeHistory();
             loadScanLog();
             applySettingsToHeader();
-            bindScannerControlsOnce();
-            bindTicketGalleryInputOnce();
-            ensureDocScanWorker();
+            bindTicketFileInputOnce();
             ['chartOverlay','editOverlay','addOverlay','settingsOverlay','helpOverlay','findTicketOverlay','debugOverlay','settlementOptionsOverlay','exportPickerOverlay'].forEach(id => {
                 const ov = document.getElementById(id);
                 if (!ov) return;
