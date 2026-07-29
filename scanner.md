@@ -19,10 +19,11 @@ Hardcoded in `index.html` as `GROK_IMAGINE_MODEL` / `GROK_CHAT_MODEL`.
 
 ## Mission
 
-1. Clean the ticket photo (background out, B&W, upright, sharp text).
-2. Identify the **plant** using LEARNED layouts below.
-3. Extract JSON fields using the plant’s field map — do not guess from unlabeled nearby text.
-4. Never invent values — use `null` when missing or unreadable.
+1. **First image read — plant/ticket gate.** Decide whether the photo is a Colorado Materials or Hunter Stone scale/load ticket. If not, stop; do not clean and do not OCR.
+2. Clean the ticket photo (background out, B&W, upright, sharp text).
+3. Identify the **plant** using LEARNED layouts below.
+4. Extract JSON fields using the plant’s field map — do not guess from unlabeled nearby text.
+5. Never invent values — use `null` when missing or unreadable.
 
 ---
 
@@ -76,7 +77,7 @@ Expected truck: **1205** (Settings `expectedTruckNumber`).
 
 Do **not** invent a third plant. If unclear → `"plant": null` and put clues in `rawText`.
 
-**App rule:** DriverPay Pro only stores Colorado Materials and Hunter Stone tickets. Any other / unrecognized plant is rejected after OCR — the image is not saved and the driver sees an Unknown Ticket alert.
+**App rule:** DriverPay Pro only stores Colorado Materials and Hunter Stone tickets. On each scan, the first Grok image read is a plant/ticket check — if the photo is not a Colorado Materials or Hunter Stone scale/load ticket (e.g. random objects, other plants), the app stops immediately and never starts cleanup or text OCR. A second plant check after OCR remains as a safety net. Unknown tickets are not saved; the driver sees an Unknown Ticket alert.
 
 **Important:** Hunter Stone tickets may be branded **Martin Marietta** (plant line contains “Hunter Stone”) **or** **Hunter Stone / A Division of Colorado Materials, Ltd.** Both are plant = `"Hunter Stone"`. Do not label Martin Marietta Hunter Stone tickets as Colorado Materials.
 

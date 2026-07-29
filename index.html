@@ -6,8 +6,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="driverpay-build" content="2.12.27">
-    <title>DriverPay Pro v2.12.27</title>
+    <meta name="driverpay-build" content="2.12.28">
+    <title>DriverPay Pro v2.12.28</title>
     <script>
     (function () {
         var meta = document.querySelector('meta[name="driverpay-build"]');
@@ -396,7 +396,7 @@
     <header class="app-header">
         <div class="header-title">
             <h1>DriverPay <span>Pro</span></h1>
-            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v2.12.27</p>
+            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v2.12.28</p>
         </div>
         <div class="menu-container">
             <button class="menu-btn" onclick="toggleMenu(event)" aria-label="Menu">
@@ -499,7 +499,7 @@
             </div>
             <div class="footer-tagline">Built for the long haul</div>
             <div class="footer-meta">
-                <span class="footer-version">v2.12.27</span>
+                <span class="footer-version">v2.12.28</span>
                 <span class="footer-meta-dot"></span>
                 <span>© 2026</span>
                 <span class="footer-meta-dot"></span>
@@ -683,7 +683,7 @@
                         <span class="help-section-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span>
                         Load Tickets
                     </div>
-                    <p>Every load has a camera icon. <strong style="color:#ef4444;">Red</strong> = no ticket yet. <strong style="color:#60a5fa;">Blue ticket</strong> = ticket + info saved. Tap to open the Grok ticket scanner — snap with the shutter, or tap <strong>Photos</strong> to add an image from your library. Grok cleans the ticket, reads the fields, and lets you confirm before saving. If you scan a ticket # that’s already saved, you’ll get a duplicate warning and it won’t save twice.</p>
+                    <p>Every load has a camera icon. <strong style="color:#ef4444;">Red</strong> = no ticket yet. <strong style="color:#60a5fa;">Blue ticket</strong> = ticket + info saved. Tap to open the Grok ticket scanner — snap with the shutter, or tap <strong>Photos</strong> to add an image from your library. Grok first checks that the photo is a Colorado Materials or Hunter Stone ticket; if it isn’t, scanning stops before cleanup or text reading. Known tickets are cleaned, fields are read, and you confirm before saving. If you scan a ticket # that’s already saved, you’ll get a duplicate warning and it won’t save twice.</p>
                     <div class="help-tip"><strong>Tip:</strong> Scans are saved on your phone first so they work offline. Scanning inside Edit shows a <strong style="color:#3b82f6;">blue ticket icon</strong> until you tap Save.</div>
                 </div>
                 <div class="help-section">
@@ -831,7 +831,7 @@
         <button type="button" class="scan-cancel-btn" id="scanCancelBtn">Cancel</button>
     </div>
 
-    <!-- driverpay-scanner:2.12.27 -->
+    <!-- driverpay-scanner:2.12.28 -->
     <div class="doc-scanner" id="docScanner" aria-hidden="true" role="dialog" aria-label="Grok ticket scanner">
         <div class="doc-scanner-stage">
             <video id="docScannerVideo" class="doc-scanner-video" playsinline muted autoplay></video>
@@ -1122,7 +1122,7 @@
 
         function applySettingsToHeader() {
             const sub = document.getElementById('headerSubtitle');
-            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v2.12.27`;
+            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v2.12.28`;
         }
 
         let savedScrollY = 0;
@@ -1833,7 +1833,7 @@
         async function findTicketFromPhoto(file) {
             const ready = await ensureGrokReadyForScan();
             if (!ready) return;
-            showScanOverlay('Finding Ticket…', 'Grok is reading the photo to match a saved ticket');
+            showScanOverlay('Checking Ticket…', 'Colorado Materials · Hunter Stone only');
             try {
                 const dataUrl = await fileToUploadDataUrl(file);
                 // Prefer a modest upload size for OCR-only find
@@ -1843,6 +1843,16 @@
                     const c = canvasFromImage(img, 1600);
                     ocrUrl = c.toDataURL('image/jpeg', 0.85);
                 } catch (_) {}
+                const detect = await grokDetectKnownTicket(ocrUrl);
+                if (!detect || !detect.isKnownPlantTicket) {
+                    hideScanOverlay();
+                    await appAlert(
+                        'Only Colorado Materials and Hunter Stone tickets can be scanned. This photo doesn\'t look like either plant ticket, so text reading was skipped.',
+                        { title: 'Unknown Ticket' }
+                    );
+                    return;
+                }
+                showScanOverlay('Finding Ticket…', 'Grok is reading the photo to match a saved ticket');
                 const ocr = await grokReadTicket(ocrUrl);
                 hideScanOverlay();
                 const matches = matchTicketsFromOcr(ocr);
@@ -2244,6 +2254,7 @@
         const GROK_IMAGINE_MODEL = 'grok-imagine-image'; // cheapest Imagine edit model ($0.02) — not -quality ($0.05)
         const SCAN_UPLOAD_EDGE = 1280; // smaller uploads = less chance of mobile hang on Imagine
         const SCAN_JPEG_QUALITY = 0.65;
+        const SCAN_DETECT_TIMEOUT_MS = 30000;
         const SCAN_CLEAN_TIMEOUT_MS = 90000;
         const SCAN_OCR_TIMEOUT_MS = 60000;
 
@@ -2905,6 +2916,83 @@
             });
         }
 
+        async function grokDetectKnownTicket(dataUrl) {
+            const key = getGrokApiKey();
+            if (!key) throw new Error('No Grok API key set.');
+            const prompt = [
+                'You are DriverPay Pro ticket gatekeeper. Look at this photo ONCE and decide if it is an accepted plant ticket.',
+                'Accepted ONLY:',
+                '1) Colorado Materials scale/load ticket (Colorado Materials, Ltd. header / CM logo)',
+                '2) Hunter Stone scale/load ticket — including Martin Marietta tickets whose plant line says Hunter Stone, OR "HUNTER STONE / A Division of Colorado Materials"',
+                '',
+                'Reject (isKnownPlantTicket=false) for: water bottles, cans, random objects, selfies, dashboards without a ticket, blank paper, receipts, other plants, generic weigh tickets that are not Colorado Materials or Hunter Stone, or anything that is clearly not one of those two tickets.',
+                'If unsure because the image is too blurry/dark but it still looks like a paper scale ticket from one of those plants, set isKnownPlantTicket=true and plant to best guess or null.',
+                'If it is clearly not one of those two tickets, set isKnownPlantTicket=false.',
+                '',
+                'Return ONLY valid JSON:',
+                '{"isKnownPlantTicket":boolean,"plant":"Colorado Materials"|"Hunter Stone"|null,"reason":string}',
+                'Do not extract miles/tons/ticket fields. Do not invent a third plant name.'
+            ].join('\n');
+
+            let uploadUrl = dataUrl;
+            try {
+                if (dataUrl && dataUrl.indexOf('data:') === 0 && dataUrl.length > 700000) {
+                    const img = await loadImageFromUrl(dataUrl);
+                    uploadUrl = canvasFromImage(img, 1024).toDataURL('image/jpeg', 0.6);
+                }
+            } catch (_) {}
+
+            console.log('[scan] Grok ticket detect request…');
+            pushScanLog('info', ['Detect start', 'model=' + GROK_CHAT_MODEL]);
+            const res = await fetchWithTimeout('https://api.x.ai/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'content-type': 'application/json',
+                    'Authorization': 'Bearer ' + key
+                },
+                body: JSON.stringify({
+                    model: GROK_CHAT_MODEL,
+                    temperature: 0,
+                    max_tokens: 220,
+                    messages: [{
+                        role: 'user',
+                        content: [
+                            { type: 'image_url', image_url: { url: uploadUrl, detail: 'low' } },
+                            { type: 'text', text: prompt }
+                        ]
+                    }]
+                })
+            }, SCAN_DETECT_TIMEOUT_MS, 'Grok ticket check');
+            if (!res.ok) {
+                let body = '';
+                try { body = await res.text(); } catch (_) {}
+                console.error('[scan] Detect error', res.status, body.slice(0, 400));
+                pushScanLog('error', ['Detect HTTP ' + res.status, body.slice(0, 300)]);
+                throw new Error('Grok ticket check failed (HTTP ' + res.status + '). Enable Chat models (e.g. grok-build-0.1) on your API key.');
+            }
+            const json = await res.json();
+            const text = (json && json.choices && json.choices[0] && json.choices[0].message && json.choices[0].message.content)
+                ? String(json.choices[0].message.content).trim()
+                : '';
+            const m = text.match(/\{[\s\S]*\}/);
+            if (!m) {
+                return { isKnownPlantTicket: false, plant: null, reason: text || 'No structured detect response' };
+            }
+            try {
+                const parsed = JSON.parse(m[0]);
+                const plant = normalizePlantName(parsed.plant || null);
+                const flagged = parsed.isKnownPlantTicket === true || parsed.isKnownPlantTicket === 'true';
+                // Accept when Grok names a known plant or explicitly flags a known ticket (blurry but looks right).
+                return {
+                    isKnownPlantTicket: !!(plant || flagged),
+                    plant: plant,
+                    reason: parsed.reason ? String(parsed.reason) : ''
+                };
+            } catch (_) {
+                return { isKnownPlantTicket: false, plant: null, reason: text };
+            }
+        }
+
         async function grokCleanTicketImage(dataUrl) {
             const key = getGrokApiKey();
             if (!key) throw new Error('No Grok API key set.');
@@ -3117,6 +3205,43 @@
 
         async function processWithGrok(originalDataUrl) {
             bindScanOverlayOnce();
+            showScanOverlay('Checking Ticket…', 'Colorado Materials · Hunter Stone only');
+            let detect;
+            try {
+                detect = await grokDetectKnownTicket(originalDataUrl);
+                pushScanLog('info', [
+                    'Detect OK',
+                    'known=' + !!detect.isKnownPlantTicket,
+                    'plant=' + (detect.plant || 'null'),
+                    'reason=' + String(detect.reason || '').slice(0, 120)
+                ]);
+            } catch (err) {
+                const detectError = formatScanError(err, 'Ticket check failed');
+                console.error('[scan] detect failed:', err);
+                pushScanLog('error', ['detect failed', detectError]);
+                hideScanOverlay();
+                await appAlert(detectError, { title: 'Grok Ticket Check Issue' });
+                return { rejected: true, cleaned: null, ocr: null, cleanupError: null };
+            }
+
+            if (scanAbortController && scanAbortController.signal.aborted) {
+                throw new Error('Scan cancelled');
+            }
+
+            if (!detect || !detect.isKnownPlantTicket) {
+                pushScanLog('warn', [
+                    'rejected before OCR',
+                    'plant=' + ((detect && detect.plant) || 'null'),
+                    'reason=' + String((detect && detect.reason) || '').slice(0, 120)
+                ]);
+                hideScanOverlay();
+                await appAlert(
+                    'Only Colorado Materials and Hunter Stone tickets can be scanned. This photo doesn\'t look like either plant ticket, so cleanup and text reading were skipped.',
+                    { title: 'Unknown Ticket' }
+                );
+                return { rejected: true, cleaned: null, ocr: null, cleanupError: null };
+            }
+
             showScanOverlay('Grok Cleaning Ticket…', 'Removing background · B&W · upright · sharpening');
             let cleaned = originalDataUrl;
             let cleanupError = null;
@@ -3141,6 +3266,8 @@
             let ocr = emptyOcr('');
             try {
                 ocr = await grokReadTicket(cleaned);
+                // Prefer detect plant if OCR left it blank but detect named a known plant.
+                if (!ocr.plant && detect.plant) ocr.plant = detect.plant;
                 pushScanLog('info', ['OCR OK', 'plant=' + (ocr.plant || 'null'), 'truck=' + (ocr.truckNumber || 'null')]);
             } catch (err) {
                 const ocrError = formatScanError(err, 'OCR failed');
@@ -3151,7 +3278,7 @@
             } finally {
                 hideScanOverlay();
             }
-            return { cleaned, ocr, cleanupError };
+            return { rejected: false, cleaned, ocr, cleanupError };
         }
 
         async function runGrokPipeline(originalDataUrl) {
@@ -3163,8 +3290,10 @@
             scanPipelineActive = true;
             scanAbortController = new AbortController();
             try {
-                const { cleaned, ocr } = await processWithGrok(originalDataUrl);
+                const result = await processWithGrok(originalDataUrl);
+                if (!result || result.rejected) return;
                 if (scanAbortController && scanAbortController.signal.aborted) return;
+                const { cleaned, ocr } = result;
                 if (await rejectUnknownPlant(ocr)) return;
                 await openDocReview(originalDataUrl, cleaned, ocr);
             } catch (err) {
