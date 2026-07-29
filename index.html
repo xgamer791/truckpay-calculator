@@ -2257,6 +2257,7 @@
         const SCAN_DETECT_TIMEOUT_MS = 30000;
         const SCAN_CLEAN_TIMEOUT_MS = 90000;
         const SCAN_OCR_TIMEOUT_MS = 60000;
+        const SCAN_OCR_EDGE = 1280;
 
         let scanAbortController = null;
         let scanPipelineActive = false;
@@ -3151,6 +3152,18 @@
             };
         }
 
+        async function prepareVisionUpload(dataUrl, maxEdge, quality) {
+            const edge = maxEdge || SCAN_OCR_EDGE;
+            const q = (quality == null) ? 0.7 : quality;
+            try {
+                const img = await loadImageFromUrl(dataUrl);
+                const canvas = canvasFromImage(img, edge);
+                return canvas.toDataURL('image/jpeg', q);
+            } catch (_) {
+                return dataUrl;
+            }
+        }
+
         async function grokReadTicket(dataUrl) {
             const key = getGrokApiKey();
             const guide = await loadScannerGuide();
@@ -3177,8 +3190,11 @@
                 '===== end scanner.md ====='
             ].join('\n');
 
-            console.log('[scan] Grok OCR request (with scanner.md plant memory)…');
-            pushScanLog('info', ['OCR start', 'model=' + GROK_CHAT_MODEL]);
+            // Shrink Imagine PNG → JPEG before OCR so the read stays ~seconds, not a 60s client abort.
+            const uploadUrl = await prepareVisionUpload(dataUrl, SCAN_OCR_EDGE, 0.72);
+            console.log('[scan] Grok OCR request (with scanner.md plant memory)…', 'bytes≈', uploadUrl.length);
+            pushScanLog('info', ['OCR start', 'model=' + GROK_CHAT_MODEL, 'bytes≈' + uploadUrl.length]);
+
             const res = await fetchWithTimeout('https://api.x.ai/v1/chat/completions', {
                 method: 'POST',
                 headers: {
@@ -3192,7 +3208,7 @@
                     messages: [{
                         role: 'user',
                         content: [
-                            { type: 'image_url', image_url: { url: dataUrl, detail: 'high' } },
+                            { type: 'image_url', image_url: { url: uploadUrl, detail: 'high' } },
                             { type: 'text', text: prompt }
                         ]
                     }]
@@ -3203,7 +3219,13 @@
                 try { body = await res.text(); } catch (_) {}
                 console.error('[scan] OCR error', res.status, body.slice(0, 400));
                 pushScanLog('error', ['OCR HTTP ' + res.status, body.slice(0, 300)]);
-                throw new Error('Grok text read failed (HTTP ' + res.status + '). Enable Chat models (e.g. grok-build-0.1) on your API key.');
+                if (res.status === 401 || res.status === 403) {
+                    throw new Error('Grok text read failed (HTTP ' + res.status + '). Check your API key and enable Chat models (e.g. ' + GROK_CHAT_MODEL + ').');
+                }
+                if (res.status >= 500) {
+                    throw new Error('Grok text read failed (HTTP ' + res.status + '). xAI had a temporary server error — try again.');
+                }
+                throw new Error('Grok text read failed (HTTP ' + res.status + ').' + (body ? ' ' + body.slice(0, 120) : ''));
             }
             const json = await res.json();
             const text = (json && json.choices && json.choices[0] && json.choices[0].message && json.choices[0].message.content)
@@ -3289,21 +3311,28 @@
 
             showScanOverlay('Grok Reading Ticket…', 'Plant · job · times · truck · miles/tons');
             let ocr = emptyOcr('');
+            let ocrFailed = false;
             try {
                 ocr = await grokReadTicket(cleaned);
                 // Prefer detect plant if OCR left it blank but detect named a known plant.
                 if (!ocr.plant && detect.plant) ocr.plant = detect.plant;
                 pushScanLog('info', ['OCR OK', 'plant=' + (ocr.plant || 'null'), 'truck=' + (ocr.truckNumber || 'null')]);
             } catch (err) {
+                ocrFailed = true;
                 const ocrError = formatScanError(err, 'OCR failed');
                 console.error('[scan] OCR failed:', err);
                 pushScanLog('error', ['OCR failed', ocrError]);
+                // Keep plant from the earlier ticket check so a timeout is not treated as Unknown Ticket.
+                if (detect && detect.plant) ocr.plant = detect.plant;
                 hideScanOverlay();
-                await appAlert(ocrError, { title: 'Grok Read Issue' });
+                await appAlert(
+                    ocrError + '\n\nOpening the ticket for you to fill fields manually. This was not marked as an unknown plant.',
+                    { title: 'Grok Read Issue' }
+                );
             } finally {
                 hideScanOverlay();
             }
-            return { rejected: false, cleaned, ocr, cleanupError };
+            return { rejected: false, cleaned, ocr, cleanupError, ocrFailed };
         }
 
         async function runGrokPipeline(originalDataUrl) {
@@ -3318,8 +3347,9 @@
                 const result = await processWithGrok(originalDataUrl);
                 if (!result || result.rejected) return;
                 if (scanAbortController && scanAbortController.signal.aborted) return;
-                const { cleaned, ocr } = result;
-                if (await rejectUnknownPlant(ocr)) return;
+                const { cleaned, ocr, ocrFailed } = result;
+                // OCR timeout/error ≠ unknown plant. Only reject when OCR actually returned and plant is unknown.
+                if (!ocrFailed && await rejectUnknownPlant(ocr)) return;
                 await openDocReview(originalDataUrl, cleaned, ocr);
             } catch (err) {
                 const msg = formatScanError(err, 'Scan failed');
