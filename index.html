@@ -6,8 +6,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="driverpay-build" content="2.12.40">
-    <title>DriverPay Pro v2.12.40</title>
+    <meta name="driverpay-build" content="2.12.41">
+    <title>DriverPay Pro v2.12.41</title>
     <script>
     (function () {
         var meta = document.querySelector('meta[name="driverpay-build"]');
@@ -384,7 +384,7 @@
     <header class="app-header">
         <div class="header-title">
             <h1>DriverPay <span>Pro</span></h1>
-            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v2.12.40</p>
+            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v2.12.41</p>
         </div>
         <div class="menu-container">
             <button class="menu-btn" onclick="toggleMenu(event)" aria-label="Menu">
@@ -487,7 +487,7 @@
             </div>
             <div class="footer-tagline">Built for the long haul</div>
             <div class="footer-meta">
-                <span class="footer-version">v2.12.40</span>
+                <span class="footer-version">v2.12.41</span>
                 <span class="footer-meta-dot"></span>
                 <span>© 2026</span>
                 <span class="footer-meta-dot"></span>
@@ -1037,7 +1037,7 @@
 
         function applySettingsToHeader() {
             const sub = document.getElementById('headerSubtitle');
-            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v2.12.40`;
+            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v2.12.41`;
         }
 
         let savedScrollY = 0;
@@ -2392,20 +2392,21 @@
             };
         }
 
-        // ---- OpenCV.js document contour scanner (Web Worker) -------------------------
-        // Browser JS only. Contour → approxPolyDP(exactly 4) → convex. No Hough-line quads.
+        // ---- OpenCV.js edge-first document scanner (Web Worker) ----------------------
+        // bilateral → adaptive Canny → closed loops → 4-gon/minAreaRect → side-edge score.
         const OPENCV_JS_SRC = 'https://docs.opencv.org/4.7.0/opencv.js';
         const DOC_DETECT_W = 640;
         const DOC_DETECT_INTERVAL_MS = 70;
         const DOC_MIN_AREA_RATIO = 0.02;
-        const DOC_MAX_AREA_RATIO = 0.62;
+        const DOC_MAX_AREA_RATIO = 0.65;
         const DOC_LOCK_HITS = 4;
         const DOC_UNLOCK_MISSES = 2;
         const DOC_MAX_CORNER_SHIFT_RATIO = 0.045;
         const DOC_MIN_IOU = 0.72;
         const DOC_LOST_GRACE_MS = 180;
-        const DOC_MIN_SCORE = 70;
+        const DOC_MIN_SCORE = 72;
         const DOC_SMOOTH = 0.45;
+        const DOC_MIN_EDGE = 28; // min mean gradient along each side
 
         const liveScanner = window.liveScanner = {
             active: false,
@@ -2570,15 +2571,15 @@
             const bal = oppositeSideBalance(ordered);
             const minSide = Math.min(w, h) * 0.04;
             if (Math.min(...bal.sides) < minSide) return false;
-            if (bal.balW < 0.62 || bal.balH < 0.62) return false;
+            if (bal.balW < 0.55 || bal.balH < 0.55) return false;
             const aspect = bal.avgW / Math.max(1, bal.avgH);
-            if (aspect < 0.35 || aspect > 4.0) return false;
+            if (aspect < 0.3 || aspect > 4.2) return false;
             const angles = cornerAngles(ordered);
             if (!angles) return false;
-            for (const deg of angles) if (deg < 68 || deg > 112) return false;
-            if (diagonalRatio(ordered) < 0.8) return false;
-            if (rectangularity(ordered) < 0.8) return false;
-            if (parallelError(ordered) > 0.2) return false;
+            for (const deg of angles) if (deg < 60 || deg > 120) return false;
+            if (diagonalRatio(ordered) < 0.72) return false;
+            if (rectangularity(ordered) < 0.72) return false;
+            if (parallelError(ordered) > 0.28) return false;
             return true;
         }
 
@@ -2650,26 +2651,291 @@
         }
 
         function buildDocScanWorkerSource() {
-            return [
-                "var cvReady=false,initError=null;",
-                "var DOC_DETECT_W=" + DOC_DETECT_W + ",DOC_MIN_AREA_RATIO=" + DOC_MIN_AREA_RATIO + ",DOC_MAX_AREA_RATIO=" + DOC_MAX_AREA_RATIO + ",DOC_MIN_SCORE=" + DOC_MIN_SCORE + ";",
-                "function postReady(){self.postMessage({type:'ready'});}",
-                "function postErr(m){self.postMessage({type:'error',message:String(m||'OpenCV error')});}",
-                "try{",
-                "self.Module={onRuntimeInitialized:function(){cvReady=true;postReady();}};",
-                "importScripts('" + OPENCV_JS_SRC + "');",
-                "if(typeof cv!=='undefined'&&cv&&cv.Mat){cvReady=true;postReady();}",
-                "}catch(e){initError=e;postErr(e&&e.message?e.message:e);}",
-                "function orderCorners(pts){var s=pts.slice().sort(function(a,b){return a.y-b.y;});var t=s.slice(0,2).sort(function(a,b){return a.x-b.x;});var btm=s.slice(2).sort(function(a,b){return a.x-b.x;});return [t[0],t[1],btm[1],btm[0]];}",
-                "function areaOf(pts){var a=0;for(var i=0;i<4;i++){var j=(i+1)%4;a+=pts[i].x*pts[j].y-pts[j].x*pts[i].y;}return Math.abs(a)/2;}",
-                "function dist2(a,b){var dx=a.x-b.x,dy=a.y-b.y;return dx*dx+dy*dy;}",
-                "function validateQuad(pts,w,h){if(!pts||pts.length!==4)return false;for(var i=0;i<4;i++){if(!isFinite(pts[i].x)||!isFinite(pts[i].y))return false;if(pts[i].x<-2||pts[i].y<-2||pts[i].x>w+2||pts[i].y>h+2)return false;}var ratio=areaOf(pts)/(w*h);if(ratio<DOC_MIN_AREA_RATIO||ratio>DOC_MAX_AREA_RATIO)return false;var sides=[Math.sqrt(dist2(pts[0],pts[1])),Math.sqrt(dist2(pts[1],pts[2])),Math.sqrt(dist2(pts[2],pts[3])),Math.sqrt(dist2(pts[3],pts[0]))];var minSide=Math.min(w,h)*0.04;if(Math.min.apply(null,sides)<minSide)return false;var balW=Math.min(sides[0],sides[2])/Math.max(sides[0],sides[2]);var balH=Math.min(sides[1],sides[3])/Math.max(sides[1],sides[3]);if(balW<0.62||balH<0.62)return false;var avgW=(sides[0]+sides[2])/2,avgH=(sides[1]+sides[3])/2;var aspect=avgW/Math.max(1,avgH);if(aspect<0.35||aspect>4.0)return false;for(var i=0;i<4;i++){var p0=pts[(i+3)%4],p1=pts[i],p2=pts[(i+1)%4];var ax=p0.x-p1.x,ay=p0.y-p1.y,bx=p2.x-p1.x,by=p2.y-p1.y;var la=Math.hypot(ax,ay),lb=Math.hypot(bx,by);if(la<1||lb<1)return false;var cos=Math.max(-1,Math.min(1,(ax*bx+ay*by)/(la*lb)));var deg=Math.acos(cos)*180/Math.PI;if(deg<68||deg>112)return false;}var d1=Math.sqrt(dist2(pts[0],pts[2])),d2=Math.sqrt(dist2(pts[1],pts[3]));if(Math.min(d1,d2)/Math.max(d1,d2)<0.8)return false;var minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;for(var i=0;i<4;i++){var p=pts[i];if(p.x<minX)minX=p.x;if(p.x>maxX)maxX=p.x;if(p.y<minY)minY=p.y;if(p.y>maxY)maxY=p.y;}if(areaOf(pts)/Math.max(1,(maxX-minX)*(maxY-minY))<0.8)return false;return true;}",
-                "function meanInPoly(gray,pts){var mask=null;try{mask=cv.Mat.zeros(gray.rows,gray.cols,cv.CV_8UC1);var arr=[];for(var i=0;i<4;i++){arr.push(Math.round(pts[i].x),Math.round(pts[i].y));}var mv=new cv.MatVector();var poly=cv.matFromArray(4,1,cv.CV_32SC2,arr);mv.push_back(poly);cv.fillPoly(mask,mv,new cv.Scalar(255));poly.delete();mv.delete();var m=cv.mean(gray,mask);return m[0];}catch(e){return 0;}finally{if(mask)mask.delete();}}",
-                "function ringContrast(gray,pts){var inner=null,outer=null,ring=null;try{var minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;for(var i=0;i<4;i++){var p=pts[i];if(p.x<minX)minX=p.x;if(p.x>maxX)maxX=p.x;if(p.y<minY)minY=p.y;if(p.y>maxY)maxY=p.y;}var pad=Math.max(10,Math.round(Math.min(maxX-minX,maxY-minY)*0.18));var x0=Math.max(0,Math.floor(minX-pad)),y0=Math.max(0,Math.floor(minY-pad));var x1=Math.min(gray.cols-1,Math.ceil(maxX+pad)),y1=Math.min(gray.rows-1,Math.ceil(maxY+pad));outer=cv.Mat.zeros(gray.rows,gray.cols,cv.CV_8UC1);inner=cv.Mat.zeros(gray.rows,gray.cols,cv.CV_8UC1);var arr=[];for(var i=0;i<4;i++){arr.push(Math.round(pts[i].x),Math.round(pts[i].y));}var mv=new cv.MatVector();var poly=cv.matFromArray(4,1,cv.CV_32SC2,arr);mv.push_back(poly);cv.fillPoly(inner,mv,new cv.Scalar(255));poly.delete();mv.delete();cv.rectangle(outer,new cv.Point(x0,y0),new cv.Point(x1,y1),new cv.Scalar(255),-1);ring=new cv.Mat();cv.subtract(outer,inner,ring);var nin=cv.countNonZero(inner),nout=cv.countNonZero(ring);if(nin<40||nout<40)return 0;return cv.mean(gray,inner)[0]-cv.mean(gray,ring)[0];}catch(e){return 0;}finally{if(inner)inner.delete();if(outer)outer.delete();if(ring)ring.delete();}}",
-                "function scoreQuad(pts,w,h,gray){if(!validateQuad(pts,w,h))return 0;var ratio=areaOf(pts)/(w*h);var minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;for(var i=0;i<4;i++){var p=pts[i];if(p.x<minX)minX=p.x;if(p.x>maxX)maxX=p.x;if(p.y<minY)minY=p.y;if(p.y>maxY)maxY=p.y;}var rect=areaOf(pts)/Math.max(1,(maxX-minX)*(maxY-minY));var cx=(pts[0].x+pts[1].x+pts[2].x+pts[3].x)/4;var cy=(pts[0].y+pts[1].y+pts[2].y+pts[3].y)/4;var center=1-Math.hypot(cx-w/2,cy-h/2)/Math.hypot(w/2,h/2);var score=Math.max(0,1-Math.abs(ratio-0.14)/0.28)*18+rect*38+Math.max(0,center)*8;if(gray){var inside=meanInPoly(gray,pts);var full=cv.mean(gray)[0];var local=ringContrast(gray,pts);var contrast=inside-full;if(inside<105)return 0;if(local<22&&contrast<22)return 0;if(local<14)return 0;score+=Math.min(45,Math.max(local,contrast)*0.55);score+=Math.min(28,(inside-105)*0.22);if(ratio>0.42)score-=(ratio-0.42)*80;}else{score+=12;}return score;}",
-                "function detectFromImageData(imageData,width,height){if(!cvReady||typeof cv==='undefined'||!cv.Mat)return null;var mats=[];function track(m){if(m)mats.push(m);return m;}function considerContours(contours,gray,best){var frameArea=width*height;var list=[];for(var i=0;i<contours.size();i++){var cnt=contours.get(i);var area=cv.contourArea(cnt);if(area<frameArea*DOC_MIN_AREA_RATIO||area>frameArea*DOC_MAX_AREA_RATIO)continue;list.push({i:i,area:area});}list.sort(function(a,b){return b.area-a.area;});var epsList=[0.01,0.015,0.022,0.03,0.042,0.055];for(var n=0;n<list.length&&n<24;n++){var cnt=contours.get(list[n].i);var peri=cv.arcLength(cnt,true);for(var e=0;e<epsList.length;e++){var approx=track(new cv.Mat());cv.approxPolyDP(cnt,approx,epsList[e]*peri,true);if(approx.rows!==4)continue;if(!cv.isContourConvex(approx))continue;var pts=[];for(var r=0;r<4;r++)pts.push({x:approx.data32S[r*2],y:approx.data32S[r*2+1]});var ordered=orderCorners(pts);if(!validateQuad(ordered,width,height))continue;var sc=scoreQuad(ordered,width,height,gray);if(sc<DOC_MIN_SCORE)continue;if(!best||sc>best.score)best={pts:ordered,score:sc,source:'opencv-contour'};}}return best;}function runMask(mask,gray,best){var k3=track(cv.Mat.ones(3,3,cv.CV_8U));var closed=track(new cv.Mat());cv.morphologyEx(mask,closed,cv.MORPH_CLOSE,k3);var opened=track(new cv.Mat());cv.morphologyEx(closed,opened,cv.MORPH_OPEN,k3);var c=track(new cv.MatVector());var h=track(new cv.Mat());cv.findContours(opened,c,h,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_SIMPLE);return considerContours(c,gray,best);}try{var src=track(new cv.Mat(height,width,cv.CV_8UC4));src.data.set(imageData.data);var gray=track(new cv.Mat());cv.cvtColor(src,gray,cv.COLOR_RGBA2GRAY);var blur=track(new cv.Mat());cv.GaussianBlur(gray,blur,new cv.Size(3,3),0);var best=null;var mu=cv.mean(blur)[0];var thrSet={};function addThr(v){v=Math.round(Math.max(90,Math.min(210,v)));thrSet[v]=1;}addThr(mu+22);addThr(mu+32);addThr(mu+45);addThr(110);addThr(125);addThr(140);addThr(160);if(mu<95){addThr(mu+18);addThr(100);}var keys=Object.keys(thrSet);for(var ti=0;ti<keys.length;ti++){var thr=parseInt(keys[ti],10);var bright=track(new cv.Mat());cv.threshold(blur,bright,thr,255,cv.THRESH_BINARY);best=runMask(bright,blur,best);}var hsv=track(new cv.Mat());cv.cvtColor(src,hsv,cv.COLOR_RGBA2RGB);var hsv2=track(new cv.Mat());cv.cvtColor(hsv,hsv2,cv.COLOR_RGB2HSV);var channels=track(new cv.MatVector());cv.split(hsv2,channels);var vch=channels.get(2);var vblur=track(new cv.Mat());cv.GaussianBlur(vch,vblur,new cv.Size(3,3),0);var vmu=cv.mean(vblur)[0];var vThr=Math.max(120,Math.min(200,vmu+30));var vmask=track(new cv.Mat());cv.threshold(vblur,vmask,vThr,255,cv.THRESH_BINARY);best=runMask(vmask,blur,best);var otsu=track(new cv.Mat());cv.threshold(blur,otsu,0,255,cv.THRESH_BINARY+cv.THRESH_OTSU);best=runMask(otsu,blur,best);var edges=track(new cv.Mat());cv.Canny(blur,edges,40,120);var k5=track(cv.Mat.ones(5,5,cv.CV_8U));var closedE=track(new cv.Mat());cv.morphologyEx(edges,closedE,cv.MORPH_CLOSE,k5);var cE=track(new cv.MatVector());var hE=track(new cv.Mat());cv.findContours(closedE,cE,hE,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_SIMPLE);best=considerContours(cE,blur,best);return best;}catch(e){return null;}finally{for(var k=mats.length-1;k>=0;k--){try{mats[k].delete();}catch(e2){}}}}",
-                "self.onmessage=function(ev){var msg=ev.data||{};if(msg.type==='ping'){self.postMessage({type:cvReady?'ready':'loading',error:initError?String(initError):null});return;}if(msg.type==='detect'){if(!cvReady){self.postMessage({type:'result',id:msg.id,pts:null,score:0,reason:'not-ready'});return;}try{var data=new Uint8ClampedArray(msg.buffer);var imageData=new ImageData(data,msg.width,msg.height);var found=detectFromImageData(imageData,msg.width,msg.height);self.postMessage({type:'result',id:msg.id,pts:found?found.pts:null,score:found?found.score:0,source:found?found.source:null,detectW:msg.width,detectH:msg.height});}catch(e){self.postMessage({type:'result',id:msg.id,pts:null,score:0,reason:String(e&&e.message?e.message:e)});}}};"
-            ].join(String.fromCharCode(10));
+            // Edge-first document detector (OpenCV.js).
+            // bilateral → adaptive Canny → closed edge loops → approxPolyDP(4)/minAreaRect
+            // → score by gradient energy along all four sides. Brightness is secondary only.
+            return `
+var cvReady=false,initError=null;
+var DOC_MIN_AREA_RATIO=${DOC_MIN_AREA_RATIO};
+var DOC_MAX_AREA_RATIO=${DOC_MAX_AREA_RATIO};
+var DOC_MIN_SCORE=${DOC_MIN_SCORE};
+var DOC_MIN_EDGE=${DOC_MIN_EDGE};
+function postReady(){self.postMessage({type:'ready'});}
+function postErr(m){self.postMessage({type:'error',message:String(m||'OpenCV error')});}
+try{
+  self.Module={onRuntimeInitialized:function(){cvReady=true;postReady();}};
+  importScripts('${OPENCV_JS_SRC}');
+  if(typeof cv!=='undefined'&&cv&&cv.Mat){cvReady=true;postReady();}
+}catch(e){initError=e;postErr(e&&e.message?e.message:e);}
+
+function orderCorners(pts){
+  var s=pts.slice().sort(function(a,b){return a.y-b.y;});
+  var t=s.slice(0,2).sort(function(a,b){return a.x-b.x;});
+  var btm=s.slice(2).sort(function(a,b){return a.x-b.x;});
+  return [t[0],t[1],btm[1],btm[0]];
+}
+function areaOf(pts){
+  var a=0;for(var i=0;i<4;i++){var j=(i+1)%4;a+=pts[i].x*pts[j].y-pts[j].x*pts[i].y;}
+  return Math.abs(a)/2;
+}
+function dist2(a,b){var dx=a.x-b.x,dy=a.y-b.y;return dx*dx+dy*dy;}
+function sideLens(pts){
+  return [
+    Math.sqrt(dist2(pts[0],pts[1])),
+    Math.sqrt(dist2(pts[1],pts[2])),
+    Math.sqrt(dist2(pts[2],pts[3])),
+    Math.sqrt(dist2(pts[3],pts[0]))
+  ];
+}
+function validateQuad(pts,w,h){
+  if(!pts||pts.length!==4)return false;
+  for(var i=0;i<4;i++){
+    if(!isFinite(pts[i].x)||!isFinite(pts[i].y))return false;
+    if(pts[i].x<-3||pts[i].y<-3||pts[i].x>w+3||pts[i].y>h+3)return false;
+  }
+  var ratio=areaOf(pts)/(w*h);
+  if(ratio<DOC_MIN_AREA_RATIO||ratio>DOC_MAX_AREA_RATIO)return false;
+  var sides=sideLens(pts);
+  var minSide=Math.min(w,h)*0.035;
+  if(Math.min.apply(null,sides)<minSide)return false;
+  var balW=Math.min(sides[0],sides[2])/Math.max(sides[0],sides[2]);
+  var balH=Math.min(sides[1],sides[3])/Math.max(sides[1],sides[3]);
+  if(balW<0.55||balH<0.55)return false;
+  var avgW=(sides[0]+sides[2])/2,avgH=(sides[1]+sides[3])/2;
+  var aspect=avgW/Math.max(1,avgH);
+  // Physical range for load tickets + cab stickers (portrait or landscape).
+  if(aspect<0.3||aspect>4.2)return false;
+  for(var i=0;i<4;i++){
+    var p0=pts[(i+3)%4],p1=pts[i],p2=pts[(i+1)%4];
+    var ax=p0.x-p1.x,ay=p0.y-p1.y,bx=p2.x-p1.x,by=p2.y-p1.y;
+    var la=Math.hypot(ax,ay),lb=Math.hypot(bx,by);
+    if(la<1||lb<1)return false;
+    var cos=Math.max(-1,Math.min(1,(ax*bx+ay*by)/(la*lb)));
+    var deg=Math.acos(cos)*180/Math.PI;
+    if(deg<60||deg>120)return false;
+  }
+  var d1=Math.sqrt(dist2(pts[0],pts[2])),d2=Math.sqrt(dist2(pts[1],pts[3]));
+  if(Math.min(d1,d2)/Math.max(d1,d2)<0.72)return false;
+  var minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+  for(var i=0;i<4;i++){
+    var p=pts[i];
+    if(p.x<minX)minX=p.x;if(p.x>maxX)maxX=p.x;
+    if(p.y<minY)minY=p.y;if(p.y>maxY)maxY=p.y;
+  }
+  if(areaOf(pts)/Math.max(1,(maxX-minX)*(maxY-minY))<0.72)return false;
+  return true;
+}
+function sampleGrad(grad,x,y){
+  var xi=Math.max(0,Math.min(grad.cols-1,Math.round(x)));
+  var yi=Math.max(0,Math.min(grad.rows-1,Math.round(y)));
+  return grad.data32F[yi*grad.cols+xi];
+}
+function sideEdgeEnergy(grad,a,b){
+  var len=Math.hypot(b.x-a.x,b.y-a.y);
+  if(len<1)return 0;
+  var n=Math.max(12,Math.min(48,Math.round(len/4)));
+  var dx=(b.x-a.x)/n,dy=(b.y-a.y)/n;
+  // unit normal
+  var nx=-(b.y-a.y)/len,ny=(b.x-a.x)/len;
+  var sum=0,hits=0;
+  for(var i=0;i<=n;i++){
+    var x=a.x+dx*i,y=a.y+dy*i;
+    // peak response across the boundary (±2px)
+    var best=0;
+    for(var k=-2;k<=2;k++){
+      var g=sampleGrad(grad,x+nx*k,y+ny*k);
+      if(g>best)best=g;
+    }
+    sum+=best;
+    if(best>=DOC_MIN_EDGE*0.65)hits++;
+  }
+  return {mean:sum/(n+1), coverage:hits/(n+1)};
+}
+function edgeSupport(grad,pts){
+  var sides=[];
+  for(var i=0;i<4;i++){
+    sides.push(sideEdgeEnergy(grad,pts[i],pts[(i+1)%4]));
+  }
+  var mean=0,minM=Infinity,cov=0;
+  for(var i=0;i<4;i++){
+    mean+=sides[i].mean;
+    cov+=sides[i].coverage;
+    if(sides[i].mean<minM)minM=sides[i].mean;
+  }
+  mean/=4;cov/=4;
+  return {mean:mean,min:minM,coverage:cov,sides:sides};
+}
+function meanInPoly(gray,pts){
+  var mask=null;
+  try{
+    mask=cv.Mat.zeros(gray.rows,gray.cols,cv.CV_8UC1);
+    var arr=[];for(var i=0;i<4;i++){arr.push(Math.round(pts[i].x),Math.round(pts[i].y));}
+    var mv=new cv.MatVector();var poly=cv.matFromArray(4,1,cv.CV_32SC2,arr);
+    mv.push_back(poly);cv.fillPoly(mask,mv,new cv.Scalar(255));
+    poly.delete();mv.delete();
+    return cv.mean(gray,mask)[0];
+  }catch(e){return 0;}
+  finally{if(mask)mask.delete();}
+}
+function scoreQuad(pts,w,h,gray,grad){
+  if(!validateQuad(pts,w,h))return 0;
+  var es=edgeSupport(grad,pts);
+  // Core gate: every side must be a real edge. No edge → not a document.
+  if(es.min<DOC_MIN_EDGE)return 0;
+  if(es.coverage<0.55)return 0;
+  var ratio=areaOf(pts)/(w*h);
+  var minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+  for(var i=0;i<4;i++){
+    var p=pts[i];
+    if(p.x<minX)minX=p.x;if(p.x>maxX)maxX=p.x;
+    if(p.y<minY)minY=p.y;if(p.y>maxY)maxY=p.y;
+  }
+  var rect=areaOf(pts)/Math.max(1,(maxX-minX)*(maxY-minY));
+  var cx=(pts[0].x+pts[1].x+pts[2].x+pts[3].x)/4;
+  var cy=(pts[0].y+pts[1].y+pts[2].y+pts[3].y)/4;
+  var center=1-Math.hypot(cx-w/2,cy-h/2)/Math.hypot(w/2,h/2);
+  var score=0;
+  score+=Math.min(55,es.mean*0.55);
+  score+=Math.min(30,es.min*0.45);
+  score+=es.coverage*20;
+  score+=rect*18;
+  score+=Math.max(0,center)*6;
+  score+=Math.max(0,1-Math.abs(ratio-0.18)/0.3)*8;
+  // Soft preference for documents brighter/darker than surroundings (step across border).
+  if(gray){
+    var inside=meanInPoly(gray,pts);
+    var full=cv.mean(gray)[0];
+    var step=Math.abs(inside-full);
+    score+=Math.min(16,step*0.12);
+  }
+  return score;
+}
+function medianOf(mat){
+  // Approximate median via histogram (fast, good enough for Canny auto).
+  var hist=new Array(256);for(var i=0;i<256;i++)hist[i]=0;
+  var data=mat.data;var step=Math.max(1,Math.floor(data.length/8000));
+  var n=0;
+  for(var i=0;i<data.length;i+=step){hist[data[i]]++;n++;}
+  var mid=n/2,acc=0;
+  for(var v=0;v<256;v++){acc+=hist[v];if(acc>=mid)return v;}
+  return 128;
+}
+function boxFromRotatedRect(rr){
+  var mat=new cv.Mat();
+  cv.boxPoints(rr,mat);
+  var pts=[];
+  for(var i=0;i<4;i++)pts.push({x:mat.data32F[i*2],y:mat.data32F[i*2+1]});
+  mat.delete();
+  return orderCorners(pts);
+}
+function considerContour(cnt,gray,grad,best,width,height){
+  var frameArea=width*height;
+  var area=cv.contourArea(cnt);
+  if(area<frameArea*DOC_MIN_AREA_RATIO||area>frameArea*DOC_MAX_AREA_RATIO)return best;
+  var peri=cv.arcLength(cnt,true);
+  var epsList=[0.01,0.015,0.02,0.028,0.04,0.055,0.07];
+  var candidates=[];
+  for(var e=0;e<epsList.length;e++){
+    var approx=new cv.Mat();
+    cv.approxPolyDP(cnt,approx,epsList[e]*peri,true);
+    if(approx.rows===4&&cv.isContourConvex(approx)){
+      var pts=[];
+      for(var r=0;r<4;r++)pts.push({x:approx.data32S[r*2],y:approx.data32S[r*2+1]});
+      candidates.push(orderCorners(pts));
+    }
+    approx.delete();
+  }
+  // When text/noise prevents a clean 4-gon approx, fall back to the fitted rectangle
+  // only if the contour itself is already fairly rectangular.
+  try{
+    var rr=cv.minAreaRect(cnt);
+    var bw=Math.max(rr.size.width,rr.size.height),bh=Math.min(rr.size.width,rr.size.height);
+    if(bw>0&&bh>0){
+      var rectArea=bw*bh;
+      var fill=area/Math.max(1,rectArea);
+      if(fill>=0.72)candidates.push(boxFromRotatedRect(rr));
+    }
+  }catch(e){}
+  for(var c=0;c<candidates.length;c++){
+    var ordered=candidates[c];
+    if(!validateQuad(ordered,width,height))continue;
+    var sc=scoreQuad(ordered,width,height,gray,grad);
+    if(sc<DOC_MIN_SCORE)continue;
+    if(!best||sc>best.score)best={pts:ordered,score:sc,source:'opencv-edge'};
+  }
+  return best;
+}
+function detectFromImageData(imageData,width,height){
+  if(!cvReady||typeof cv==='undefined'||!cv.Mat)return null;
+  var mats=[];
+  function track(m){if(m)mats.push(m);return m;}
+  try{
+    var src=track(new cv.Mat(height,width,cv.CV_8UC4));
+    src.data.set(imageData.data);
+    var gray=track(new cv.Mat());
+    cv.cvtColor(src,gray,cv.COLOR_RGBA2GRAY);
+    // Preserve hard document edges; suppress wood-grain / vinyl texture.
+    var smooth=track(new cv.Mat());
+    cv.bilateralFilter(gray,smooth,7,55,55);
+    // Gradient magnitude used for side-edge scoring.
+    var gx=track(new cv.Mat()),gy=track(new cv.Mat());
+    cv.Sobel(smooth,gx,cv.CV_32F,1,0,3);
+    cv.Sobel(smooth,gy,cv.CV_32F,0,1,3);
+    var grad=track(new cv.Mat());
+    cv.magnitude(gx,gy,grad);
+    // Adaptive Canny from scene median (classic auto-Canny).
+    var med=medianOf(smooth);
+    var lo=Math.max(20,Math.round(0.5*med));
+    var hi=Math.max(lo+20,Math.round(1.4*med));
+    var edges=track(new cv.Mat());
+    cv.Canny(smooth,edges,lo,hi);
+    // Second pass for high-contrast objects on dark grounds (stickers/tickets).
+    var edges2=track(new cv.Mat());
+    cv.Canny(smooth,edges2,40,120);
+    var edgesU=track(new cv.Mat());
+    cv.bitwise_or(edges,edges2,edgesU);
+    var k=track(cv.Mat.ones(5,5,cv.CV_8U));
+    var closed=track(new cv.Mat());
+    cv.morphologyEx(edgesU,closed,cv.MORPH_CLOSE,k);
+    var contours=track(new cv.MatVector());
+    var hier=track(new cv.Mat());
+    cv.findContours(closed,contours,hier,cv.RETR_LIST,cv.CHAIN_APPROX_SIMPLE);
+    var best=null;
+    var frameArea=width*height;
+    var ranked=[];
+    for(var i=0;i<contours.size();i++){
+      var a=cv.contourArea(contours.get(i));
+      if(a>=frameArea*DOC_MIN_AREA_RATIO&&a<=frameArea*DOC_MAX_AREA_RATIO)ranked.push({i:i,a:a});
+    }
+    ranked.sort(function(a,b){return b.a-a.a;});
+    for(var n=0;n<ranked.length&&n<30;n++){
+      best=considerContour(contours.get(ranked[n].i),smooth,grad,best,width,height);
+    }
+    return best;
+  }catch(e){return null;}
+  finally{
+    for(var k=mats.length-1;k>=0;k--){try{mats[k].delete();}catch(e2){}}
+  }
+}
+self.onmessage=function(ev){
+  var msg=ev.data||{};
+  if(msg.type==='ping'){
+    self.postMessage({type:cvReady?'ready':'loading',error:initError?String(initError):null});
+    return;
+  }
+  if(msg.type==='detect'){
+    if(!cvReady){self.postMessage({type:'result',id:msg.id,pts:null,score:0,reason:'not-ready'});return;}
+    try{
+      var data=new Uint8ClampedArray(msg.buffer);
+      var imageData=new ImageData(data,msg.width,msg.height);
+      var found=detectFromImageData(imageData,msg.width,msg.height);
+      self.postMessage({type:'result',id:msg.id,pts:found?found.pts:null,score:found?found.score:0,source:found?found.source:null,detectW:msg.width,detectH:msg.height});
+    }catch(e){
+      self.postMessage({type:'result',id:msg.id,pts:null,score:0,reason:String(e&&e.message?e.message:e)});
+    }
+  }
+};
+`;
         }
 
         function ensureDocScanWorker() {
