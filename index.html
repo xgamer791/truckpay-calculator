@@ -315,8 +315,8 @@
         .doc-viewer-thumbs.show { display: flex; }
         .doc-viewer-thumb { width: 56px; height: 72px; border-radius: 8px; object-fit: cover; border: 2px solid transparent; cursor: pointer; flex: 0 0 auto; opacity: 0.7; }
         .doc-viewer-thumb.active { border-color: #3b82f6; opacity: 1; }
-        .doc-viewer-actions { order: 4; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 12px 16px calc(18px + env(safe-area-inset-bottom, 0px)); }
-        .doc-viewer-actions button { padding: 14px 6px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); color: white; font-size: 10px; font-weight: 900; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; font-family: inherit; }
+        .doc-viewer-actions { order: 4; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; padding: 12px 16px calc(18px + env(safe-area-inset-bottom, 0px)); }
+        .doc-viewer-actions button { padding: 14px 4px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); color: white; font-size: 9px; font-weight: 900; letter-spacing: 0.04em; text-transform: uppercase; cursor: pointer; font-family: inherit; }
         .doc-viewer-actions .danger { color: #fca5a5; border-color: rgba(239,68,68,0.3); }
         .ticket-icon.processing { color: #60a5fa; position: relative; }
         .ticket-icon.processing::after { content: ''; position: absolute; inset: -2px; border: 2px solid rgba(96,165,250,0.35); border-top-color: #60a5fa; border-radius: 50%; animation: scan-spin 0.8s linear infinite; }
@@ -950,6 +950,7 @@
         </div>
         <div class="doc-viewer-actions">
             <button type="button" id="docViewerShare">Share</button>
+            <button type="button" id="docViewerCopy">Copy</button>
             <button type="button" id="docViewerAdd">Add</button>
             <button type="button" id="docViewerReplace">Replace</button>
             <button type="button" class="danger" id="docViewerDelete">Delete</button>
@@ -2554,7 +2555,7 @@
         const INFO_ICON_SVG = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="10" x2="12" y2="16"/><circle cx="12" cy="7.25" r="0.9" fill="currentColor" stroke="none"/></svg>';
 
         let processingLoads = new Set();
-        const docViewer = { sId: null, lId: null, docs: [], index: 0 };
+        const docViewer = { sId: null, lId: null, docs: [], index: 0, infoRows: [] };
 
         function loadKey(sId, lId) { return String(sId) + '|' + String(lId); }
 
@@ -3681,6 +3682,7 @@
                 closeDocViewer();
             };
             document.getElementById('docViewerShare').onclick = () => shareCurrentDoc();
+            document.getElementById('docViewerCopy').onclick = () => copyCurrentDocInfo();
             bindViewerImageTapOnce();
             bindLightboxZoomOnce();
         }
@@ -3719,22 +3721,26 @@
             const infoWrap = document.getElementById('docViewerInfo');
             const infoGrid = document.getElementById('docViewerInfoGrid');
             const o = doc.ocr || {};
+            const has = (v) => v != null && String(v).trim() !== '';
+            // Grid fills L→R, T→B. Tons sits opposite Truck # (where Time In used to be);
+            // Time In / Time Out always finish on the bottom row.
             const rows = [
                 ['Plant', o.plant],
                 ['Job #', o.jobNumber],
                 ['Date', o.date],
                 ['Ticket #', o.ticketNumber],
                 ['Truck #', o.truckNumber],
-                ['Time In', o.timeIn],
-                ['Time Out', o.timeOut],
-                ['Miles', (o.miles != null && o.miles !== '') ? o.miles : ''],
-                ['Tons', (o.tons != null && o.tons !== '') ? o.tons : ''],
-            ].filter(([, v]) => v != null && String(v).trim() !== '');
-            if (o.wrongTruckNote) rows.push(['Note', o.wrongTruckNote]);
+                ['Tons', has(o.tons) ? o.tons : ''],
+            ].filter(([, v]) => has(v));
+            if (has(o.miles)) rows.push(['Miles', o.miles, true]);
+            if (has(o.timeIn)) rows.push(['Time In', o.timeIn]);
+            if (has(o.timeOut)) rows.push(['Time Out', o.timeOut]);
+            if (o.wrongTruckNote) rows.push(['Note', o.wrongTruckNote, true]);
+            docViewer.infoRows = rows.map(([label, val]) => [label, val]);
             if (infoWrap && infoGrid) {
                 if (rows.length) {
-                    infoGrid.innerHTML = rows.map(([label, val]) =>
-                        `<div class="doc-info-item${label === 'Note' ? ' full' : ''}"><div class="doc-info-label">${escapeHtml(label)}</div><div class="doc-info-value">${escapeHtml(String(val))}</div></div>`
+                    infoGrid.innerHTML = rows.map(([label, val, full]) =>
+                        `<div class="doc-info-item${full ? ' full' : ''}"><div class="doc-info-label">${escapeHtml(label)}</div><div class="doc-info-value">${escapeHtml(String(val))}</div></div>`
                     ).join('');
                     infoWrap.classList.remove('hidden');
                 } else {
@@ -3782,6 +3788,58 @@
             document.body.appendChild(a);
             a.click();
             a.remove();
+        }
+
+        async function copyTextToClipboard(text) {
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(text);
+                    return true;
+                }
+            } catch (_) {}
+            try {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.setAttribute('readonly', '');
+                ta.style.position = 'fixed';
+                ta.style.top = '-9999px';
+                document.body.appendChild(ta);
+                ta.focus();
+                ta.select();
+                const ok = document.execCommand('copy');
+                ta.remove();
+                return !!ok;
+            } catch (_) {
+                return false;
+            }
+        }
+
+        async function copyCurrentDocInfo() {
+            const rows = Array.isArray(docViewer.infoRows) ? docViewer.infoRows : [];
+            const titleEl = document.getElementById('docViewerTitle');
+            const subEl = document.getElementById('docViewerSub');
+            const lines = [];
+            if (titleEl && titleEl.textContent) lines.push(titleEl.textContent.trim());
+            if (subEl && subEl.textContent) lines.push(subEl.textContent.trim());
+            if (lines.length) lines.push('');
+            rows.forEach(([label, val]) => {
+                if (val == null || String(val).trim() === '') return;
+                lines.push(label + ': ' + String(val).trim());
+            });
+            const text = lines.join('\n').trim();
+            if (!text) {
+                await appAlert('No ticket details to copy yet.', { title: 'Copy' });
+                return;
+            }
+            const ok = await copyTextToClipboard(text);
+            const btn = document.getElementById('docViewerCopy');
+            if (btn) {
+                const original = btn.dataset.label || btn.textContent;
+                btn.dataset.label = original;
+                btn.textContent = ok ? 'Copied!' : 'Failed';
+                setTimeout(() => { btn.textContent = btn.dataset.label || 'Copy'; }, 1200);
+            }
+            if (!ok) await appAlert(text, { title: 'Copy this text' });
         }
 
         function renderHistory(){
