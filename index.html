@@ -6,8 +6,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="driverpay-build" content="2.12.28">
-    <title>DriverPay Pro v2.12.28</title>
+    <meta name="driverpay-build" content="2.12.29">
+    <title>DriverPay Pro v2.12.29</title>
     <script>
     (function () {
         var meta = document.querySelector('meta[name="driverpay-build"]');
@@ -396,7 +396,7 @@
     <header class="app-header">
         <div class="header-title">
             <h1>DriverPay <span>Pro</span></h1>
-            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v2.12.28</p>
+            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v2.12.29</p>
         </div>
         <div class="menu-container">
             <button class="menu-btn" onclick="toggleMenu(event)" aria-label="Menu">
@@ -499,7 +499,7 @@
             </div>
             <div class="footer-tagline">Built for the long haul</div>
             <div class="footer-meta">
-                <span class="footer-version">v2.12.28</span>
+                <span class="footer-version">v2.12.29</span>
                 <span class="footer-meta-dot"></span>
                 <span>© 2026</span>
                 <span class="footer-meta-dot"></span>
@@ -831,7 +831,7 @@
         <button type="button" class="scan-cancel-btn" id="scanCancelBtn">Cancel</button>
     </div>
 
-    <!-- driverpay-scanner:2.12.28 -->
+    <!-- driverpay-scanner:2.12.29 -->
     <div class="doc-scanner" id="docScanner" aria-hidden="true" role="dialog" aria-label="Grok ticket scanner">
         <div class="doc-scanner-stage">
             <video id="docScannerVideo" class="doc-scanner-video" playsinline muted autoplay></video>
@@ -1122,7 +1122,7 @@
 
         function applySettingsToHeader() {
             const sub = document.getElementById('headerSubtitle');
-            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v2.12.28`;
+            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v2.12.29`;
         }
 
         let savedScrollY = 0;
@@ -2929,46 +2929,61 @@
                 'If unsure because the image is too blurry/dark but it still looks like a paper scale ticket from one of those plants, set isKnownPlantTicket=true and plant to best guess or null.',
                 'If it is clearly not one of those two tickets, set isKnownPlantTicket=false.',
                 '',
-                'Return ONLY valid JSON:',
-                '{"isKnownPlantTicket":boolean,"plant":"Colorado Materials"|"Hunter Stone"|null,"reason":string}',
+                'Return ONLY valid JSON (no markdown):',
+                '{"isKnownPlantTicket":true|false,"plant":"Colorado Materials" or "Hunter Stone" or null,"reason":"short reason"}',
                 'Do not extract miles/tons/ticket fields. Do not invent a third plant name.'
             ].join('\n');
 
+            // Always shrink — large camera JPEGs have caused api.x.ai 500s on this gate.
             let uploadUrl = dataUrl;
             try {
-                if (dataUrl && dataUrl.indexOf('data:') === 0 && dataUrl.length > 700000) {
-                    const img = await loadImageFromUrl(dataUrl);
-                    uploadUrl = canvasFromImage(img, 1024).toDataURL('image/jpeg', 0.6);
-                }
+                const img = await loadImageFromUrl(dataUrl);
+                uploadUrl = canvasFromImage(img, 1024).toDataURL('image/jpeg', 0.65);
             } catch (_) {}
 
-            console.log('[scan] Grok ticket detect request…');
-            pushScanLog('info', ['Detect start', 'model=' + GROK_CHAT_MODEL]);
-            const res = await fetchWithTimeout('https://api.x.ai/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'content-type': 'application/json',
-                    'Authorization': 'Bearer ' + key
-                },
-                body: JSON.stringify({
-                    model: GROK_CHAT_MODEL,
-                    temperature: 0,
-                    max_tokens: 220,
-                    messages: [{
-                        role: 'user',
-                        content: [
-                            { type: 'image_url', image_url: { url: uploadUrl, detail: 'low' } },
-                            { type: 'text', text: prompt }
-                        ]
-                    }]
-                })
-            }, SCAN_DETECT_TIMEOUT_MS, 'Grok ticket check');
+            async function postDetect() {
+                return fetchWithTimeout('https://api.x.ai/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'content-type': 'application/json',
+                        'Authorization': 'Bearer ' + key
+                    },
+                    body: JSON.stringify({
+                        model: GROK_CHAT_MODEL,
+                        temperature: 0,
+                        max_tokens: 300,
+                        messages: [{
+                            role: 'user',
+                            content: [
+                                // Match working OCR request shape (detail: high). detail:low has 500'd on xAI.
+                                { type: 'image_url', image_url: { url: uploadUrl, detail: 'high' } },
+                                { type: 'text', text: prompt }
+                            ]
+                        }]
+                    })
+                }, SCAN_DETECT_TIMEOUT_MS, 'Grok ticket check');
+            }
+
+            console.log('[scan] Grok ticket detect request…', 'bytes≈', uploadUrl.length);
+            pushScanLog('info', ['Detect start', 'model=' + GROK_CHAT_MODEL, 'bytes≈' + uploadUrl.length]);
+            let res = await postDetect();
+            if (!res.ok && res.status >= 500) {
+                pushScanLog('warn', ['Detect HTTP ' + res.status + ' — retrying once']);
+                await new Promise((r) => setTimeout(r, 600));
+                res = await postDetect();
+            }
             if (!res.ok) {
                 let body = '';
                 try { body = await res.text(); } catch (_) {}
                 console.error('[scan] Detect error', res.status, body.slice(0, 400));
                 pushScanLog('error', ['Detect HTTP ' + res.status, body.slice(0, 300)]);
-                throw new Error('Grok ticket check failed (HTTP ' + res.status + '). Enable Chat models (e.g. grok-build-0.1) on your API key.');
+                if (res.status === 401 || res.status === 403) {
+                    throw new Error('Grok ticket check failed (HTTP ' + res.status + '). Check your API key and enable Chat models (e.g. ' + GROK_CHAT_MODEL + ').');
+                }
+                if (res.status >= 500) {
+                    throw new Error('Grok ticket check failed (HTTP ' + res.status + '). xAI had a temporary server error — try again in a moment.');
+                }
+                throw new Error('Grok ticket check failed (HTTP ' + res.status + ').' + (body ? ' ' + body.slice(0, 120) : ''));
             }
             const json = await res.json();
             const text = (json && json.choices && json.choices[0] && json.choices[0].message && json.choices[0].message.content)
@@ -3218,10 +3233,20 @@
             } catch (err) {
                 const detectError = formatScanError(err, 'Ticket check failed');
                 console.error('[scan] detect failed:', err);
-                pushScanLog('error', ['detect failed', detectError]);
+                pushScanLog('warn', ['detect failed, continuing to cleanup/OCR', detectError]);
+                // Don't hard-block the scan on transient xAI 500s — only skip OCR when
+                // detect confidently says "not a known ticket". Post-OCR plant reject remains.
+                detect = {
+                    isKnownPlantTicket: true,
+                    plant: null,
+                    reason: 'detect unavailable — deferred to OCR',
+                    deferred: true
+                };
                 hideScanOverlay();
-                await appAlert(detectError, { title: 'Grok Ticket Check Issue' });
-                return { rejected: true, cleaned: null, ocr: null, cleanupError: null };
+                await appAlert(
+                    detectError + '\n\nContinuing with cleanup and text reading. Unknown plants will still be blocked after OCR.',
+                    { title: 'Grok Ticket Check Issue' }
+                );
             }
 
             if (scanAbortController && scanAbortController.signal.aborted) {
