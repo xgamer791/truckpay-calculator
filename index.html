@@ -6,8 +6,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="driverpay-build" content="2.12.35">
-    <title>DriverPay Pro v2.12.35</title>
+    <meta name="driverpay-build" content="2.12.36">
+    <title>DriverPay Pro v2.12.36</title>
     <script>
     (function () {
         var meta = document.querySelector('meta[name="driverpay-build"]');
@@ -217,6 +217,70 @@
         @keyframes scan-spin { to { transform: rotate(360deg); } }
         .doc-btn { width: 48px; height: 48px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.16); background: rgba(15,23,42,0.72); color: white; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; -webkit-tap-highlight-color: transparent; }
         .doc-btn:active { transform: scale(0.94); background: rgba(30,41,59,0.9); }
+
+        /* Custom CamScanner-style document capture */
+        .doc-scanner { position: fixed; inset: 0; z-index: 10040; background: #000; display: none; flex-direction: column; color: white; }
+        .doc-scanner.active { display: flex; }
+        .doc-scanner-stage { position: relative; flex: 1; min-height: 0; background: #000; overflow: hidden; }
+        .doc-scanner-stage video, .doc-scanner-stage canvas.doc-scanner-overlay {
+            position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+        }
+        .doc-scanner-stage canvas.doc-scanner-overlay { pointer-events: none; }
+        .doc-scanner-top {
+            position: absolute; top: 0; left: 0; right: 0; z-index: 3;
+            display: flex; justify-content: space-between; align-items: center; gap: 10px;
+            padding: calc(10px + env(safe-area-inset-top, 0px)) 14px 10px;
+            background: linear-gradient(180deg, rgba(0,0,0,0.65), transparent);
+        }
+        .doc-scanner-status {
+            position: absolute; left: 50%; top: calc(64px + env(safe-area-inset-top, 0px));
+            transform: translateX(-50%); z-index: 3;
+            padding: 7px 12px; border-radius: 999px; background: rgba(15,23,42,0.72);
+            font-size: 11px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
+            color: #e2e8f0; white-space: nowrap; pointer-events: none;
+        }
+        .doc-scanner-status.locked { color: #86efac; background: rgba(22,101,52,0.55); }
+        .doc-scanner-bottom {
+            position: absolute; left: 0; right: 0; bottom: 0; z-index: 3;
+            display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px;
+            padding: 18px 22px calc(22px + env(safe-area-inset-bottom, 0px));
+            background: linear-gradient(0deg, rgba(0,0,0,0.78), transparent);
+        }
+        .doc-scanner-bottom .doc-photos-btn {
+            justify-self: start; display: inline-flex; flex-direction: column; align-items: center; gap: 6px;
+            background: transparent; border: none; color: #cbd5e1; font-size: 10px; font-weight: 800;
+            letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; font-family: inherit; padding: 0;
+        }
+        .doc-scanner-bottom .doc-photos-btn .doc-photos-icon {
+            width: 44px; height: 44px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.18);
+            background: rgba(15,23,42,0.55); display: flex; align-items: center; justify-content: center; color: white;
+        }
+        .doc-capture {
+            width: 76px; height: 76px; border-radius: 999px; border: 4px solid #2dd4bf;
+            background: white; box-shadow: 0 0 0 4px rgba(45,212,191,0.25); cursor: pointer; justify-self: center;
+        }
+        .doc-capture:active { transform: scale(0.94); }
+        .doc-capture:disabled { opacity: 0.45; }
+        .doc-scanner-corner-hint { justify-self: end; width: 44px; }
+        .doc-perm {
+            position: absolute; inset: 0; z-index: 5; display: none; align-items: center; justify-content: center;
+            padding: 28px; background: rgba(2,6,23,0.92);
+        }
+        .doc-perm.show { display: flex; }
+        .doc-perm-card {
+            width: 100%; max-width: 360px; background: #0f172a; border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 18px; padding: 22px;
+        }
+        .doc-perm-title { font-size: 18px; font-weight: 900; margin-bottom: 8px; }
+        .doc-perm-msg { font-size: 14px; font-weight: 600; color: #94a3b8; line-height: 1.5; margin-bottom: 18px; }
+        .doc-perm-actions { display: flex; flex-direction: column; gap: 10px; }
+        .doc-perm-primary, .doc-perm-secondary {
+            width: 100%; padding: 14px; border-radius: 12px; font-weight: 900; font-size: 13px;
+            letter-spacing: 0.08em; text-transform: uppercase; font-family: inherit; cursor: pointer; border: none;
+        }
+        .doc-perm-primary { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; }
+        .doc-perm-secondary { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); color: #e2e8f0; }
+
         /* Visually hidden — display:none can break iOS file picker */
         .doc-file-input { position: fixed; left: 0; top: 0; width: 1px; height: 1px; opacity: 0; overflow: hidden; z-index: 10050; }
 
@@ -320,7 +384,7 @@
     <header class="app-header">
         <div class="header-title">
             <h1>DriverPay <span>Pro</span></h1>
-            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v2.12.35</p>
+            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v2.12.36</p>
         </div>
         <div class="menu-container">
             <button class="menu-btn" onclick="toggleMenu(event)" aria-label="Menu">
@@ -423,7 +487,7 @@
             </div>
             <div class="footer-tagline">Built for the long haul</div>
             <div class="footer-meta">
-                <span class="footer-version">v2.12.35</span>
+                <span class="footer-version">v2.12.36</span>
                 <span class="footer-meta-dot"></span>
                 <span>© 2026</span>
                 <span class="footer-meta-dot"></span>
@@ -594,7 +658,7 @@
                         <span class="help-section-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span>
                         Load Tickets
                     </div>
-                    <p>Every load has a camera icon. <strong style="color:#ef4444;">Red</strong> = no ticket yet. <strong style="color:#60a5fa;">Blue</strong> = photo saved on this device. Tap the camera to take a photo or choose one from your gallery — it’s saved with the load. No cloud upload.</p>
+                    <p>Every load has a camera icon. <strong style="color:#ef4444;">Red</strong> = no ticket yet. <strong style="color:#60a5fa;">Blue</strong> = photo saved on this device. Tap the camera to open the in-app scanner — live green edges lock onto the ticket, then tap capture. Use <strong>Photos</strong> to import from your library. Saved on this device only.</p>
                     <div class="help-tip"><strong>Tip:</strong> Capturing inside Edit stages the photo until you tap Save.</div>
                 </div>
                 <div class="help-section">
@@ -729,9 +793,48 @@
         </div>
     </div>
 
-    <input type="file" id="ticketFileInput" class="doc-file-input"
-        accept="image/*" capture="environment"
+
+    <div class="doc-scanner" id="docScanner" aria-hidden="true" role="dialog" aria-label="Ticket scanner">
+        <div class="doc-scanner-stage">
+            <video id="docScannerVideo" playsinline muted autoplay></video>
+            <canvas id="docScannerOverlay" class="doc-scanner-overlay"></canvas>
+            <div class="doc-scanner-top">
+                <button type="button" class="doc-btn" id="docScannerClose" aria-label="Close scanner">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+                <button type="button" class="doc-btn" id="docScannerFlash" aria-label="Toggle flash">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                </button>
+            </div>
+            <div class="doc-scanner-status" id="docScannerStatus">Align ticket in frame</div>
+            <div class="doc-scanner-bottom">
+                <label class="doc-photos-btn" for="ticketGalleryInput" id="docScannerGallery">
+                    <span class="doc-photos-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                    </span>
+                    Photos
+                </label>
+                <button type="button" class="doc-capture" id="docScannerCapture" aria-label="Capture ticket"></button>
+                <div class="doc-scanner-corner-hint" aria-hidden="true"></div>
+            </div>
+            <div class="doc-perm" id="docScannerPerm">
+                <div class="doc-perm-card">
+                    <div class="doc-perm-title" id="docScannerPermTitle">Camera access needed</div>
+                    <div class="doc-perm-msg" id="docScannerPermMsg">Allow camera access to scan load tickets with live edge detection. You can also add a photo from your library.</div>
+                    <div class="doc-perm-actions">
+                        <button type="button" class="doc-perm-primary" id="docScannerRetryCam">Try Again</button>
+                        <label class="doc-perm-secondary" for="ticketGalleryInput" style="display:block; text-align:center; box-sizing:border-box;">Add from Photos</label>
+                        <button type="button" class="doc-perm-secondary" id="docScannerPermClose">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <input type="file" id="ticketGalleryInput" class="doc-file-input"
+        accept="image/jpeg,image/png,image/heic,image/heif,.jpg,.jpeg,.png,.heic,.heif"
         aria-hidden="true" tabindex="-1">
+
 
     <div class="ticket-lightbox" id="ticketLightbox" aria-hidden="true" role="dialog" aria-label="Ticket gallery">
         <div class="ticket-lightbox-top">
@@ -934,7 +1037,7 @@
 
         function applySettingsToHeader() {
             const sub = document.getElementById('headerSubtitle');
-            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v2.12.35`;
+            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v2.12.36`;
         }
 
         let savedScrollY = 0;
@@ -2289,10 +2392,799 @@
             };
         }
 
-        function bindTicketFileInputOnce() {
-            if (ticketCapture.bound) return;
-            ticketCapture.bound = true;
-            const input = document.getElementById('ticketFileInput');
+        // ---- CamScanner-style live document scanner (pure JS CV) --------------------
+        const DOC_DETECT_W = 360;
+        const DOC_DETECT_INTERVAL_MS = 70;
+        const DOC_MIN_AREA_RATIO = 0.05;
+        const DOC_MAX_AREA_RATIO = 0.85;
+        const DOC_LOCK_HITS = 2;
+        const DOC_SMOOTH = 0.35;
+
+        const liveScanner = {
+            active: false,
+            stream: null,
+            track: null,
+            flashOn: false,
+            raf: 0,
+            detectBusy: false,
+            lastDetectAt: 0,
+            detectW: DOC_DETECT_W,
+            detectH: 1,
+            targetPts: null,
+            displayPts: null,
+            lastGood: null,
+            hitStreak: 0,
+            confidence: 0,
+            videoReady: false,
+            capturing: false,
+            uiBound: false,
+            galleryBound: false
+        };
+
+        function orderQuadPoints(pts) {
+            if (!pts || pts.length !== 4) return null;
+            const sorted = pts.slice().sort((a, b) => a.y - b.y);
+            const top = sorted.slice(0, 2).sort((a, b) => a.x - b.x);
+            const bottom = sorted.slice(2).sort((a, b) => a.x - b.x);
+            return [top[0], top[1], bottom[1], bottom[0]]; // TL TR BR BL
+        }
+
+        function quadArea(pts) {
+            let a = 0;
+            for (let i = 0; i < pts.length; i++) {
+                const j = (i + 1) % pts.length;
+                a += pts[i].x * pts[j].y - pts[j].x * pts[i].y;
+            }
+            return Math.abs(a) / 2;
+        }
+
+        function dist2(a, b) {
+            const dx = a.x - b.x, dy = a.y - b.y;
+            return dx * dx + dy * dy;
+        }
+
+        function scoreQuadPts(pts, w, h) {
+            if (!pts || pts.length !== 4) return 0;
+            const area = quadArea(pts);
+            const ratio = area / (w * h);
+            if (ratio < DOC_MIN_AREA_RATIO || ratio > DOC_MAX_AREA_RATIO) return 0;
+            const sides = [
+                Math.sqrt(dist2(pts[0], pts[1])),
+                Math.sqrt(dist2(pts[1], pts[2])),
+                Math.sqrt(dist2(pts[2], pts[3])),
+                Math.sqrt(dist2(pts[3], pts[0]))
+            ];
+            const balW = Math.min(sides[0], sides[2]) / Math.max(sides[0], sides[2]);
+            const balH = Math.min(sides[1], sides[3]) / Math.max(sides[1], sides[3]);
+            if (balW < 0.35 || balH < 0.35) return 0;
+            const avgW = (sides[0] + sides[2]) / 2;
+            const avgH = (sides[1] + sides[3]) / 2;
+            const aspect = avgW / Math.max(1, avgH);
+            if (aspect < 0.3 || aspect > 3.5) return 0;
+            let score = (balW + balH) * 40;
+            score += Math.max(0, 1 - Math.abs(ratio - 0.28) / 0.28) * 30;
+            score += Math.min(aspect, 1 / aspect) * 20;
+            return score;
+        }
+
+        function approxPolyDP(points, epsilon) {
+            if (!points || points.length < 3) return points ? points.slice() : [];
+            const sqEps = epsilon * epsilon;
+            function perpDistSq(p, a, b) {
+                const dx = b.x - a.x, dy = b.y - a.y;
+                const len2 = dx * dx + dy * dy;
+                if (len2 < 1e-9) return dist2(p, a);
+                let t = ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2;
+                t = Math.max(0, Math.min(1, t));
+                return dist2(p, { x: a.x + t * dx, y: a.y + t * dy });
+            }
+            function simplify(pts) {
+                let maxD = 0, idx = 0;
+                const end = pts.length - 1;
+                for (let i = 1; i < end; i++) {
+                    const d = perpDistSq(pts[i], pts[0], pts[end]);
+                    if (d > maxD) { maxD = d; idx = i; }
+                }
+                if (maxD > sqEps) {
+                    const left = simplify(pts.slice(0, idx + 1));
+                    const right = simplify(pts.slice(idx));
+                    return left.slice(0, -1).concat(right);
+                }
+                return [pts[0], pts[end]];
+            }
+            return simplify(points);
+        }
+
+        function convexHull(points) {
+            if (points.length < 3) return points.slice();
+            const pts = points.slice().sort((a, b) => a.x === b.x ? a.y - b.y : a.x - b.x);
+            const cross = (o, a, b) => (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+            const lower = [];
+            for (const p of pts) {
+                while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], p) <= 0) lower.pop();
+                lower.push(p);
+            }
+            const upper = [];
+            for (let i = pts.length - 1; i >= 0; i--) {
+                const p = pts[i];
+                while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], p) <= 0) upper.pop();
+                upper.push(p);
+            }
+            lower.pop(); upper.pop();
+            return lower.concat(upper);
+        }
+
+        function detectQuadPureJS(canvas) {
+            const w = canvas.width, h = canvas.height;
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            const img = ctx.getImageData(0, 0, w, h);
+            const data = img.data;
+            const gray = new Uint8Array(w * h);
+            let sum = 0;
+            for (let i = 0, p = 0; i < data.length; i += 4, p++) {
+                const g = (data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114) | 0;
+                gray[p] = g;
+                sum += g;
+            }
+            const mean = sum / (w * h);
+            const thr = Math.max(130, Math.min(200, mean + 18));
+
+            // Binary: bright paper
+            const bin = new Uint8Array(w * h);
+            for (let i = 0; i < gray.length; i++) bin[i] = gray[i] >= thr ? 1 : 0;
+
+            // Morphological close (dilate then erode) 3x3
+            const tmp = new Uint8Array(w * h);
+            const morph = (src, dst, mode) => {
+                for (let y = 1; y < h - 1; y++) {
+                    for (let x = 1; x < w - 1; x++) {
+                        let v = mode === 'dilate' ? 0 : 1;
+                        for (let dy = -1; dy <= 1; dy++) {
+                            for (let dx = -1; dx <= 1; dx++) {
+                                const s = src[(y + dy) * w + (x + dx)];
+                                if (mode === 'dilate') { if (s) v = 1; }
+                                else { if (!s) v = 0; }
+                            }
+                        }
+                        dst[y * w + x] = v;
+                    }
+                }
+            };
+            morph(bin, tmp, 'dilate');
+            morph(tmp, bin, 'erode');
+
+            // Largest connected component (4-connected)
+            const seen = new Uint8Array(w * h);
+            const bestMask = new Uint8Array(w * h);
+            let bestPts = null, bestCount = 0;
+            const stack = new Int32Array(w * h);
+            const comp = new Int32Array(w * h);
+            for (let y = 0; y < h; y++) {
+                for (let x = 0; x < w; x++) {
+                    const start = y * w + x;
+                    if (!bin[start] || seen[start]) continue;
+                    let sp = 0, cp = 0;
+                    stack[sp++] = start;
+                    seen[start] = 1;
+                    const pts = [];
+                    let count = 0;
+                    let minX = x, maxX = x, minY = y, maxY = y;
+                    while (sp) {
+                        const idx = stack[--sp];
+                        comp[cp++] = idx;
+                        const cx = idx % w, cy = (idx / w) | 0;
+                        count++;
+                        if (cx < minX) minX = cx;
+                        if (cx > maxX) maxX = cx;
+                        if (cy < minY) minY = cy;
+                        if (cy > maxY) maxY = cy;
+                        if ((count & 7) === 0) pts.push({ x: cx, y: cy });
+                        const nbs = [idx - 1, idx + 1, idx - w, idx + w];
+                        for (let n = 0; n < 4; n++) {
+                            const ni = nbs[n];
+                            if (ni < 0 || ni >= w * h) continue;
+                            if (!bin[ni] || seen[ni]) continue;
+                            if (n < 2 && ((ni / w) | 0) !== cy) continue;
+                            seen[ni] = 1;
+                            stack[sp++] = ni;
+                        }
+                    }
+                    if (count > bestCount) {
+                        bestCount = count;
+                        bestMask.fill(0);
+                        for (let i = 0; i < cp; i++) bestMask[comp[i]] = 1;
+                        pts.push({ x: minX, y: minY }, { x: maxX, y: minY }, { x: maxX, y: maxY }, { x: minX, y: maxY });
+                        bestPts = pts;
+                    }
+                }
+            }
+            if (!bestPts || bestCount < w * h * DOC_MIN_AREA_RATIO) return null;
+
+            const edgePts = [];
+            for (let y = 1; y < h - 1; y++) {
+                for (let x = 1; x < w - 1; x++) {
+                    const i = y * w + x;
+                    if (!bestMask[i]) continue;
+                    if (!bestMask[i - 1] || !bestMask[i + 1] || !bestMask[i - w] || !bestMask[i + w]) {
+                        if (((x + y) & 1) === 0) edgePts.push({ x, y });
+                    }
+                }
+            }
+            const hull = convexHull(edgePts.length > 12 ? edgePts : bestPts.concat(edgePts));
+            if (hull.length < 4) return null;
+            const peri = hull.reduce((acc, p, i) => {
+                const q = hull[(i + 1) % hull.length];
+                return acc + Math.sqrt(dist2(p, q));
+            }, 0);
+            let approx = approxPolyDP(hull.concat([hull[0]]), Math.max(3, peri * 0.02));
+            if (approx.length > 1 && approx[0].x === approx[approx.length - 1].x && approx[0].y === approx[approx.length - 1].y) {
+                approx = approx.slice(0, -1);
+            }
+            let quad = null;
+            if (approx.length === 4) {
+                quad = orderQuadPoints(approx);
+            } else if (approx.length > 4) {
+                // take 4 extremes
+                let tl = approx[0], tr = approx[0], br = approx[0], bl = approx[0];
+                for (const p of approx) {
+                    if (p.x + p.y < tl.x + tl.y) tl = p;
+                    if (p.x - p.y > tr.x - tr.y) tr = p;
+                    if (p.x + p.y > br.x + br.y) br = p;
+                    if (-p.x + p.y > -bl.x + bl.y) bl = p;
+                }
+                quad = orderQuadPoints([tl, tr, br, bl]);
+            } else {
+                // fallback axis-aligned bbox of hull
+                let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+                for (const p of hull) {
+                    if (p.x < minX) minX = p.x;
+                    if (p.x > maxX) maxX = p.x;
+                    if (p.y < minY) minY = p.y;
+                    if (p.y > maxY) maxY = p.y;
+                }
+                quad = [
+                    { x: minX, y: minY }, { x: maxX, y: minY },
+                    { x: maxX, y: maxY }, { x: minX, y: maxY }
+                ];
+            }
+            const score = scoreQuadPts(quad, w, h);
+            if (score < 28) return null;
+            return { pts: quad, score };
+        }
+
+        function detectDocumentQuad(canvas) {
+            return detectQuadPureJS(canvas);
+        }
+
+        function solveHomography(src, dst) {
+            // src/dst: arrays of 4 {x,y}. Solve for h0..h7 (h8=1).
+            const A = [];
+            const b = [];
+            for (let i = 0; i < 4; i++) {
+                const x = src[i].x, y = src[i].y;
+                const u = dst[i].x, v = dst[i].y;
+                A.push([x, y, 1, 0, 0, 0, -x * u, -y * u]);
+                b.push(u);
+                A.push([0, 0, 0, x, y, 1, -x * v, -y * v]);
+                b.push(v);
+            }
+            // Gaussian elimination
+            const n = 8;
+            const M = A.map((row, i) => row.concat([b[i]]));
+            for (let col = 0; col < n; col++) {
+                let pivot = col;
+                for (let r = col + 1; r < n; r++) {
+                    if (Math.abs(M[r][col]) > Math.abs(M[pivot][col])) pivot = r;
+                }
+                if (Math.abs(M[pivot][col]) < 1e-10) return null;
+                if (pivot !== col) { const tmp = M[col]; M[col] = M[pivot]; M[pivot] = tmp; }
+                const div = M[col][col];
+                for (let c = col; c <= n; c++) M[col][c] /= div;
+                for (let r = 0; r < n; r++) {
+                    if (r === col) continue;
+                    const f = M[r][col];
+                    for (let c = col; c <= n; c++) M[r][c] -= f * M[col][c];
+                }
+            }
+            const h = M.map(row => row[n]);
+            h.push(1);
+            return h;
+        }
+
+        function invertHomography(h) {
+            const m = [
+                [h[0], h[1], h[2]],
+                [h[3], h[4], h[5]],
+                [h[6], h[7], h[8]]
+            ];
+            const det =
+                m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]) -
+                m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]) +
+                m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
+            if (Math.abs(det) < 1e-12) return null;
+            const inv = [
+                [
+                    (m[1][1] * m[2][2] - m[1][2] * m[2][1]) / det,
+                    (m[0][2] * m[2][1] - m[0][1] * m[2][2]) / det,
+                    (m[0][1] * m[1][2] - m[0][2] * m[1][1]) / det
+                ],
+                [
+                    (m[1][2] * m[2][0] - m[1][0] * m[2][2]) / det,
+                    (m[0][0] * m[2][2] - m[0][2] * m[2][0]) / det,
+                    (m[0][2] * m[1][0] - m[0][0] * m[1][2]) / det
+                ],
+                [
+                    (m[1][0] * m[2][1] - m[1][1] * m[2][0]) / det,
+                    (m[0][1] * m[2][0] - m[0][0] * m[2][1]) / det,
+                    (m[0][0] * m[1][1] - m[0][1] * m[1][0]) / det
+                ]
+            ];
+            return [inv[0][0], inv[0][1], inv[0][2], inv[1][0], inv[1][1], inv[1][2], inv[2][0], inv[2][1], inv[2][2]];
+        }
+
+        function warpPerspectiveCanvas(srcCanvas, corners, outW, outH) {
+            const dst = [
+                { x: 0, y: 0 },
+                { x: outW - 1, y: 0 },
+                { x: outW - 1, y: outH - 1 },
+                { x: 0, y: outH - 1 }
+            ];
+            const H = solveHomography(corners, dst);
+            if (!H) return null;
+            const Hi = invertHomography(H);
+            if (!Hi) return null;
+            const sw = srcCanvas.width, sh = srcCanvas.height;
+            const sctx = srcCanvas.getContext('2d', { willReadFrequently: true });
+            const srcData = sctx.getImageData(0, 0, sw, sh).data;
+            const out = document.createElement('canvas');
+            out.width = outW; out.height = outH;
+            const octx = out.getContext('2d');
+            const outImg = octx.createImageData(outW, outH);
+            const od = outImg.data;
+            const sample = (x, y) => {
+                if (x < 0 || y < 0 || x >= sw - 1 || y >= sh - 1) return [0, 0, 0];
+                const x0 = x | 0, y0 = y | 0;
+                const fx = x - x0, fy = y - y0;
+                const i00 = (y0 * sw + x0) * 4;
+                const i10 = i00 + 4;
+                const i01 = i00 + sw * 4;
+                const i11 = i01 + 4;
+                const r = srcData[i00] * (1 - fx) * (1 - fy) + srcData[i10] * fx * (1 - fy) + srcData[i01] * (1 - fx) * fy + srcData[i11] * fx * fy;
+                const g = srcData[i00 + 1] * (1 - fx) * (1 - fy) + srcData[i10 + 1] * fx * (1 - fy) + srcData[i01 + 1] * (1 - fx) * fy + srcData[i11 + 1] * fx * fy;
+                const b = srcData[i00 + 2] * (1 - fx) * (1 - fy) + srcData[i10 + 2] * fx * (1 - fy) + srcData[i01 + 2] * (1 - fx) * fy + srcData[i11 + 2] * fx * fy;
+                return [r, g, b];
+            };
+            for (let y = 0; y < outH; y++) {
+                for (let x = 0; x < outW; x++) {
+                    const denom = Hi[6] * x + Hi[7] * y + Hi[8];
+                    const sx = (Hi[0] * x + Hi[1] * y + Hi[2]) / denom;
+                    const sy = (Hi[3] * x + Hi[4] * y + Hi[5]) / denom;
+                    const [r, g, b] = sample(sx, sy);
+                    const i = (y * outW + x) * 4;
+                    od[i] = r; od[i + 1] = g; od[i + 2] = b; od[i + 3] = 255;
+                }
+            }
+            octx.putImageData(outImg, 0, 0);
+            return out;
+        }
+
+        function targetDimsFromQuad(pts) {
+            const w = (Math.sqrt(dist2(pts[0], pts[1])) + Math.sqrt(dist2(pts[3], pts[2]))) / 2;
+            const h = (Math.sqrt(dist2(pts[0], pts[3])) + Math.sqrt(dist2(pts[1], pts[2]))) / 2;
+            let outW = Math.round(w), outH = Math.round(h);
+            const longEdge = TICKET_JPEG_EDGE;
+            const scale = longEdge / Math.max(outW, outH, 1);
+            if (scale < 1 || scale > 1.5) {
+                outW = Math.max(200, Math.round(outW * Math.min(scale, 1.5)));
+                outH = Math.max(200, Math.round(outH * Math.min(scale, 1.5)));
+            }
+            // Prefer portrait for tickets
+            if (outW > outH) { const t = outW; outW = outH; outH = t; }
+            return { w: outW, h: outH };
+        }
+
+        function enhanceScanCanvas(canvas) {
+            // Light document cleanup: contrast stretch + mild unsharp — keep natural photo look.
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const d = img.data;
+            let min = 255, max = 0;
+            for (let i = 0; i < d.length; i += 4) {
+                const g = d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114;
+                if (g < min) min = g;
+                if (g > max) max = g;
+            }
+            const range = Math.max(1, max - min);
+            for (let i = 0; i < d.length; i += 4) {
+                for (let c = 0; c < 3; c++) {
+                    let v = ((d[i + c] - min) / range) * 255;
+                    // slight gamma toward white paper
+                    v = Math.pow(Math.max(0, Math.min(255, v)) / 255, 0.92) * 255;
+                    d[i + c] = v;
+                }
+            }
+            ctx.putImageData(img, 0, 0);
+            return canvas;
+        }
+
+        function scaleCorners(corners, fromW, fromH, toW, toH) {
+            const sx = toW / fromW, sy = toH / fromH;
+            return corners.map(p => ({ x: p.x * sx, y: p.y * sy }));
+        }
+
+        function mapPtsToOverlay(pts, srcW, srcH, canvasW, canvasH) {
+            // object-fit: cover mapping from detect canvas -> overlay
+            const scale = Math.max(canvasW / srcW, canvasH / srcH);
+            const dw = srcW * scale, dh = srcH * scale;
+            const ox = (canvasW - dw) / 2, oy = (canvasH - dh) / 2;
+            return pts.map(p => ({ x: p.x * scale + ox, y: p.y * scale + oy }));
+        }
+
+        function drawScannerOverlay(canvas, pts, confidence) {
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (!pts || pts.length !== 4) return;
+            ctx.save();
+            // dim outside
+            ctx.fillStyle = 'rgba(0,0,0,0.28)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.beginPath();
+            ctx.moveTo(pts[0].x, pts[0].y);
+            for (let i = 1; i < 4; i++) ctx.lineTo(pts[i].x, pts[i].y);
+            ctx.closePath();
+            ctx.fill();
+            ctx.globalCompositeOperation = 'source-over';
+            const locked = confidence >= 0.7;
+            ctx.strokeStyle = locked ? '#4ade80' : '#86efac';
+            ctx.lineWidth = locked ? 3.5 : 2.5;
+            ctx.shadowColor = 'rgba(74,222,128,0.45)';
+            ctx.shadowBlur = locked ? 10 : 4;
+            ctx.beginPath();
+            ctx.moveTo(pts[0].x, pts[0].y);
+            for (let i = 1; i < 4; i++) ctx.lineTo(pts[i].x, pts[i].y);
+            ctx.closePath();
+            ctx.stroke();
+            for (const p of pts) {
+                ctx.beginPath();
+                ctx.fillStyle = locked ? '#4ade80' : '#bbf7d0';
+                ctx.arc(p.x, p.y, locked ? 5 : 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.restore();
+        }
+
+        function setScannerStatus(text, locked) {
+            const el = document.getElementById('docScannerStatus');
+            if (!el) return;
+            el.textContent = text || 'Align ticket in frame';
+            el.classList.toggle('locked', !!locked);
+        }
+
+        function showCameraPermission(title, msg) {
+            const perm = document.getElementById('docScannerPerm');
+            const t = document.getElementById('docScannerPermTitle');
+            const m = document.getElementById('docScannerPermMsg');
+            if (t && title) t.textContent = title;
+            if (m && msg) m.textContent = msg;
+            if (perm) perm.classList.add('show');
+        }
+
+        function hideCameraPermission() {
+            const perm = document.getElementById('docScannerPerm');
+            if (perm) perm.classList.remove('show');
+        }
+
+        function stopScannerCamera() {
+            if (liveScanner.raf) {
+                cancelAnimationFrame(liveScanner.raf);
+                liveScanner.raf = 0;
+            }
+            const video = document.getElementById('docScannerVideo');
+            if (video) {
+                try { video.pause(); } catch (_) {}
+                try { video.srcObject = null; } catch (_) {}
+            }
+            if (liveScanner.stream) {
+                try { liveScanner.stream.getTracks().forEach(t => t.stop()); } catch (_) {}
+            }
+            liveScanner.stream = null;
+            liveScanner.track = null;
+            liveScanner.videoReady = false;
+            liveScanner.targetPts = null;
+            liveScanner.displayPts = null;
+            liveScanner.lastGood = null;
+            liveScanner.hitStreak = 0;
+            liveScanner.confidence = 0;
+            liveScanner.flashOn = false;
+            const overlay = document.getElementById('docScannerOverlay');
+            if (overlay) {
+                const ctx = overlay.getContext('2d');
+                if (ctx) ctx.clearRect(0, 0, overlay.width, overlay.height);
+            }
+        }
+
+        function closeDocScanner() {
+            if (!liveScanner.active) return;
+            liveScanner.active = false;
+            liveScanner.capturing = false;
+            stopScannerCamera();
+            hideCameraPermission();
+            const root = document.getElementById('docScanner');
+            if (root) {
+                root.classList.remove('active');
+                root.setAttribute('aria-hidden', 'true');
+            }
+            // Keep body locked if another modal is open
+            const editOpen = document.getElementById('editOverlay') && document.getElementById('editOverlay').classList.contains('active');
+            const viewerOpen = document.getElementById('docViewer') && document.getElementById('docViewer').classList.contains('active');
+            if (editOpen || viewerOpen) lockBodyScroll();
+            else unlockBodyScroll();
+        }
+
+        async function startScannerCamera() {
+            hideCameraPermission();
+            const video = document.getElementById('docScannerVideo');
+            if (!video) return;
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                showCameraPermission('Camera not supported', 'This browser cannot open a live camera. Use Photos to add a ticket image instead.');
+                return;
+            }
+            try {
+                stopScannerCamera();
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    audio: false,
+                    video: {
+                        facingMode: { ideal: 'environment' },
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
+                    }
+                });
+                liveScanner.stream = stream;
+                liveScanner.track = stream.getVideoTracks()[0] || null;
+                video.srcObject = stream;
+                await video.play().catch(() => {});
+                liveScanner.videoReady = true;
+                setScannerStatus('Align ticket in frame', false);
+                startDetectLoop();
+            } catch (err) {
+                console.error('[scan] getUserMedia failed:', err);
+                const name = (err && err.name) || '';
+                if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
+                    showCameraPermission('Camera access needed', 'Allow camera access to scan load tickets with live edge detection. You can also add a photo from your library.');
+                } else if (name === 'NotFoundError' || name === 'DevicesNotFoundError') {
+                    showCameraPermission('No camera found', 'No camera is available on this device. Use Photos to add a ticket image.');
+                } else {
+                    showCameraPermission('Camera unavailable', 'Could not open the camera. Use Photos to add a ticket image instead.');
+                }
+            }
+        }
+
+        function startDetectLoop() {
+            const video = document.getElementById('docScannerVideo');
+            const overlay = document.getElementById('docScannerOverlay');
+            if (!video || !overlay) return;
+            const detectCanvas = document.createElement('canvas');
+            const detectCtx = detectCanvas.getContext('2d', { willReadFrequently: true });
+
+            const tick = () => {
+                if (!liveScanner.active) return;
+                liveScanner.raf = requestAnimationFrame(tick);
+                const cw = overlay.clientWidth || window.innerWidth;
+                const ch = overlay.clientHeight || window.innerHeight;
+                if (overlay.width !== cw || overlay.height !== ch) {
+                    overlay.width = cw;
+                    overlay.height = ch;
+                }
+
+                // Smooth chase
+                if (liveScanner.targetPts && liveScanner.targetPts.length === 4) {
+                    if (!liveScanner.displayPts) {
+                        liveScanner.displayPts = liveScanner.targetPts.map(p => ({ x: p.x, y: p.y }));
+                    } else {
+                        for (let i = 0; i < 4; i++) {
+                            liveScanner.displayPts[i].x += (liveScanner.targetPts[i].x - liveScanner.displayPts[i].x) * DOC_SMOOTH;
+                            liveScanner.displayPts[i].y += (liveScanner.targetPts[i].y - liveScanner.displayPts[i].y) * DOC_SMOOTH;
+                        }
+                    }
+                }
+                const drawPts = liveScanner.displayPts
+                    ? mapPtsToOverlay(liveScanner.displayPts, liveScanner.detectW, liveScanner.detectH, overlay.width, overlay.height)
+                    : null;
+                drawScannerOverlay(overlay, drawPts, liveScanner.confidence);
+
+                const now = performance.now();
+                if (liveScanner.detectBusy || now - liveScanner.lastDetectAt < DOC_DETECT_INTERVAL_MS) return;
+                if (!liveScanner.videoReady || video.readyState < 2) return;
+                const vw = video.videoWidth, vh = video.videoHeight;
+                if (!vw || !vh) return;
+
+                liveScanner.detectBusy = true;
+                liveScanner.lastDetectAt = now;
+                try {
+                    detectCanvas.width = DOC_DETECT_W;
+                    detectCanvas.height = Math.max(1, Math.round(vh * (DOC_DETECT_W / vw)));
+                    liveScanner.detectW = detectCanvas.width;
+                    liveScanner.detectH = detectCanvas.height;
+                    detectCtx.drawImage(video, 0, 0, detectCanvas.width, detectCanvas.height);
+                    const found = detectDocumentQuad(detectCanvas);
+                    if (found && found.pts) {
+                        liveScanner.hitStreak++;
+                        liveScanner.targetPts = found.pts;
+                        liveScanner.confidence = Math.min(1, found.score / 90);
+                        if (liveScanner.hitStreak >= DOC_LOCK_HITS) {
+                            liveScanner.lastGood = {
+                                corners: found.pts.map(p => ({ x: p.x, y: p.y })),
+                                detectW: detectCanvas.width,
+                                detectH: detectCanvas.height,
+                                score: found.score,
+                                at: Date.now()
+                            };
+                            setScannerStatus('Edges locked — tap capture', true);
+                        } else {
+                            setScannerStatus('Hold steady…', false);
+                        }
+                    } else {
+                        liveScanner.hitStreak = 0;
+                        liveScanner.confidence = Math.max(0, liveScanner.confidence - 0.15);
+                        if (liveScanner.confidence < 0.25) {
+                            liveScanner.targetPts = null;
+                            liveScanner.displayPts = null;
+                            liveScanner.lastGood = null;
+                            setScannerStatus('Align ticket in frame', false);
+                        } else {
+                            setScannerStatus('Looking for edges…', false);
+                        }
+                    }
+                } catch (err) {
+                    console.warn('[scan] detect tick error:', err);
+                } finally {
+                    liveScanner.detectBusy = false;
+                }
+            };
+            if (liveScanner.raf) cancelAnimationFrame(liveScanner.raf);
+            liveScanner.raf = requestAnimationFrame(tick);
+        }
+
+        function videoFrameToCanvas(video) {
+            const c = document.createElement('canvas');
+            c.width = video.videoWidth || 1280;
+            c.height = video.videoHeight || 720;
+            c.getContext('2d').drawImage(video, 0, 0, c.width, c.height);
+            return c;
+        }
+
+        async function processScanCanvas(sourceCanvas, hintCorners, hintSize) {
+            let corners = null;
+            if (hintCorners && hintSize) {
+                corners = scaleCorners(hintCorners, hintSize.w, hintSize.h, sourceCanvas.width, sourceCanvas.height);
+            }
+            // Re-detect at higher res when possible
+            try {
+                const work = document.createElement('canvas');
+                const scale = Math.min(1, 720 / Math.max(sourceCanvas.width, sourceCanvas.height));
+                work.width = Math.max(1, Math.round(sourceCanvas.width * scale));
+                work.height = Math.max(1, Math.round(sourceCanvas.height * scale));
+                work.getContext('2d').drawImage(sourceCanvas, 0, 0, work.width, work.height);
+                const found = detectDocumentQuad(work);
+                if (found && found.pts && (!corners || found.score > 40)) {
+                    corners = scaleCorners(found.pts, work.width, work.height, sourceCanvas.width, sourceCanvas.height);
+                }
+            } catch (err) {
+                console.warn('[scan] full-res detect failed:', err);
+            }
+
+            let out = sourceCanvas;
+            if (corners && scoreQuadPts(corners, sourceCanvas.width, sourceCanvas.height) >= 28) {
+                const dims = targetDimsFromQuad(corners);
+                // If we swapped for portrait, also swap corner order mapping carefully:
+                // targetDims may swap w/h; warp uses corners as TL TR BR BL onto outW x outH.
+                let outW = dims.w, outH = dims.h;
+                const sideW = (Math.sqrt(dist2(corners[0], corners[1])) + Math.sqrt(dist2(corners[3], corners[2]))) / 2;
+                const sideH = (Math.sqrt(dist2(corners[0], corners[3])) + Math.sqrt(dist2(corners[1], corners[2]))) / 2;
+                if (sideW >= sideH) {
+                    // landscape document — keep landscape output then rotate to portrait
+                    outW = Math.max(dims.w, dims.h);
+                    outH = Math.min(dims.w, dims.h);
+                }
+                const warped = warpPerspectiveCanvas(sourceCanvas, corners, outW, outH);
+                if (warped) {
+                    out = warped;
+                    if (out.width > out.height) {
+                        const rot = document.createElement('canvas');
+                        rot.width = out.height; rot.height = out.width;
+                        const rctx = rot.getContext('2d');
+                        rctx.translate(rot.width, 0);
+                        rctx.rotate(Math.PI / 2);
+                        rctx.drawImage(out, 0, 0);
+                        out = rot;
+                    }
+                }
+            } else {
+                // No edges — resize only
+                out = canvasFromImage(sourceCanvas, TICKET_JPEG_EDGE);
+            }
+            enhanceScanCanvas(out);
+            // Cap long edge
+            if (Math.max(out.width, out.height) > TICKET_JPEG_EDGE) {
+                out = canvasFromImage(out, TICKET_JPEG_EDGE);
+            }
+            return out.toDataURL('image/jpeg', TICKET_JPEG_QUALITY);
+        }
+
+        async function captureFromScanner() {
+            if (!liveScanner.active || liveScanner.capturing || ticketCapture.busy) return;
+            const video = document.getElementById('docScannerVideo');
+            const btn = document.getElementById('docScannerCapture');
+            if (!video || !liveScanner.videoReady) {
+                await appAlert('Camera is not ready yet.', { title: 'Scanner' });
+                return;
+            }
+            liveScanner.capturing = true;
+            if (btn) btn.disabled = true;
+            setScannerStatus('Capturing…', true);
+            haptic(18);
+            try {
+                const full = videoFrameToCanvas(video);
+                const hint = liveScanner.lastGood;
+                const dataUrl = await processScanCanvas(
+                    full,
+                    hint ? hint.corners : null,
+                    hint ? { w: hint.detectW, h: hint.detectH } : null
+                );
+                closeDocScanner();
+                await ingestTicketJpegDataUrl(dataUrl, 'scan');
+            } catch (err) {
+                console.error('[scan] capture failed:', err);
+                await appAlert((err && err.message) ? err.message : 'Capture failed.', { title: 'Scan Failed' });
+            } finally {
+                liveScanner.capturing = false;
+                if (btn) btn.disabled = false;
+            }
+        }
+
+        async function toggleScannerFlash() {
+            const track = liveScanner.track;
+            const btn = document.getElementById('docScannerFlash');
+            if (!track || typeof track.getCapabilities !== 'function') {
+                await appAlert('Flash is not available on this camera.', { title: 'Flash' });
+                return;
+            }
+            const caps = track.getCapabilities();
+            if (!caps || !caps.torch) {
+                await appAlert('Flash is not available on this camera.', { title: 'Flash' });
+                return;
+            }
+            try {
+                liveScanner.flashOn = !liveScanner.flashOn;
+                await track.applyConstraints({ advanced: [{ torch: liveScanner.flashOn }] });
+                if (btn) btn.style.color = liveScanner.flashOn ? '#fbbf24' : '';
+            } catch (err) {
+                liveScanner.flashOn = false;
+                if (btn) btn.style.color = '';
+                console.warn('[scan] torch failed:', err);
+            }
+        }
+
+        function bindScannerControlsOnce() {
+            if (liveScanner.uiBound) return;
+            liveScanner.uiBound = true;
+            const closeBtn = document.getElementById('docScannerClose');
+            const permClose = document.getElementById('docScannerPermClose');
+            const retry = document.getElementById('docScannerRetryCam');
+            const capture = document.getElementById('docScannerCapture');
+            const flash = document.getElementById('docScannerFlash');
+            if (closeBtn) closeBtn.onclick = () => closeDocScanner();
+            if (permClose) permClose.onclick = () => closeDocScanner();
+            if (retry) retry.onclick = () => { startScannerCamera(); };
+            if (capture) capture.onclick = () => { captureFromScanner(); };
+            if (flash) flash.onclick = () => { toggleScannerFlash(); };
+        }
+
+        function bindTicketGalleryInputOnce() {
+            if (liveScanner.galleryBound) return;
+            liveScanner.galleryBound = true;
+            const input = document.getElementById('ticketGalleryInput');
             if (!input) return;
             input.addEventListener('change', async () => {
                 const file = input.files && input.files[0];
@@ -2302,32 +3194,47 @@
             });
         }
 
-        function pickTicketPhoto(opts) {
+        async function openDocScanner(opts) {
             opts = opts || {};
             ticketCapture.mode = opts.mode || 'direct';
             ticketCapture.sId = opts.sId != null ? opts.sId : (editingLoad && editingLoad.sId);
             ticketCapture.lId = opts.lId != null ? opts.lId : (editingLoad && editingLoad.lId);
             ticketCapture.docId = opts.docId || null;
-            bindTicketFileInputOnce();
-            const input = document.getElementById('ticketFileInput');
-            if (!input) {
-                appAlert('Photo capture is unavailable in this browser.');
+
+            bindScannerControlsOnce();
+            bindTicketGalleryInputOnce();
+
+            const root = document.getElementById('docScanner');
+            if (!root) {
+                await appAlert('Scanner UI is missing.', { title: 'Scanner' });
                 return;
             }
-            try { input.value = ''; } catch (_) {}
-            try { input.click(); } catch (_) {
-                appAlert('Could not open the camera or photo library.');
-            }
+            liveScanner.active = true;
+            liveScanner.capturing = false;
+            liveScanner.targetPts = null;
+            liveScanner.displayPts = null;
+            liveScanner.lastGood = null;
+            liveScanner.hitStreak = 0;
+            liveScanner.confidence = 0;
+            setScannerStatus('Align ticket in frame', false);
+            root.classList.add('active');
+            root.setAttribute('aria-hidden', 'false');
+            lockBodyScroll();
+            await startScannerCamera();
         }
 
-        async function handleTicketFileChosen(file) {
+        function pickTicketPhoto(opts) {
+            // Opens the custom in-app scanner (not the default Apple camera picker).
+            openDocScanner(opts || {});
+        }
+
+        async function ingestTicketJpegDataUrl(dataUrl, filterName) {
             if (ticketCapture.busy) return;
             ticketCapture.busy = true;
             const key = loadKey(ticketCapture.sId, ticketCapture.lId);
             try {
                 processingLoads.add(key);
                 renderHistory();
-                const dataUrl = await fileToJpegDataUrl(file);
                 const now = new Date().toISOString();
                 const doc = {
                     id: 'doc_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
@@ -2336,7 +3243,7 @@
                     type: 'ticket',
                     original: null,
                     processed: dataUrl,
-                    filter: 'photo',
+                    filter: filterName || 'scan',
                     createdAt: now,
                     modifiedAt: now,
                     syncStatus: 'local',
@@ -2359,7 +3266,7 @@
                 enqueueDocSync(ticketCapture.sId, ticketCapture.lId, doc.id);
                 haptic([12, 40, 12]);
             } catch (err) {
-                console.error('[scan] ticket photo failed:', err);
+                console.error('[scan] ticket ingest failed:', err);
                 await appAlert((err && err.message) ? err.message : 'Could not save that photo.', { title: 'Photo Failed' });
             } finally {
                 ticketCapture.busy = false;
@@ -2367,6 +3274,35 @@
                 renderHistory();
             }
         }
+
+        async function handleTicketFileChosen(file) {
+            if (ticketCapture.busy) return;
+            try {
+                // Try edge-detect + warp for gallery imports too
+                const url = URL.createObjectURL(file);
+                let dataUrl;
+                try {
+                    const img = await loadImageFromUrl(url);
+                    const source = canvasFromImage(img, Math.max(TICKET_JPEG_EDGE, 1600));
+                    dataUrl = await processScanCanvas(source, null, null);
+                } finally {
+                    URL.revokeObjectURL(url);
+                }
+                if (liveScanner.active) closeDocScanner();
+                await ingestTicketJpegDataUrl(dataUrl, 'photo');
+            } catch (err) {
+                console.error('[scan] gallery import failed:', err);
+                // Fallback: simple JPEG resize
+                try {
+                    const dataUrl = await fileToJpegDataUrl(file);
+                    if (liveScanner.active) closeDocScanner();
+                    await ingestTicketJpegDataUrl(dataUrl, 'photo');
+                } catch (err2) {
+                    await appAlert((err2 && err2.message) ? err2.message : 'Could not save that photo.', { title: 'Photo Failed' });
+                }
+            }
+        }
+
 
         function persistLoadDocument(sId, lId, doc, mode, replaceId) {
             let h = JSON.parse(localStorage.getItem('driver_history') || '[]');
@@ -3156,7 +4092,8 @@
             sanitizeHistory();
             loadScanLog();
             applySettingsToHeader();
-            bindTicketFileInputOnce();
+            bindScannerControlsOnce();
+            bindTicketGalleryInputOnce();
             ['chartOverlay','editOverlay','addOverlay','settingsOverlay','helpOverlay','findTicketOverlay','debugOverlay','settlementOptionsOverlay','exportPickerOverlay'].forEach(id => {
                 const ov = document.getElementById(id);
                 if (!ov) return;

@@ -1,0 +1,4 @@
+.firecrawl/
+node_modules/
+verify-scanner.mjs
+package-lock.json
