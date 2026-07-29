@@ -6,8 +6,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="driverpay-build" content="2.12.26">
-    <title>DriverPay Pro v2.12.26</title>
+    <meta name="driverpay-build" content="2.12.27">
+    <title>DriverPay Pro v2.12.27</title>
     <script>
     (function () {
         var meta = document.querySelector('meta[name="driverpay-build"]');
@@ -396,7 +396,7 @@
     <header class="app-header">
         <div class="header-title">
             <h1>DriverPay <span>Pro</span></h1>
-            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v2.12.26</p>
+            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v2.12.27</p>
         </div>
         <div class="menu-container">
             <button class="menu-btn" onclick="toggleMenu(event)" aria-label="Menu">
@@ -499,7 +499,7 @@
             </div>
             <div class="footer-tagline">Built for the long haul</div>
             <div class="footer-meta">
-                <span class="footer-version">v2.12.26</span>
+                <span class="footer-version">v2.12.27</span>
                 <span class="footer-meta-dot"></span>
                 <span>© 2026</span>
                 <span class="footer-meta-dot"></span>
@@ -831,7 +831,7 @@
         <button type="button" class="scan-cancel-btn" id="scanCancelBtn">Cancel</button>
     </div>
 
-    <!-- driverpay-scanner:2.12.26 -->
+    <!-- driverpay-scanner:2.12.27 -->
     <div class="doc-scanner" id="docScanner" aria-hidden="true" role="dialog" aria-label="Grok ticket scanner">
         <div class="doc-scanner-stage">
             <video id="docScannerVideo" class="doc-scanner-video" playsinline muted autoplay></video>
@@ -1122,7 +1122,7 @@
 
         function applySettingsToHeader() {
             const sub = document.getElementById('headerSubtitle');
-            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v2.12.26`;
+            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v2.12.27`;
         }
 
         let savedScrollY = 0;
@@ -2982,7 +2982,36 @@
             if (lower.indexOf('colorado materials') >= 0 || lower === 'colorado' || lower.indexOf('colorado mat') >= 0) return 'Colorado Materials';
             // Martin Marietta alone is not enough — need Hunter Stone in plant line (handled in prompt).
             if (lower.indexOf('martin marietta') >= 0 && lower.indexOf('hunter') < 0) return null;
-            return s;
+            return null;
+        }
+
+        function resolveKnownPlant(ocr) {
+            const direct = normalizePlantName(ocr && ocr.plant);
+            if (direct) return direct;
+            return normalizePlantName(ocr && ocr.rawText);
+        }
+
+        function isKnownPlant(plant) {
+            const n = normalizePlantName(plant);
+            return n === 'Colorado Materials' || n === 'Hunter Stone';
+        }
+
+        async function rejectUnknownPlant(ocr) {
+            const plant = resolveKnownPlant(ocr);
+            if (plant) {
+                if (ocr) ocr.plant = plant;
+                return false;
+            }
+            pushScanLog('warn', [
+                'rejected unknown plant',
+                'plant=' + ((ocr && ocr.plant) || 'null'),
+                'raw=' + String((ocr && ocr.rawText) || '').slice(0, 120)
+            ]);
+            await appAlert(
+                'Only Colorado Materials and Hunter Stone tickets can be saved. This scan wasn\'t recognized as either plant, so the image was not stored.',
+                { title: 'Unknown Ticket' }
+            );
+            return true;
         }
 
         function extractTruckUnit(v) {
@@ -3136,6 +3165,7 @@
             try {
                 const { cleaned, ocr } = await processWithGrok(originalDataUrl);
                 if (scanAbortController && scanAbortController.signal.aborted) return;
+                if (await rejectUnknownPlant(ocr)) return;
                 await openDocReview(originalDataUrl, cleaned, ocr);
             } catch (err) {
                 const msg = formatScanError(err, 'Scan failed');
@@ -3460,6 +3490,14 @@
                 return;
             }
             const ocr = readOcrFieldsFromForm();
+            ocr.plant = normalizePlantName(ocr.plant) || resolveKnownPlant(ocr);
+            if (!isKnownPlant(ocr.plant)) {
+                await appAlert(
+                    'Only Colorado Materials and Hunter Stone tickets can be saved. Pick one of those plants, or cancel this scan.',
+                    { title: 'Unknown Ticket' }
+                );
+                return;
+            }
             // Re-check on save. If the driver already approved this same wrong truck at OCR time, skip a second popup.
             let truckCheck;
             const expected = getExpectedTruckNumber();

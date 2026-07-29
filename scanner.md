@@ -76,6 +76,8 @@ Expected truck: **1205** (Settings `expectedTruckNumber`).
 
 Do **not** invent a third plant. If unclear → `"plant": null` and put clues in `rawText`.
 
+**App rule:** DriverPay Pro only stores Colorado Materials and Hunter Stone tickets. Any other / unrecognized plant is rejected after OCR — the image is not saved and the driver sees an Unknown Ticket alert.
+
 **Important:** Hunter Stone tickets may be branded **Martin Marietta** (plant line contains “Hunter Stone”) **or** **Hunter Stone / A Division of Colorado Materials, Ltd.** Both are plant = `"Hunter Stone"`. Do not label Martin Marietta Hunter Stone tickets as Colorado Materials.
 
 ---
