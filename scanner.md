@@ -19,7 +19,7 @@ Hardcoded in `index.html` as `GROK_IMAGINE_MODEL` / `GROK_CHAT_MODEL`.
 
 ## Mission
 
-1. Clean the ticket photo (background out, B&W, upright, sharp text).
+1. Light-clean the ticket photo only: remove background outside the paper; optional mild B&W/contrast. **Do not** change ticket size, shape, proportions, or alter any text/numbers/layout on the ticket.
 2. Identify the **plant** using LEARNED layouts below.
 3. Extract JSON fields using the plant’s field map — do not guess from unlabeled nearby text.
 4. Never invent values — use `null` when missing or unreadable.

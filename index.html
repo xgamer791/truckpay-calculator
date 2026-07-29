@@ -2910,14 +2910,22 @@
             if (!key) throw new Error('No Grok API key set.');
             const prompt = [
                 'This is a photo of a trucking load ticket / scale ticket / delivery ticket.',
-                'Edit it into a clean scanned document:',
-                '- Remove background clutter (hands, dashboard, clipboard edges outside the paper)',
-                '- Deskew / straighten and auto-rotate so text is upright and readable',
-                '- Convert to high-contrast black & white scanner look',
-                '- Improve clarity and sharpness of printed text and numbers',
-                '- Keep ALL ticket text, numbers, barcodes, and box borders fully legible; do not invent or erase values',
-                '- Preserve the rectangular form layout (headers, grids, weight tables)',
-                '- Output a flat rectangular document filling the frame'
+                'Light cleanup ONLY. The output must look like the same physical ticket in the photo.',
+                '',
+                'DO NOT:',
+                '- Change the ticket size, aspect ratio, proportions, or shape',
+                '- Stretch, squash, warp, perspective-map, or reshape the ticket',
+                '- Crop away ticket content or pad/fill the frame by inventing paper',
+                '- Redraw, restyle, or redesign the form (no new layout, fonts, logos, or boxes)',
+                '- Alter, invent, move, or erase any text, numbers, barcodes, lines, stamps, or handwriting on the ticket',
+                '',
+                'ALLOWED ONLY:',
+                '- Remove background clutter outside the paper (hands, dashboard, etc.) with a plain white/near-white backdrop',
+                '- Optional mild black-and-white / contrast so existing print is clearer',
+                '- Optional slight sharpening of existing print',
+                '- Rotate in 90° steps only if the ticket is sideways/upside-down (keep geometry identical)',
+                '',
+                'Keep the ticket’s exact geometry and all printed content unchanged. If unsure, change less.'
             ].join('\n');
 
             // Prefer compact JPEG data URLs — huge payloads hang Safari on cellular.
