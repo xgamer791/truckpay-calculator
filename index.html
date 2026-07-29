@@ -6,8 +6,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="driverpay-build" content="2.12.37">
-    <title>DriverPay Pro v2.12.37</title>
+    <meta name="driverpay-build" content="2.12.38">
+    <title>DriverPay Pro v2.12.38</title>
     <script>
     (function () {
         var meta = document.querySelector('meta[name="driverpay-build"]');
@@ -384,7 +384,7 @@
     <header class="app-header">
         <div class="header-title">
             <h1>DriverPay <span>Pro</span></h1>
-            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v2.12.37</p>
+            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v2.12.38</p>
         </div>
         <div class="menu-container">
             <button class="menu-btn" onclick="toggleMenu(event)" aria-label="Menu">
@@ -487,7 +487,7 @@
             </div>
             <div class="footer-tagline">Built for the long haul</div>
             <div class="footer-meta">
-                <span class="footer-version">v2.12.37</span>
+                <span class="footer-version">v2.12.38</span>
                 <span class="footer-meta-dot"></span>
                 <span>© 2026</span>
                 <span class="footer-meta-dot"></span>
@@ -1037,7 +1037,7 @@
 
         function applySettingsToHeader() {
             const sub = document.getElementById('headerSubtitle');
-            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v2.12.37`;
+            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v2.12.38`;
         }
 
         let savedScrollY = 0;
@@ -2393,17 +2393,19 @@
         }
 
         // ---- CamScanner-style live document scanner (pure JS CV) --------------------
-        // Detector: four-sided EDGE quads only (not brightest blob). Tracker follows motion.
+        // Hard rule: ONLY a validated convex 4-corner document quad may draw or lock.
+        // Motion follow uses rigid translation of that quad — never free-form edge tracking.
         const DOC_DETECT_W = 400;
-        const DOC_DETECT_INTERVAL_MS = 55;
-        const DOC_MIN_AREA_RATIO = 0.06;
-        const DOC_MAX_AREA_RATIO = 0.82;
-        const DOC_LOCK_HITS = 3;
-        const DOC_SMOOTH_STABLE = 0.22;
-        const DOC_SMOOTH_MOVE = 0.55;
-        const DOC_MATCH_PX = 48;
-        const DOC_LOST_GRACE_MS = 900;
-        const DOC_MISS_DECAY = 0.06;
+        const DOC_DETECT_INTERVAL_MS = 45;
+        const DOC_MIN_AREA_RATIO = 0.08;
+        const DOC_MAX_AREA_RATIO = 0.75;
+        const DOC_LOCK_HITS = 2;
+        const DOC_SMOOTH_STABLE = 0.28;
+        const DOC_SMOOTH_MOVE = 0.72;
+        const DOC_MATCH_PX = 70;
+        const DOC_LOST_GRACE_MS = 1400;
+        const DOC_MISS_DECAY = 0.04;
+        const DOC_MIN_SCORE = 55;
 
         const liveScanner = {
             active: false,
@@ -2415,13 +2417,15 @@
             lastDetectAt: 0,
             detectW: DOC_DETECT_W,
             detectH: 1,
-            targetPts: null,
+            targetPts: null,   // last VALID ordered quad (detect space)
             displayPts: null,
             lastGood: null,
             hitStreak: 0,
             missStreak: 0,
             confidence: 0,
-            velocity: [{ x: 0, y: 0 }, { x: 0, y: 0 }, { x: 0, y: 0 }, { x: 0, y: 0 }],
+            // Rigid motion only (keeps rectangle shape while camera moves)
+            velX: 0,
+            velY: 0,
             lastTrackAt: 0,
             lostAt: 0,
             videoReady: false,
@@ -2435,6 +2439,7 @@
             const sorted = pts.slice().sort((a, b) => a.y - b.y);
             const top = sorted.slice(0, 2).sort((a, b) => a.x - b.x);
             const bottom = sorted.slice(2).sort((a, b) => a.x - b.x);
+            if (!top[0] || !top[1] || !bottom[0] || !bottom[1]) return null;
             return [top[0], top[1], bottom[1], bottom[0]]; // TL TR BR BL
         }
 
@@ -2459,41 +2464,112 @@
             };
         }
 
-        function scoreQuadPts(pts, w, h, edgeBonus) {
-            if (!pts || pts.length !== 4) return 0;
-            const area = quadArea(pts);
-            const ratio = area / (w * h);
-            if (ratio < DOC_MIN_AREA_RATIO || ratio > DOC_MAX_AREA_RATIO) return 0;
+        function cloneQuad(pts) {
+            return pts.map(p => ({ x: p.x, y: p.y }));
+        }
+
+        function clearScannerTrack(statusText) {
+            liveScanner.targetPts = null;
+            liveScanner.displayPts = null;
+            liveScanner.lastGood = null;
+            liveScanner.hitStreak = 0;
+            liveScanner.missStreak = 0;
+            liveScanner.confidence = 0;
+            liveScanner.velX = 0;
+            liveScanner.velY = 0;
+            liveScanner.lastTrackAt = 0;
+            liveScanner.lostAt = 0;
+            if (statusText != null) setScannerStatus(statusText, false);
+        }
+
+        /** Gate used by detector, tracker, and overlay. Nothing else may draw. */
+        function isValidDocumentQuad(pts, w, h) {
+            if (!pts || pts.length !== 4) return false;
+            for (const p of pts) {
+                if (!p || !isFinite(p.x) || !isFinite(p.y)) return false;
+            }
+            const ordered = orderQuadPoints(pts);
+            if (!ordered) return false;
+            // Distinct corners
+            for (let i = 0; i < 4; i++) {
+                for (let j = i + 1; j < 4; j++) {
+                    if (dist2(ordered[i], ordered[j]) < 64) return false; // <8px
+                }
+            }
+            const area = quadArea(ordered);
+            const frame = Math.max(1, w * h);
+            const ratio = area / frame;
+            if (ratio < DOC_MIN_AREA_RATIO || ratio > DOC_MAX_AREA_RATIO) return false;
+
             const sides = [
-                Math.sqrt(dist2(pts[0], pts[1])),
-                Math.sqrt(dist2(pts[1], pts[2])),
-                Math.sqrt(dist2(pts[2], pts[3])),
-                Math.sqrt(dist2(pts[3], pts[0]))
+                Math.sqrt(dist2(ordered[0], ordered[1])),
+                Math.sqrt(dist2(ordered[1], ordered[2])),
+                Math.sqrt(dist2(ordered[2], ordered[3])),
+                Math.sqrt(dist2(ordered[3], ordered[0]))
             ];
             const balW = Math.min(sides[0], sides[2]) / Math.max(sides[0], sides[2]);
             const balH = Math.min(sides[1], sides[3]) / Math.max(sides[1], sides[3]);
-            if (balW < 0.4 || balH < 0.4) return 0;
+            if (balW < 0.42 || balH < 0.42) return false;
             const avgW = (sides[0] + sides[2]) / 2;
             const avgH = (sides[1] + sides[3]) / 2;
             const aspect = avgW / Math.max(1, avgH);
-            if (aspect < 0.35 || aspect > 3.2) return 0;
-            // Reject self-intersecting / bowtie quads
-            const c = quadCentroid(pts);
+            if (aspect < 0.38 || aspect > 3.0) return false;
+
+            // Convex + consistent winding
+            const c = quadCentroid(ordered);
             let sign = 0;
             for (let i = 0; i < 4; i++) {
-                const a = pts[i], b = pts[(i + 1) % 4];
+                const a = ordered[i], b = ordered[(i + 1) % 4];
                 const cross = (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
                 const s = cross >= 0 ? 1 : -1;
                 if (!sign) sign = s;
-                else if (s !== sign) return 0;
+                else if (s !== sign) return false;
             }
+            if (!cornerAngleOk(ordered)) return false;
+
+            // Reject near-collinear / diagonal-line degenerates (area vs bounding box)
+            let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+            for (const p of ordered) {
+                if (p.x < minX) minX = p.x;
+                if (p.x > maxX) maxX = p.x;
+                if (p.y < minY) minY = p.y;
+                if (p.y > maxY) maxY = p.y;
+            }
+            const boxArea = Math.max(1, (maxX - minX) * (maxY - minY));
+            if (area / boxArea < 0.55) return false; // collapsed toward a line/bowtie
+
+            // Reject "whole frame" quads (phone bezel / dashboard spanning)
+            let borderHits = 0;
+            const pad = Math.max(3, Math.min(w, h) * 0.02);
+            for (const p of ordered) {
+                if (p.x <= pad || p.y <= pad || p.x >= w - pad || p.y >= h - pad) borderHits++;
+            }
+            if (borderHits >= 3) return false;
+
+            return true;
+        }
+
+        function scoreQuadPts(pts, w, h, edgeBonus) {
+            if (!isValidDocumentQuad(pts, w, h)) return 0;
+            const ordered = orderQuadPoints(pts);
+            const area = quadArea(ordered);
+            const ratio = area / (w * h);
+            const sides = [
+                Math.sqrt(dist2(ordered[0], ordered[1])),
+                Math.sqrt(dist2(ordered[1], ordered[2])),
+                Math.sqrt(dist2(ordered[2], ordered[3])),
+                Math.sqrt(dist2(ordered[3], ordered[0]))
+            ];
+            const balW = Math.min(sides[0], sides[2]) / Math.max(sides[0], sides[2]);
+            const balH = Math.min(sides[1], sides[3]) / Math.max(sides[1], sides[3]);
+            const avgW = (sides[0] + sides[2]) / 2;
+            const avgH = (sides[1] + sides[3]) / 2;
+            const aspect = avgW / Math.max(1, avgH);
             let score = (balW + balH) * 38;
             score += Math.max(0, 1 - Math.abs(ratio - 0.30) / 0.30) * 26;
             score += Math.min(aspect, 1 / aspect) * 18;
-            // Prefer exact 4-edge candidates
             score += (edgeBonus || 0);
-            // Prefer not hugging the full frame (phone bezel false positives)
-            if (ratio > 0.72) score -= 18;
+            if (ratio > 0.65) score -= 22;
             return score;
         }
 
@@ -2595,7 +2671,6 @@
             const a2 = ang(pts[1], pts[2]), a3 = ang(pts[0], pts[3]);
             const dW = Math.abs(norm(a0 - a1));
             const dH = Math.abs(norm(a2 - a3));
-            // 0 = perfect parallel, larger = worse
             return (dW + dH) / 2;
         }
 
@@ -2608,24 +2683,20 @@
                 if (la < 1 || lb < 1) return false;
                 const cos = (ax * bx + ay * by) / (la * lb);
                 const deg = Math.acos(Math.max(-1, Math.min(1, cos))) * 180 / Math.PI;
-                // Document corners are roughly rectangular; allow perspective
                 if (deg < 55 || deg > 125) return false;
             }
             return true;
         }
 
         function matchQuadOrder(prev, next) {
-            // Reorder `next` corners to best match `prev` (TL TR BR BL) under small motion.
             if (!prev || !next || prev.length !== 4 || next.length !== 4) return next;
             let best = null, bestCost = Infinity;
-            // Try identity + single rotations of next (already ordered), and also raw ordered variants
-            const candidates = [next];
-            // Also try starting from each corner of an unordered set
             const raw = next.slice();
+            const candidates = [next];
             for (let rot = 0; rot < 4; rot++) {
                 const rotated = [raw[(0 + rot) % 4], raw[(1 + rot) % 4], raw[(2 + rot) % 4], raw[(3 + rot) % 4]];
                 candidates.push(rotated);
-                candidates.push([rotated[0], rotated[3], rotated[2], rotated[1]]); // reverse winding
+                candidates.push([rotated[0], rotated[3], rotated[2], rotated[1]]);
             }
             for (const cand of candidates) {
                 const ordered = orderQuadPoints(cand);
@@ -2642,6 +2713,43 @@
             let s = 0;
             for (let i = 0; i < 4; i++) s += Math.sqrt(dist2(a[i], b[i]));
             return s / 4;
+        }
+
+        /** Local refine around a previously validated quad — helps while camera moves. */
+        function refineQuadFromPrior(mag, w, h, prior) {
+            if (!prior || !isValidDocumentQuad(prior, w, h)) return null;
+            const c = quadCentroid(prior);
+            const refined = [];
+            const radius = Math.max(10, Math.min(w, h) * 0.08);
+            for (let i = 0; i < 4; i++) {
+                const p = prior[i];
+                // Search outward from centroid through prior corner for strongest edge peak
+                const vx = p.x - c.x, vy = p.y - c.y;
+                const len = Math.hypot(vx, vy) || 1;
+                const ux = vx / len, uy = vy / len;
+                let best = { x: p.x, y: p.y, m: -1 };
+                for (let d = -radius; d <= radius; d += 1) {
+                    const x = Math.round(p.x + ux * d);
+                    const y = Math.round(p.y + uy * d);
+                    if (x < 2 || y < 2 || x >= w - 2 || y >= h - 2) continue;
+                    // Also nudge perpendicular a little
+                    for (let s = -2; s <= 2; s++) {
+                        const px = Math.round(x - uy * s);
+                        const py = Math.round(y + ux * s);
+                        if (px < 2 || py < 2 || px >= w - 2 || py >= h - 2) continue;
+                        const m = mag[py * w + px];
+                        if (m > best.m) best = { x: px, y: py, m };
+                    }
+                }
+                if (best.m < 0) return null;
+                refined.push({ x: best.x, y: best.y });
+            }
+            const ordered = orderQuadPoints(refined);
+            if (!ordered || !isValidDocumentQuad(ordered, w, h)) return null;
+            const edgeMean = meanEdgeAlongSides(mag, w, h, ordered, 16);
+            const score = scoreQuadPts(ordered, w, h, Math.min(36, edgeMean / 4) + 24);
+            if (score < DOC_MIN_SCORE * 0.85) return null;
+            return { pts: ordered, score, edgeMean, source: 'edge4-track' };
         }
 
         /**
@@ -2782,7 +2890,7 @@
                         }
                     }
                     if (!quad) continue; // reject non-4-sided shapes entirely
-                    if (!cornerAngleOk(quad)) continue;
+                    if (!isValidDocumentQuad(quad, w, h)) continue;
 
                     // Residual: contour/hull points must hug the four straight sides (kills circles → diamond)
                     const residual = quadFitResidual(hull, quad);
@@ -2790,30 +2898,55 @@
                         Math.sqrt(dist2(quad[0], quad[1])) + Math.sqrt(dist2(quad[1], quad[2])) +
                         Math.sqrt(dist2(quad[2], quad[3])) + Math.sqrt(dist2(quad[3], quad[0]))
                     ) / 4;
-                    if (residual > Math.max(2.2, avgSide * 0.045)) continue;
+                    if (residual > Math.max(2.8, avgSide * 0.055)) continue;
 
                     const parallelErr = oppositeSidesParallelScore(quad);
-                    if (parallelErr > 0.38) continue; // radians-ish normalized delta
+                    if (parallelErr > 0.42) continue;
 
                     const edgeMean = meanEdgeAlongSides(mag, w, h, quad, 20);
-                    if (edgeMean < thr * 0.65) continue; // sides must sit on real edges
+                    if (edgeMean < thr * 0.55) continue; // sides must sit on real edges
 
                     const edgeBonus = Math.min(40, (edgeMean / Math.max(1, thr)) * 22) + 30;
                     let score = scoreQuadPts(quad, w, h, edgeBonus);
+                    if (!score) continue;
                     score += Math.max(0, 18 - residual * 4);
                     score += Math.max(0, 14 - parallelErr * 30);
-                    if (score < 55) continue;
-                    candidates.push({ pts: quad, score, edgeMean, residual, source: 'edge4' });
+                    if (score < DOC_MIN_SCORE) continue;
+                    candidates.push({ pts: quad, score, edgeMean, residual, source: 'edge4', mag: mag });
                 }
             }
 
-            if (!candidates.length) return null;
+            if (!candidates.length) return { best: null, mag: mag, w: w, h: h };
             candidates.sort((a, b) => b.score - a.score);
-            return candidates[0];
+            // Strip mag refs from candidates
+            const best = candidates[0];
+            return { best: { pts: best.pts, score: best.score, edgeMean: best.edgeMean, residual: best.residual, source: 'edge4' }, mag: mag, w: w, h: h };
         }
 
-        function detectDocumentQuad(canvas) {
-            return detectQuadPureJS(canvas);
+        function detectDocumentQuad(canvas, priorPts) {
+            const result = detectQuadPureJS(canvas);
+            if (!result) return null;
+            const { best, mag, w, h } = result;
+
+            // If we already have a valid lock, prefer a local refine around it (motion-tolerant)
+            if (priorPts && isValidDocumentQuad(priorPts, w, h) && mag) {
+                const refined = refineQuadFromPrior(mag, w, h, priorPts);
+                if (refined && isValidDocumentQuad(refined.pts, w, h)) {
+                    // Prefer refined if close to prior OR better than global when global jumped
+                    if (!best) return refined;
+                    const travelBest = cornerTravel(priorPts, matchQuadOrder(priorPts, best.pts));
+                    const travelRef = cornerTravel(priorPts, refined.pts);
+                    if (travelRef <= travelBest + 8 || travelBest > DOC_MATCH_PX) return refined;
+                    // If global is a coherent update of the same quad, keep the higher score
+                    if (travelBest < DOC_MATCH_PX * 1.8 && best.score >= refined.score) {
+                        return { pts: matchQuadOrder(priorPts, best.pts), score: best.score, edgeMean: best.edgeMean, source: 'edge4' };
+                    }
+                    return refined;
+                }
+            }
+
+            if (!best || !isValidDocumentQuad(best.pts, w, h)) return null;
+            return best;
         }
 
         function solveHomography(src, dst) {
@@ -2980,10 +3113,15 @@
             return pts.map(p => ({ x: p.x * scale + ox, y: p.y * scale + oy }));
         }
 
-        function drawScannerOverlay(canvas, pts, confidence) {
+        function drawScannerOverlay(canvas, pts, confidence, detectW, detectH) {
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // HARD RULE: never draw unless these overlay points still form a valid document quad
+            // Validate in overlay space with scaled thresholds via mapped detect dims.
             if (!pts || pts.length !== 4) return;
+            const dw = detectW || canvas.width, dh = detectH || canvas.height;
+            // Map overlay pts back roughly by checking geometry in overlay pixels with area ratios
+            if (!isValidDocumentQuad(pts, canvas.width, canvas.height)) return;
             ctx.save();
             // dim outside
             ctx.fillStyle = 'rgba(0,0,0,0.28)';
@@ -3057,7 +3195,8 @@
             liveScanner.hitStreak = 0;
             liveScanner.missStreak = 0;
             liveScanner.confidence = 0;
-            liveScanner.velocity = [{ x: 0, y: 0 }, { x: 0, y: 0 }, { x: 0, y: 0 }, { x: 0, y: 0 }];
+            liveScanner.velX = 0;
+            liveScanner.velY = 0;
             liveScanner.lastTrackAt = 0;
             liveScanner.lostAt = 0;
             liveScanner.flashOn = false;
@@ -3142,39 +3281,55 @@
                 }
 
                 const nowDraw = performance.now();
-                // Motion prediction: keep overlay following while waiting on next detect
-                if (liveScanner.targetPts && liveScanner.targetPts.length === 4 && liveScanner.lastTrackAt) {
+                // Rigid motion prediction only (translate whole quad — preserves 4 corners)
+                if (liveScanner.targetPts && liveScanner.lastTrackAt && liveScanner.confidence > 0.4) {
                     const dt = Math.min(0.05, (nowDraw - liveScanner.lastTrackAt) / 1000);
-                    if (dt > 0 && liveScanner.confidence > 0.35) {
-                        for (let i = 0; i < 4; i++) {
-                            liveScanner.targetPts[i].x += liveScanner.velocity[i].x * dt;
-                            liveScanner.targetPts[i].y += liveScanner.velocity[i].y * dt;
+                    if (dt > 0 && (liveScanner.velX || liveScanner.velY)) {
+                        const predicted = liveScanner.targetPts.map(p => ({
+                            x: p.x + liveScanner.velX * dt,
+                            y: p.y + liveScanner.velY * dt
+                        }));
+                        if (isValidDocumentQuad(predicted, liveScanner.detectW, liveScanner.detectH)) {
+                            liveScanner.targetPts = predicted;
+                            liveScanner.lastTrackAt = nowDraw;
+                        } else {
+                            // Stop coasting if prediction would break the rectangle
+                            liveScanner.velX *= 0.5;
+                            liveScanner.velY *= 0.5;
+                            liveScanner.lastTrackAt = nowDraw;
                         }
-                        liveScanner.lastTrackAt = nowDraw;
                     }
                 }
 
-                // Adaptive chase: snappier when the quad is moving, softer when locked still
-                if (liveScanner.targetPts && liveScanner.targetPts.length === 4) {
+                // Drop track immediately if current target is no longer a valid 4-gon
+                if (liveScanner.targetPts && !isValidDocumentQuad(liveScanner.targetPts, liveScanner.detectW, liveScanner.detectH)) {
+                    clearScannerTrack('Align ticket — need four edges');
+                }
+
+                if (liveScanner.targetPts) {
                     if (!liveScanner.displayPts) {
-                        liveScanner.displayPts = liveScanner.targetPts.map(p => ({ x: p.x, y: p.y }));
+                        liveScanner.displayPts = cloneQuad(liveScanner.targetPts);
                     } else {
                         let travel = 0;
                         for (let i = 0; i < 4; i++) {
                             travel += Math.abs(liveScanner.targetPts[i].x - liveScanner.displayPts[i].x);
                             travel += Math.abs(liveScanner.targetPts[i].y - liveScanner.displayPts[i].y);
                         }
-                        const alpha = travel > 18 ? DOC_SMOOTH_MOVE : DOC_SMOOTH_STABLE;
+                        const alpha = travel > 14 ? DOC_SMOOTH_MOVE : DOC_SMOOTH_STABLE;
                         for (let i = 0; i < 4; i++) {
                             liveScanner.displayPts[i].x += (liveScanner.targetPts[i].x - liveScanner.displayPts[i].x) * alpha;
                             liveScanner.displayPts[i].y += (liveScanner.targetPts[i].y - liveScanner.displayPts[i].y) * alpha;
                         }
+                        if (!isValidDocumentQuad(liveScanner.displayPts, liveScanner.detectW, liveScanner.detectH)) {
+                            liveScanner.displayPts = cloneQuad(liveScanner.targetPts);
+                        }
                     }
                 }
-                const drawPts = liveScanner.displayPts
+
+                const drawPts = (liveScanner.displayPts && isValidDocumentQuad(liveScanner.displayPts, liveScanner.detectW, liveScanner.detectH))
                     ? mapPtsToOverlay(liveScanner.displayPts, liveScanner.detectW, liveScanner.detectH, overlay.width, overlay.height)
                     : null;
-                drawScannerOverlay(overlay, drawPts, liveScanner.confidence);
+                drawScannerOverlay(overlay, drawPts, liveScanner.confidence, liveScanner.detectW, liveScanner.detectH);
 
                 const now = performance.now();
                 if (liveScanner.detectBusy || now - liveScanner.lastDetectAt < DOC_DETECT_INTERVAL_MS) return;
@@ -3190,21 +3345,18 @@
                     liveScanner.detectW = detectCanvas.width;
                     liveScanner.detectH = detectCanvas.height;
                     detectCtx.drawImage(video, 0, 0, detectCanvas.width, detectCanvas.height);
-                    const found = detectDocumentQuad(detectCanvas);
 
-                    if (found && found.pts) {
-                        let pts = found.pts;
-                        // Follow the same four-sided object across frames / camera motion
-                        if (liveScanner.targetPts && liveScanner.targetPts.length === 4) {
-                            pts = matchQuadOrder(liveScanner.targetPts, pts);
-                            const travel = cornerTravel(liveScanner.targetPts, pts);
-                            // Coherent pan/zoom: all corners move similarly → follow even on larger moves
+                    const prior = liveScanner.targetPts;
+                    const found = detectDocumentQuad(detectCanvas, prior);
+
+                    if (found && found.pts && isValidDocumentQuad(found.pts, detectCanvas.width, detectCanvas.height)) {
+                        let pts = orderQuadPoints(found.pts);
+                        if (prior && isValidDocumentQuad(prior, detectCanvas.width, detectCanvas.height)) {
+                            pts = matchQuadOrder(prior, pts);
+                            const travel = cornerTravel(prior, pts);
                             const shifts = [];
                             for (let i = 0; i < 4; i++) {
-                                shifts.push({
-                                    x: pts[i].x - liveScanner.targetPts[i].x,
-                                    y: pts[i].y - liveScanner.targetPts[i].y
-                                });
+                                shifts.push({ x: pts[i].x - prior[i].x, y: pts[i].y - prior[i].y });
                             }
                             const meanDx = (shifts[0].x + shifts[1].x + shifts[2].x + shifts[3].x) / 4;
                             const meanDy = (shifts[0].y + shifts[1].y + shifts[2].y + shifts[3].y) / 4;
@@ -3213,72 +3365,61 @@
                                 varShift += Math.hypot(shifts[i].x - meanDx, shifts[i].y - meanDy);
                             }
                             varShift /= 4;
-                            const coherentPan = varShift < 22 && travel < DOC_MATCH_PX * 4.5;
-                            // Ignore incoherent wild jumps (likely a different object)
-                            if (travel > DOC_MATCH_PX * 2.2 && liveScanner.confidence > 0.55 && !coherentPan) {
+                            const coherentPan = varShift < 28 && travel < DOC_MATCH_PX * 5;
+                            // Reject incoherent jumps to unrelated dashboard edges
+                            if (travel > DOC_MATCH_PX * 2.8 && liveScanner.confidence > 0.6 && !coherentPan) {
                                 liveScanner.missStreak++;
                                 liveScanner.lostAt = liveScanner.lostAt || now;
                             } else {
-                                // Update velocity for follow-while-moving
                                 const dtSec = Math.max(0.04, (now - (liveScanner.lastTrackAt || now)) / 1000);
-                                for (let i = 0; i < 4; i++) {
-                                    const vx = (pts[i].x - liveScanner.targetPts[i].x) / dtSec;
-                                    const vy = (pts[i].y - liveScanner.targetPts[i].y) / dtSec;
-                                    liveScanner.velocity[i].x = liveScanner.velocity[i].x * 0.55 + vx * 0.45;
-                                    liveScanner.velocity[i].y = liveScanner.velocity[i].y * 0.55 + vy * 0.45;
-                                }
-                                liveScanner.targetPts = pts.map(p => ({ x: p.x, y: p.y }));
+                                // Rigid velocity from centroid motion
+                                liveScanner.velX = liveScanner.velX * 0.45 + (meanDx / dtSec) * 0.55;
+                                liveScanner.velY = liveScanner.velY * 0.45 + (meanDy / dtSec) * 0.55;
+                                liveScanner.targetPts = cloneQuad(pts);
                                 liveScanner.lastTrackAt = now;
                                 liveScanner.hitStreak++;
                                 liveScanner.missStreak = 0;
                                 liveScanner.lostAt = 0;
-                                liveScanner.confidence = Math.min(1, Math.max(liveScanner.confidence, found.score / 100) * 0.35 + Math.min(1, found.score / 100) * 0.65);
+                                liveScanner.confidence = Math.min(1, 0.3 * liveScanner.confidence + 0.7 * Math.min(1, found.score / 100));
                             }
                         } else {
-                            liveScanner.targetPts = pts.map(p => ({ x: p.x, y: p.y }));
-                            liveScanner.velocity = [{ x: 0, y: 0 }, { x: 0, y: 0 }, { x: 0, y: 0 }, { x: 0, y: 0 }];
+                            liveScanner.targetPts = cloneQuad(pts);
+                            liveScanner.velX = 0;
+                            liveScanner.velY = 0;
                             liveScanner.lastTrackAt = now;
                             liveScanner.hitStreak = 1;
                             liveScanner.missStreak = 0;
                             liveScanner.lostAt = 0;
                             liveScanner.confidence = Math.min(1, found.score / 100);
+                            liveScanner.displayPts = cloneQuad(pts);
                         }
 
-                        if (liveScanner.hitStreak >= DOC_LOCK_HITS && liveScanner.targetPts) {
+                        if (liveScanner.hitStreak >= DOC_LOCK_HITS && liveScanner.targetPts &&
+                            isValidDocumentQuad(liveScanner.targetPts, detectCanvas.width, detectCanvas.height)) {
                             liveScanner.lastGood = {
-                                corners: liveScanner.targetPts.map(p => ({ x: p.x, y: p.y })),
+                                corners: cloneQuad(liveScanner.targetPts),
                                 detectW: detectCanvas.width,
                                 detectH: detectCanvas.height,
                                 score: found.score,
                                 at: Date.now()
                             };
-                            const moving = liveScanner.velocity.some(v => Math.hypot(v.x, v.y) > 40);
-                            setScannerStatus(moving ? 'Tracking edges — tap capture' : 'Edges locked — tap capture', true);
+                            const moving = Math.hypot(liveScanner.velX, liveScanner.velY) > 35;
+                            setScannerStatus(moving ? 'Following ticket — tap capture' : 'Edges locked — tap capture', true);
                         } else if (liveScanner.targetPts) {
                             setScannerStatus('Finding four edges…', false);
                         }
                     } else {
-                        // Soft miss: keep following last quad briefly so shake doesn't drop lock
+                        // Miss: keep LAST VALID rectangle briefly (rigid coast only). Never invent new edges.
                         liveScanner.missStreak++;
                         if (!liveScanner.lostAt) liveScanner.lostAt = now;
                         const grace = now - liveScanner.lostAt < DOC_LOST_GRACE_MS;
-                        if (grace && liveScanner.targetPts) {
-                            // Coast on velocity so overlay keeps following camera motion
-                            liveScanner.confidence = Math.max(0.2, liveScanner.confidence - DOC_MISS_DECAY);
-                            setScannerStatus('Tracking…', liveScanner.confidence >= 0.7);
+                        const stillValid = liveScanner.targetPts &&
+                            isValidDocumentQuad(liveScanner.targetPts, liveScanner.detectW, liveScanner.detectH);
+                        if (grace && stillValid && liveScanner.confidence >= 0.45) {
+                            liveScanner.confidence = Math.max(0.35, liveScanner.confidence - DOC_MISS_DECAY);
+                            setScannerStatus('Hold on ticket…', true);
                         } else {
-                            liveScanner.hitStreak = 0;
-                            liveScanner.confidence = Math.max(0, liveScanner.confidence - 0.12);
-                            if (liveScanner.confidence < 0.2) {
-                                liveScanner.targetPts = null;
-                                liveScanner.displayPts = null;
-                                liveScanner.lastGood = null;
-                                liveScanner.velocity = [{ x: 0, y: 0 }, { x: 0, y: 0 }, { x: 0, y: 0 }, { x: 0, y: 0 }];
-                                liveScanner.lostAt = 0;
-                                setScannerStatus('Align ticket — need four edges', false);
-                            } else {
-                                setScannerStatus('Looking for four edges…', false);
-                            }
+                            clearScannerTrack('Align ticket — need four edges');
                         }
                     }
                 } catch (err) {
@@ -3320,7 +3461,7 @@
             }
 
             let out = sourceCanvas;
-            if (corners && scoreQuadPts(corners, sourceCanvas.width, sourceCanvas.height) >= 28) {
+            if (corners && isValidDocumentQuad(corners, sourceCanvas.width, sourceCanvas.height) && scoreQuadPts(corners, sourceCanvas.width, sourceCanvas.height) >= 40) {
                 const dims = targetDimsFromQuad(corners);
                 // If we swapped for portrait, also swap corner order mapping carefully:
                 // targetDims may swap w/h; warp uses corners as TL TR BR BL onto outW x outH.
@@ -3456,16 +3597,7 @@
             }
             liveScanner.active = true;
             liveScanner.capturing = false;
-            liveScanner.targetPts = null;
-            liveScanner.displayPts = null;
-            liveScanner.lastGood = null;
-            liveScanner.hitStreak = 0;
-            liveScanner.missStreak = 0;
-            liveScanner.confidence = 0;
-            liveScanner.velocity = [{ x: 0, y: 0 }, { x: 0, y: 0 }, { x: 0, y: 0 }, { x: 0, y: 0 }];
-            liveScanner.lastTrackAt = 0;
-            liveScanner.lostAt = 0;
-            setScannerStatus('Align ticket — need four edges', false);
+            clearScannerTrack('Align ticket — need four edges');
             root.classList.add('active');
             root.setAttribute('aria-hidden', 'false');
             lockBodyScroll();
