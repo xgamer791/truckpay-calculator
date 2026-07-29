@@ -6,8 +6,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="driverpay-build" content="2.12.34">
-    <title>DriverPay Pro v2.12.34</title>
+    <meta name="driverpay-build" content="2.12.35">
+    <title>DriverPay Pro v2.12.35</title>
     <script>
     (function () {
         var meta = document.querySelector('meta[name="driverpay-build"]');
@@ -60,7 +60,7 @@
         .note-icon { color: #fbbf24; }
         .ticket-icon:active, .note-icon:active { opacity: 0.6; }
         /* Ticket capture states:
-           red camera = no ticket · blue ticket icon = ticket + OCR saved */
+           red camera = no ticket · blue camera = photo saved · blue paper = ticket + OCR (legacy) */
         .ticket-pending-icon { display: inline-flex; align-items: center; justify-content: center; margin-left: 4px; padding: 2px; color: #3b82f6; flex-shrink: 0; }
         .ticket-control { display: flex; align-items: center; gap: 12px; }
         .ticket-control-btn { display: inline-flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.10); border-radius: 12px; padding: 10px 14px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
@@ -121,16 +121,6 @@
         .edit-input, .edit-select { width: 100%; background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.2); color: white; padding: 14px 16px; border-radius: 12px; font-size: 18px; font-weight: 700; font-family: inherit; }
         .edit-select { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>"); background-repeat: no-repeat; background-position: right 16px center; padding-right: 44px; }
         .edit-input:focus, .edit-select:focus { outline: none; border-color: #3b82f6; }
-        .grok-credits-link { display: block; margin-top: 12px; font-size: 13px; font-weight: 800; color: #60a5fa; text-decoration: none; letter-spacing: 0.01em; }
-        .grok-credits-link:active { opacity: 0.7; }
-        .grok-credits-link + .grok-credits-link { margin-top: 8px; }
-        .grok-key-actions { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
-        .grok-test-btn { flex-shrink: 0; padding: 10px 14px; border-radius: 12px; border: 1px solid rgba(96,165,250,0.35); background: rgba(59,130,246,0.15); color: #93c5fd; font-weight: 800; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; font-family: inherit; cursor: pointer; }
-        .grok-test-btn:active { opacity: 0.75; }
-        .grok-test-btn:disabled { opacity: 0.5; cursor: wait; }
-        .grok-test-status { font-size: 12px; font-weight: 700; color: #94a3b8; line-height: 1.35; }
-        .grok-test-status.ok { color: #4ade80; }
-        .grok-test-status.err { color: #f87171; }
         .settings-ext-link { color: #60a5fa; text-decoration: underline; text-underline-offset: 2px; font-weight: 800; }
         .browser-chooser-list { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
         .browser-chooser-btn { width: 100%; padding: 14px 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.10); background: rgba(255,255,255,0.05); color: #e2e8f0; font-weight: 800; font-size: 15px; font-family: inherit; text-align: left; cursor: pointer; }
@@ -224,75 +214,11 @@
         .popup-btn.danger { color: #f87171; }
         .popup-btn.warn { color: #fbbf24; }
 
-        .scan-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.96); backdrop-filter: blur(10px); z-index: 10010; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; opacity: 0; transition: opacity 0.2s ease; pointer-events: none; padding: 28px; }
-        .scan-overlay.active { opacity: 1; pointer-events: auto; }
-        .scan-spinner { width: 56px; height: 56px; border: 4px solid rgba(59, 130, 246, 0.15); border-top-color: #3b82f6; border-radius: 50%; animation: scan-spin 0.9s linear infinite; box-shadow: 0 0 32px rgba(59, 130, 246, 0.25); }
         @keyframes scan-spin { to { transform: rotate(360deg); } }
-        .scan-label { font-size: 12px; font-weight: 900; color: #60a5fa; letter-spacing: 0.28em; text-transform: uppercase; text-align: center; }
-        .scan-sublabel { font-size: 11px; font-weight: 700; color: #64748b; letter-spacing: 0.08em; max-width: 300px; text-align: center; line-height: 1.5; }
-        .scan-error { display: none; max-width: 320px; margin-top: 4px; padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(248,113,113,0.35); background: rgba(127,29,29,0.35); color: #fecaca; font-size: 12px; font-weight: 700; line-height: 1.45; text-align: center; white-space: pre-wrap; word-break: break-word; }
-        .scan-error.show { display: block; }
-        .scan-cancel-btn { margin-top: 8px; padding: 14px 22px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.06); color: #e2e8f0; font-weight: 900; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; font-family: inherit; cursor: pointer; }
-        .scan-cancel-btn:active { opacity: 0.7; }
-
-        /* ---- Grok ticket scanner ---- */
-        .doc-scanner { position: fixed; inset: 0; z-index: 10020; background: #000; display: none; flex-direction: column; color: white; }
-        .doc-scanner.active { display: flex; }
-        .doc-scanner-stage { position: relative; flex: 1; min-height: 0; background: #000; overflow: hidden; }
-        .doc-scanner-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-        .doc-scanner-top { position: absolute; top: 0; left: 0; right: 0; z-index: 4; display: flex; justify-content: space-between; align-items: flex-start; padding: calc(12px + env(safe-area-inset-top, 0px)) 16px 12px; pointer-events: none; }
-        .doc-scanner-top > * { pointer-events: auto; }
-        .doc-scanner-guide { position: absolute; inset: 18% 10% 28% 10%; border: 2px dashed rgba(255,255,255,0.35); border-radius: 16px; z-index: 3; pointer-events: none; }
-        .doc-scanner-status { position: absolute; left: 50%; bottom: calc(148px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 4; font-size: 12px; font-weight: 900; letter-spacing: 0.14em; text-transform: uppercase; color: #93c5fd; text-shadow: 0 2px 8px rgba(0,0,0,0.8); pointer-events: none; white-space: nowrap; }
-        .doc-scanner-bottom { position: absolute; left: 0; right: 0; bottom: 0; z-index: 4; padding: 18px 22px calc(22px + env(safe-area-inset-bottom, 0px)); display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.72) 45%, rgba(0,0,0,0.92) 100%); }
-        .doc-scanner-side { display: flex; gap: 10px; align-items: center; }
-        .doc-scanner-side.right { justify-content: flex-end; }
         .doc-btn { width: 48px; height: 48px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.16); background: rgba(15,23,42,0.72); color: white; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; -webkit-tap-highlight-color: transparent; }
         .doc-btn:active { transform: scale(0.94); background: rgba(30,41,59,0.9); }
-        .doc-capture { width: 78px; height: 78px; border-radius: 50%; border: 4px solid rgba(255,255,255,0.92); background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-        .doc-capture::after { content: ''; width: 62px; height: 62px; border-radius: 50%; background: white; transition: transform 0.12s ease; }
-        .doc-capture:active::after { transform: scale(0.9); }
-        .doc-capture:disabled { opacity: 0.45; }
-        .doc-gallery-thumb { width: 48px; height: 48px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.18); background: rgba(15,23,42,0.72); display: inline-flex; align-items: center; justify-content: center; color: #cbd5e1; cursor: pointer; }
-        .doc-photos-btn { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-width: 64px; padding: 8px 10px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.18); background: rgba(15,23,42,0.78); color: #e2e8f0; cursor: pointer; -webkit-tap-highlight-color: transparent; font-family: inherit; }
-        .doc-photos-btn:active { transform: scale(0.94); background: rgba(30,41,59,0.92); }
-        .doc-photos-btn span { font-size: 10px; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; color: #93c5fd; }
-        /* Visually hidden — display:none breaks iOS photo-library open via label/JS */
+        /* Visually hidden — display:none can break iOS file picker */
         .doc-file-input { position: fixed; left: 0; top: 0; width: 1px; height: 1px; opacity: 0; overflow: hidden; z-index: 10050; }
-        .doc-perm { position: absolute; inset: 0; z-index: 6; display: none; align-items: center; justify-content: center; padding: 28px; background: rgba(15,23,42,0.96); text-align: center; }
-        .doc-perm.show { display: flex; }
-        .doc-perm-card { max-width: 360px; }
-        .doc-perm-title { font-size: 20px; font-weight: 900; margin-bottom: 10px; }
-        .doc-perm-msg { font-size: 14px; font-weight: 600; color: #94a3b8; line-height: 1.55; margin-bottom: 20px; }
-        .doc-perm-actions { display: flex; flex-direction: column; gap: 10px; }
-        .doc-perm-actions button { width: 100%; padding: 15px; border-radius: 14px; border: none; font-weight: 900; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: white; cursor: pointer; font-family: inherit; }
-        .doc-perm-primary { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
-        .doc-perm-secondary { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12) !important; }
-
-        .doc-review { position: fixed; inset: 0; z-index: 10030; background: #0f172a; display: none; flex-direction: column; }
-        .doc-review.active { display: flex; }
-        .doc-review-header { display: flex; justify-content: space-between; align-items: center; padding: calc(12px + env(safe-area-inset-top, 0px)) 16px 8px; border-bottom: 1px solid rgba(255,255,255,0.08); flex-shrink: 0; }
-        .doc-review-title { font-size: 15px; font-weight: 900; letter-spacing: -0.01em; }
-        /* Image on top, fields below — preview wraps the ticket tightly */
-        .doc-review-stage { position: relative; flex: 0 0 auto; background: #020617; overflow: hidden; display: block; padding: 8px 12px 0; }
-        .doc-review-zoom { position: relative; width: 100%; overflow: hidden; border-radius: 12px; background: #020617; cursor: zoom-in; -webkit-tap-highlight-color: transparent; }
-        .doc-review-zoom img { display: block; width: 100%; height: auto; max-height: min(36vh, 340px); object-fit: contain; object-position: center top; border-radius: 12px; background: #111; box-shadow: 0 8px 28px rgba(0,0,0,0.4); }
-        .doc-review-zoom-hint { position: absolute; right: 10px; bottom: 10px; z-index: 2; padding: 5px 8px; border-radius: 8px; background: rgba(15,23,42,0.78); color: #93c5fd; font-size: 9px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; pointer-events: none; }
-        .doc-ocr-panel { padding: 10px 16px 8px; border-top: 1px solid rgba(255,255,255,0.08); background: rgba(15,23,42,0.96); flex: 1 1 auto; min-height: 0; overflow-y: auto; }
-        .doc-ocr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px; }
-        .doc-ocr-field label { display: block; font-size: 10px; font-weight: 900; color: #64748b; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 6px; }
-        .doc-ocr-field input, .doc-ocr-field textarea { width: 100%; background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.14); color: white; border-radius: 10px; padding: 12px; font-size: 15px; font-weight: 700; font-family: inherit; }
-        .doc-ocr-field.full { grid-column: 1 / -1; }
-        .doc-ocr-field textarea { min-height: 64px; resize: vertical; font-size: 13px; font-weight: 600; }
-        .doc-ocr-note { font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 10px; line-height: 1.45; }
-        .doc-review-tools { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 8px 16px 0; flex-shrink: 0; }
-        .doc-review-tools button { padding: 12px 8px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.05); color: #e2e8f0; font-weight: 900; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; font-family: inherit; }
-        .doc-review-tools button:active { opacity: 0.75; transform: scale(0.98); }
-        .doc-review-actions { display: grid; grid-template-columns: 1fr 1.4fr 1fr; gap: 10px; padding: 10px 16px calc(18px + env(safe-area-inset-bottom, 0px)); flex-shrink: 0; }
-        .doc-review-actions button { padding: 16px 8px; border: none; border-radius: 14px; font-weight: 900; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: white; cursor: pointer; font-family: inherit; }
-        .doc-btn-muted { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1) !important; }
-        .doc-btn-danger { background: rgba(239,68,68,0.18); color: #fca5a5 !important; }
-        .doc-btn-primary { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
 
         /* Fullscreen gallery lightbox for ticket zoom */
         .ticket-lightbox { position: fixed; inset: 0; z-index: 10070; background: rgba(0,0,0,0.97); display: none; flex-direction: column; color: white; }
@@ -377,8 +303,6 @@
 
         .find-ticket-search { display: flex; gap: 10px; margin: 8px 0 14px; }
         .find-ticket-search .edit-input { flex: 1; min-width: 0; }
-        .find-ticket-photo-btn { flex-shrink: 0; padding: 0 14px; border-radius: 12px; border: 1px solid rgba(96,165,250,0.35); background: rgba(59,130,246,0.15); color: #93c5fd; font-weight: 800; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; font-family: inherit; cursor: pointer; }
-        .find-ticket-photo-btn:active { opacity: 0.75; }
         .find-ticket-hint { font-size: 12px; font-weight: 700; color: #64748b; line-height: 1.45; margin-bottom: 12px; flex-shrink: 0; }
         .find-ticket-results { flex: 1 1 auto; min-height: 120px; max-height: none; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
         .edit-eyebrow, .edit-title, .edit-subtitle, .find-ticket-search { flex-shrink: 0; }
@@ -396,7 +320,7 @@
     <header class="app-header">
         <div class="header-title">
             <h1>DriverPay <span>Pro</span></h1>
-            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v2.12.34</p>
+            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v2.12.35</p>
         </div>
         <div class="menu-container">
             <button class="menu-btn" onclick="toggleMenu(event)" aria-label="Menu">
@@ -442,7 +366,7 @@
                     <polyline points="8 6 2 12 8 18"/>
                 </svg>
             </span>
-            Scan Debug
+            Debug Log
         </button>
             </div>
         </div>
@@ -499,7 +423,7 @@
             </div>
             <div class="footer-tagline">Built for the long haul</div>
             <div class="footer-meta">
-                <span class="footer-version">v2.12.34</span>
+                <span class="footer-version">v2.12.35</span>
                 <span class="footer-meta-dot"></span>
                 <span>© 2026</span>
                 <span class="footer-meta-dot"></span>
@@ -564,7 +488,7 @@
                         <span id="editTicketCamera" class="tc-camera"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span>
                         <span id="editTicketPending" class="ticket-pending-icon" style="display:none;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z"/><path d="M13 5v2"/><path d="M13 11v2"/><path d="M13 17v2"/></svg></span>
                     </button>
-                    <span class="ticket-control-status" id="editTicketStatus">No ticket — tap to scan</span>
+                    <span class="ticket-control-status" id="editTicketStatus">No ticket — tap to add photo</span>
                     <button type="button" class="ticket-control-view" id="editTicketView" style="display:none;" onclick="viewEditTicket()">View</button>
                 </div>
             </div>
@@ -626,21 +550,8 @@
             <div style="margin-top: 28px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.06);">
                 <div class="edit-eyebrow">TRUCK</div>
                 <div class="edit-title" style="font-size: 18px; margin: 6px 0 4px;">My Truck Number</div>
-                <div class="edit-subtitle" style="margin-bottom: 14px;">If a scanned ticket shows a different truck number, DriverPay warns you before saving.</div>
+                <div class="edit-subtitle" style="margin-bottom: 14px;">Stored on this device for your records (and future features).</div>
                 <input type="text" id="truckNumberInput" class="edit-input" inputmode="numeric" placeholder="1205" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
-            </div>
-
-            <div style="margin-top: 28px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.06);">
-                <div class="edit-eyebrow">SCANNER · OPTIONAL</div>
-                <div class="edit-title" style="font-size: 18px; margin: 6px 0 4px;">Grok API Key</div>
-                <div class="edit-subtitle" style="margin-bottom: 14px;">xAI Grok key used to clean tickets (background removal, B&amp;W, clarity, upright orientation) and read ticket text. Stored locally on this device only. Images are sent only to api.x.ai when you scan. Defaults use the cheapest models that get the job done: <strong style="color:#cbd5e1;">Chat</strong> <code style="color:#93c5fd;">grok-build-0.1</code> and <strong style="color:#cbd5e1;">Image</strong> <code style="color:#93c5fd;">grok-imagine-image</code> ($0.02/image — not the quality variant). Enable both on the key. Get a key at <a href="https://console.x.ai/team/default/api-keys" class="settings-ext-link" data-ext-title="Get a Grok API key">console.x.ai</a>.</div>
-                <input type="password" id="grokKeyInput" class="edit-input" placeholder="xai-..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
-                <div class="grok-key-actions">
-                    <button type="button" class="grok-test-btn" id="grokKeyTestBtn" onclick="testGrokApiKey()">Test Key</button>
-                    <span class="grok-test-status" id="grokKeyTestStatus"></span>
-                </div>
-                <a href="https://console.x.ai/team/default/billing" class="grok-credits-link settings-ext-link" data-ext-title="Top up Grok API credits">Top up Grok API credits →</a>
-                <a href="https://console.x.ai/team/default/api-keys" class="grok-credits-link settings-ext-link" data-ext-title="Grok API keys">Create & view API keys →</a>
             </div>
 
             <div class="edit-actions">
@@ -683,15 +594,15 @@
                         <span class="help-section-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span>
                         Load Tickets
                     </div>
-                    <p>Every load has a camera icon. <strong style="color:#ef4444;">Red</strong> = no ticket yet. <strong style="color:#60a5fa;">Blue ticket</strong> = ticket + info saved. Tap to open the Grok ticket scanner — snap with the shutter, or tap <strong>Photos</strong> to add an image from your library. Grok cleans the ticket, reads the fields, and lets you confirm before saving. If you scan a ticket # that’s already saved, you’ll get a duplicate warning and it won’t save twice.</p>
-                    <div class="help-tip"><strong>Tip:</strong> Scans are saved on your phone first so they work offline. Scanning inside Edit shows a <strong style="color:#3b82f6;">blue ticket icon</strong> until you tap Save.</div>
+                    <p>Every load has a camera icon. <strong style="color:#ef4444;">Red</strong> = no ticket yet. <strong style="color:#60a5fa;">Blue</strong> = photo saved on this device. Tap the camera to take a photo or choose one from your gallery — it’s saved with the load. No cloud upload.</p>
+                    <div class="help-tip"><strong>Tip:</strong> Capturing inside Edit stages the photo until you tap Save.</div>
                 </div>
                 <div class="help-section">
                     <div class="help-section-title">
                         <span class="help-section-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
                         Find Ticket
                     </div>
-                    <p>Menu → <strong>Find Ticket</strong> searches saved scans by ticket #, job, plant, truck, or date. Tap <strong>Photo</strong> to let Grok read a ticket image and match it. Needs your Grok API key. Opening a match shows Ticket Info with the image on top.</p>
+                    <p>Menu → <strong>Find Ticket</strong> searches saved tickets by ticket #, job, plant, truck, or date (text search only). Opening a match shows the saved photo and any ticket info on file.</p>
                 </div>
                 <div class="help-section">
                     <div class="help-section-title">
@@ -742,28 +653,23 @@
             <div class="chart-handle"></div>
             <div class="edit-eyebrow">FIND TICKET</div>
             <div class="edit-title">Search Saved Tickets</div>
-            <div class="edit-subtitle">Search by ticket #, job, plant, truck, or date. Or snap a ticket photo and Grok will match it to a saved load.</div>
+            <div class="edit-subtitle">Search by ticket #, job, plant, truck, or date.</div>
             <div class="find-ticket-search">
                 <input type="search" id="findTicketQuery" class="edit-input" placeholder="Ticket #, job, plant…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="search">
-                <button type="button" class="find-ticket-photo-btn" id="findTicketPhotoBtn">Photo</button>
             </div>
-            <div class="find-ticket-hint" id="findTicketHint">Requires a Grok API key in Settings.</div>
+            <div class="find-ticket-hint" id="findTicketHint">Type to search saved tickets on this device.</div>
             <div class="find-ticket-results" id="findTicketResults"></div>
             <button class="chart-close" onclick="closeFindTicket()">CLOSE</button>
         </div>
     </div>
 
-    <input type="file" id="findTicketFile" class="doc-file-input"
-        accept="image/jpeg,image/png,image/heic,image/heif,.jpg,.jpeg,.png,.heic,.heif"
-        multiple
-        aria-hidden="true" tabindex="-1">
 
     <div class="help-overlay" id="debugOverlay">
         <div class="help-modal">
             <div class="chart-handle"></div>
-            <div class="edit-eyebrow">SCAN DEBUG</div>
-            <div class="edit-title">Latest Scan Log</div>
-            <div class="edit-subtitle">Console output captured from the most recent ticket scan. Persisted across reloads.</div>
+            <div class="edit-eyebrow">DEBUG</div>
+            <div class="edit-title">Local Debug Log</div>
+            <div class="edit-subtitle">Console messages tagged for ticket capture. Persisted across reloads.</div>
             <div class="debug-meta" id="debugMeta">0 entries</div>
             <pre class="debug-log" id="debugLog"></pre>
             <div class="edit-actions">
@@ -810,7 +716,7 @@
             <div class="chart-handle"></div>
             <div class="edit-eyebrow">SELECT TICKETS</div>
             <div class="edit-title" id="exportPickerTitle">—</div>
-            <div class="edit-subtitle">Choose which tickets to include. Loads without a scanned ticket are greyed out.</div>
+            <div class="edit-subtitle">Choose which tickets to include. Loads without a saved ticket photo are greyed out.</div>
             <div class="export-toggle-row">
                 <button class="export-toggle" id="exportSelectAllBtn" onclick="toggleSelectAllExport()">Select All</button>
                 <span class="export-count" id="exportCount">0 selected</span>
@@ -823,101 +729,9 @@
         </div>
     </div>
 
-    <div class="scan-overlay" id="scanOverlay" aria-hidden="true">
-        <div class="scan-spinner" id="scanSpinner"></div>
-        <div class="scan-label" id="scanLabel">Grok Scanning…</div>
-        <div class="scan-sublabel" id="scanSublabel">Cleaning ticket and reading text</div>
-        <div class="scan-error" id="scanError"></div>
-        <button type="button" class="scan-cancel-btn" id="scanCancelBtn">Cancel</button>
-    </div>
-
-    <!-- driverpay-scanner:2.12.34 -->
-    <div class="doc-scanner" id="docScanner" aria-hidden="true" role="dialog" aria-label="Grok ticket scanner">
-        <div class="doc-scanner-stage">
-            <video id="docScannerVideo" class="doc-scanner-video" playsinline muted autoplay></video>
-            <div class="doc-scanner-guide" aria-hidden="true"></div>
-            <div class="doc-scanner-top">
-                <button type="button" class="doc-btn" id="docScannerClose" aria-label="Close scanner">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-                </button>
-                <button type="button" class="doc-btn" id="docScannerFlash" aria-label="Toggle flash">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg>
-                </button>
-            </div>
-            <div class="doc-scanner-status" id="docScannerStatus">Center ticket · or add from Photos</div>
-            <div class="doc-scanner-bottom">
-                <div class="doc-scanner-side">
-                    <label class="doc-photos-btn" id="docScannerGallery" for="docScannerFile" role="button" aria-label="Add image from Photos" title="Add from Photos">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-                        <span>Photos</span>
-                    </label>
-                </div>
-                <button type="button" class="doc-capture" id="docScannerCapture" aria-label="Capture ticket"></button>
-                <div class="doc-scanner-side right"></div>
-            </div>
-            <div class="doc-perm" id="docScannerPerm">
-                <div class="doc-perm-card">
-                    <div class="doc-perm-title" id="docScannerPermTitle">Camera access needed</div>
-                    <div class="doc-perm-msg" id="docScannerPermMsg">Allow camera access to photograph load tickets. You can also add an image from Photos — Grok handles the rest.</div>
-                    <div class="doc-perm-actions">
-                        <button type="button" class="doc-perm-primary" id="docScannerRetryCam">Try Again</button>
-                        <label class="doc-perm-secondary" id="docScannerOpenGallery" for="docScannerFile" style="display:block; text-align:center; box-sizing:border-box; cursor:pointer;">Add from Photos</label>
-                        <button type="button" class="doc-perm-secondary" id="docScannerPermClose">Close</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- Outside .doc-scanner: never trapped in display:none.
-         iOS gallery force: NO capture attribute, NO accept=image/* wildcard (that prefers Camera),
-         and multiple=true so Photos library opens instead of the camera shutter. -->
-    <input type="file" id="docScannerFile" class="doc-file-input"
-        accept="image/jpeg,image/png,image/heic,image/heif,.jpg,.jpeg,.png,.heic,.heif"
-        multiple
+    <input type="file" id="ticketFileInput" class="doc-file-input"
+        accept="image/*" capture="environment"
         aria-hidden="true" tabindex="-1">
-
-    <div class="doc-review" id="docReview" aria-hidden="true" role="dialog" aria-label="Review Grok scan">
-        <div class="doc-review-header">
-            <button type="button" class="doc-btn" id="docReviewClose" aria-label="Cancel review">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-            </button>
-            <div class="doc-review-title">Grok Scan Review</div>
-            <div style="width:48px"></div>
-        </div>
-        <div class="doc-review-stage" id="docReviewStage">
-            <div class="doc-review-zoom" id="docReviewZoom">
-                <img id="docReviewImg" alt="Grok cleaned ticket">
-                <div class="doc-review-zoom-hint">Tap to expand</div>
-            </div>
-        </div>
-        <div class="doc-ocr-panel">
-            <div class="doc-ocr-note">Confirm the fields below before saving.</div>
-            <div class="doc-ocr-grid">
-                <div class="doc-ocr-field"><label for="ocrPlant">Plant</label><input type="text" id="ocrPlant" list="ocrPlantList" placeholder="—" autocomplete="off"></div>
-                <div class="doc-ocr-field"><label for="ocrJob">Job number</label><input type="text" id="ocrJob" placeholder="—" autocomplete="off"></div>
-                <div class="doc-ocr-field"><label for="ocrDate">Date</label><input type="text" id="ocrDate" placeholder="—" autocomplete="off"></div>
-                <div class="doc-ocr-field"><label for="ocrTicketNo">Ticket #</label><input type="text" id="ocrTicketNo" placeholder="—" autocomplete="off"></div>
-                <div class="doc-ocr-field"><label for="ocrTimeIn">Time in</label><input type="text" id="ocrTimeIn" placeholder="—" autocomplete="off"></div>
-                <div class="doc-ocr-field"><label for="ocrTimeOut">Time out</label><input type="text" id="ocrTimeOut" placeholder="—" autocomplete="off"></div>
-                <div class="doc-ocr-field"><label for="ocrTruck">Truck #</label><input type="text" id="ocrTruck" placeholder="—" autocomplete="off"></div>
-                <div class="doc-ocr-field"><label for="ocrMiles">Miles</label><input type="number" id="ocrMiles" inputmode="decimal" step="0.1" placeholder="—"></div>
-                <div class="doc-ocr-field"><label for="ocrTons">Tons</label><input type="number" id="ocrTons" inputmode="decimal" step="0.01" placeholder="—"></div>
-            </div>
-            <datalist id="ocrPlantList">
-                <option value="Colorado Materials"></option>
-                <option value="Hunter Stone"></option>
-            </datalist>
-        </div>
-        <div class="doc-review-tools">
-            <button type="button" id="docReviewExport">Export</button>
-            <button type="button" id="docReviewSavePhotos">Save to Photos</button>
-        </div>
-        <div class="doc-review-actions">
-            <button type="button" class="doc-btn-muted" id="docReviewRetake">Retake</button>
-            <button type="button" class="doc-btn-primary" id="docReviewSave">Save to Load</button>
-            <button type="button" class="doc-btn-danger" id="docReviewCancel">Cancel</button>
-        </div>
-    </div>
 
     <div class="ticket-lightbox" id="ticketLightbox" aria-hidden="true" role="dialog" aria-label="Ticket gallery">
         <div class="ticket-lightbox-top">
@@ -1085,7 +899,7 @@
         const rateData = [[2,3.84],[3,3.97],[6,4.38],[8,4.65],[11,5.06],[13,5.46],[14,5.43],[16,6.03],[17,6.00],[21,6.75],[25,7.32],[27,7.36],[30,8.01],[39,10.26],[45,11.24],[49,10.15],[61,14.40],[62,14.72],[65,15.42],[92,16.07]];
         const SETTINGS_KEY = 'driverpay_settings';
         const DOC_SYNC_KEY = 'driverpay_doc_sync_queue';
-        const DEFAULT_SETTINGS = { avgTons: 25, grokApiKey: '', expectedTruckNumber: '1205', localUserId: '' };
+        const DEFAULT_SETTINGS = { avgTons: 25, expectedTruckNumber: '1205', localUserId: '' };
 
         function loadSettings() {
             try {
@@ -1099,15 +913,13 @@
                 let avg = parseFloat(parsed.avgTons);
                 if (isNaN(avg) || avg < 17) avg = 17;
                 if (avg > 30) avg = 30;
-                // Prefer grokApiKey; do not migrate Anthropic keys (different provider).
-                const key = (typeof parsed.grokApiKey === 'string') ? parsed.grokApiKey : '';
                 const truck = (typeof parsed.expectedTruckNumber === 'string' && parsed.expectedTruckNumber.trim())
                     ? parsed.expectedTruckNumber.trim()
                     : '1205';
                 let localUserId = (typeof parsed.localUserId === 'string' && parsed.localUserId) ? parsed.localUserId : genLocalUserId();
-                const out = { avgTons: avg, grokApiKey: key, expectedTruckNumber: truck, localUserId };
-                // Rewrite settings if missing fields or still carrying the old Anthropic field.
-                if (!parsed.localUserId || Object.prototype.hasOwnProperty.call(parsed, 'anthropicApiKey') || typeof parsed.grokApiKey !== 'string' || typeof parsed.expectedTruckNumber !== 'string') {
+                const out = { avgTons: avg, expectedTruckNumber: truck, localUserId };
+                // Rewrite if missing fields or still carrying removed API-key fields.
+                if (!parsed.localUserId || Object.keys(parsed).some(k => /ApiKey$/i.test(k)) || typeof parsed.expectedTruckNumber !== 'string') {
                     try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(out)); } catch (_) {}
                 }
                 return out;
@@ -1122,7 +934,7 @@
 
         function applySettingsToHeader() {
             const sub = document.getElementById('headerSubtitle');
-            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v2.12.34`;
+            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v2.12.35`;
         }
 
         let savedScrollY = 0;
@@ -1436,21 +1248,10 @@
             const slider = document.getElementById('tonSlider');
             slider.value = settings.avgTons;
             document.getElementById('tonValueDisplay').textContent = formatTons(settings.avgTons);
-            const keyInput = document.getElementById('grokKeyInput');
-            if (keyInput) keyInput.value = settings.grokApiKey || '';
             const truckInput = document.getElementById('truckNumberInput');
             if (truckInput) truckInput.value = settings.expectedTruckNumber || '1205';
-            const testStatus = document.getElementById('grokKeyTestStatus');
-            if (testStatus) {
-                testStatus.textContent = '';
-                testStatus.className = 'grok-test-status';
-            }
             const settingsOverlay = document.getElementById('settingsOverlay');
             settingsOverlay.classList.add('active');
-            if (!settingsOverlay.dataset.extLinksBound) {
-                settingsOverlay.addEventListener('click', onSettingsExternalLinkClick);
-                settingsOverlay.dataset.extLinksBound = '1';
-            }
             lockBodyScroll();
         }
         function closeSettings() {
@@ -1471,129 +1272,19 @@
             v = Math.max(17, Math.min(30, v));
             v = Math.round(v * 10) / 10;
             settings.avgTons = v;
-            const keyInput = document.getElementById('grokKeyInput');
-            if (keyInput) settings.grokApiKey = keyInput.value.trim();
             const truckInput = document.getElementById('truckNumberInput');
             const truckVal = truckInput ? truckInput.value.trim() : '';
             settings.expectedTruckNumber = truckVal || '1205';
-            // Persist only current schema — drops any leftover anthropicApiKey.
             settings = {
                 avgTons: settings.avgTons,
-                grokApiKey: settings.grokApiKey || '',
                 expectedTruckNumber: settings.expectedTruckNumber || '1205',
                 localUserId: settings.localUserId || genLocalUserId()
             };
             saveSettingsObj(settings);
             applySettingsToHeader();
-            if (settings.grokApiKey) loadScannerGuide();
             closeSettings();
         }
 
-        function tinyTestImageDataUrl() {
-            const c = document.createElement('canvas');
-            c.width = 64; c.height = 64;
-            const ctx = c.getContext('2d');
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, 64, 64);
-            ctx.fillStyle = '#000000';
-            ctx.font = 'bold 14px sans-serif';
-            ctx.fillText('TEST', 14, 38);
-            return c.toDataURL('image/jpeg', 0.8);
-        }
-
-        async function testGrokApiKey() {
-            const input = document.getElementById('grokKeyInput');
-            const key = ((input && input.value) || '').trim() || getGrokApiKey();
-            const btn = document.getElementById('grokKeyTestBtn');
-            const status = document.getElementById('grokKeyTestStatus');
-            const setStatus = (text, cls) => {
-                if (!status) return;
-                status.textContent = text;
-                status.className = 'grok-test-status' + (cls ? ' ' + cls : '');
-            };
-            if (!key) {
-                setStatus('Paste a key first.', 'err');
-                await appAlert('Paste your xAI Grok API key above, then tap Test Key.', { title: 'No API Key' });
-                return;
-            }
-            if (key.indexOf('sk-ant-') === 0) {
-                setStatus('That looks like Anthropic, not Grok.', 'err');
-                await appAlert('That key looks like Anthropic’s. Paste an xAI Grok key (usually starts with xai-).', { title: 'Wrong API Key' });
-                return;
-            }
-            if (btn) btn.disabled = true;
-            setStatus('Testing Chat…');
-            let chatOk = false;
-            let imageOk = false;
-            let chatErr = '';
-            let imageErr = '';
-            try {
-                const chatRes = await fetch('https://api.x.ai/v1/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                        'content-type': 'application/json',
-                        'Authorization': 'Bearer ' + key
-                    },
-                    body: JSON.stringify({
-                        model: GROK_CHAT_MODEL,
-                        temperature: 0,
-                        max_tokens: 8,
-                        messages: [{ role: 'user', content: 'Reply with exactly: OK' }]
-                    })
-                });
-                if (!chatRes.ok) {
-                    let body = '';
-                    try { body = await chatRes.text(); } catch (_) {}
-                    chatErr = 'Chat HTTP ' + chatRes.status + (body ? ': ' + body.slice(0, 160) : '');
-                } else {
-                    chatOk = true;
-                }
-            } catch (err) {
-                chatErr = (err && err.message) ? err.message : String(err);
-            }
-
-            setStatus(chatOk ? 'Chat OK · testing Image…' : 'Chat failed · testing Image…');
-            try {
-                const imgRes = await fetch('https://api.x.ai/v1/images/edits', {
-                    method: 'POST',
-                    headers: {
-                        'content-type': 'application/json',
-                        'Authorization': 'Bearer ' + key
-                    },
-                    body: JSON.stringify({
-                        model: GROK_IMAGINE_MODEL,
-                        prompt: 'Return this image unchanged. Do not add text.',
-                        image: { url: tinyTestImageDataUrl(), type: 'image_url' },
-                        response_format: 'url'
-                    })
-                });
-                if (!imgRes.ok) {
-                    let body = '';
-                    try { body = await imgRes.text(); } catch (_) {}
-                    imageErr = 'Image HTTP ' + imgRes.status + (body ? ': ' + body.slice(0, 160) : '');
-                } else {
-                    imageOk = true;
-                }
-            } catch (err) {
-                imageErr = (err && err.message) ? err.message : String(err);
-            }
-
-            if (btn) btn.disabled = false;
-
-            if (chatOk && imageOk) {
-                setStatus('Chat + Image OK', 'ok');
-                await appAlert('Grok key works. Chat (' + GROK_CHAT_MODEL + ') and Image (' + GROK_IMAGINE_MODEL + ') both responded.', { title: 'API Key OK' });
-                return;
-            }
-
-            const parts = [];
-            parts.push(chatOk ? '✓ Chat OK' : '✗ Chat failed — enable Chat / ' + GROK_CHAT_MODEL + ' on the key.');
-            parts.push(imageOk ? '✓ Image OK' : '✗ Image failed — enable Image / ' + GROK_IMAGINE_MODEL + ' on the key.');
-            if (chatErr) parts.push('\nChat detail: ' + chatErr);
-            if (imageErr) parts.push('\nImage detail: ' + imageErr);
-            setStatus(chatOk || imageOk ? 'Partial — see details' : 'Key test failed', 'err');
-            await appAlert(parts.join('\n'), { title: 'API Key Test' });
-        }
 
         function openHelp() {
             document.getElementById('helpOverlay').classList.add('active');
@@ -1733,10 +1424,10 @@
                 const n = findTicketState.matches.length;
                 hint.textContent = n
                     ? (n + ' ticket' + (n === 1 ? '' : 's') + ' found — tap to open.')
-                    : 'Requires a Grok API key in Settings.';
+                    : 'Type to search saved tickets on this device.';
             }
             if (!findTicketState.matches.length) {
-                root.innerHTML = '<div class="find-ticket-empty">' + escapeHtml(emptyMsg || 'No matching tickets yet. Scan tickets with Grok first, then search here.') + '</div>';
+                root.innerHTML = '<div class="find-ticket-empty">' + escapeHtml(emptyMsg || 'No matching tickets yet. Save a ticket photo on a load, then search here.') + '</div>';
                 return;
             }
             root.innerHTML = findTicketState.matches.map((m, idx) => {
@@ -1753,7 +1444,7 @@
                     + (thumb ? '<img class="find-ticket-thumb" src="' + thumb + '" alt="">' : '<div class="find-ticket-thumb"></div>')
                     + '<div class="find-ticket-row-info">'
                     + '<div class="find-ticket-row-title">' + escapeHtml(title) + '</div>'
-                    + '<div class="find-ticket-row-sub">' + escapeHtml(subParts.join(' · ') || 'Scanned ticket') + '</div>'
+                    + '<div class="find-ticket-row-sub">' + escapeHtml(subParts.join(' · ') || 'Saved ticket') + '</div>'
                     + '<div class="find-ticket-row-meta">' + escapeHtml(meta) + '</div>'
                     + '</div></button>';
             }).join('');
@@ -1773,7 +1464,7 @@
             const matches = searchSavedTickets(q);
             renderFindTicketResults(
                 matches,
-                q ? 'No tickets match “' + q.trim() + '”.' : 'No scanned tickets saved yet.'
+                q ? 'No tickets match “' + q.trim() + '”.' : 'No saved tickets yet.'
             );
         }
 
@@ -1801,8 +1492,6 @@
             if (findTicketState.bound) return;
             findTicketState.bound = true;
             const input = document.getElementById('findTicketQuery');
-            const photoBtn = document.getElementById('findTicketPhotoBtn');
-            const fileInput = document.getElementById('findTicketFile');
             if (input) {
                 input.addEventListener('input', () => runFindTicketSearch());
                 input.addEventListener('keydown', (e) => {
@@ -1813,71 +1502,9 @@
                     }
                 });
             }
-            if (photoBtn && fileInput) {
-                photoBtn.addEventListener('click', async () => {
-                    const ready = await ensureGrokReadyForScan();
-                    if (!ready) return;
-                    preparePhotosInput(fileInput);
-                    try { fileInput.value = ''; } catch (_) {}
-                    try { fileInput.click(); } catch (_) {}
-                });
-                fileInput.addEventListener('change', async () => {
-                    const file = fileInput.files && fileInput.files[0];
-                    try { fileInput.value = ''; } catch (_) {}
-                    if (!file) return;
-                    await findTicketFromPhoto(file);
-                });
-            }
         }
 
-        async function findTicketFromPhoto(file) {
-            const ready = await ensureGrokReadyForScan();
-            if (!ready) return;
-            showScanOverlay('Finding Ticket…', 'Grok is reading the photo to match a saved ticket');
-            try {
-                const dataUrl = await fileToUploadDataUrl(file);
-                // Prefer a modest upload size for OCR-only find
-                let ocrUrl = dataUrl;
-                try {
-                    const img = await loadImageFromUrl(dataUrl);
-                    const c = canvasFromImage(img, 1600);
-                    ocrUrl = c.toDataURL('image/jpeg', 0.85);
-                } catch (_) {}
-                const ocr = await grokReadTicket(ocrUrl);
-                hideScanOverlay();
-                const matches = matchTicketsFromOcr(ocr);
-                const label = (ocr && ocr.ticketNumber) ? ('#' + ocr.ticketNumber)
-                    : ((ocr && ocr.jobNumber) ? ('job ' + ocr.jobNumber) : 'this photo');
-                if (!matches.length) {
-                    const q = (ocr && (ocr.ticketNumber || ocr.jobNumber || ocr.plant)) || '';
-                    const input = document.getElementById('findTicketQuery');
-                    if (input && q) input.value = String(q);
-                    runFindTicketSearch();
-                    await appAlert(
-                        'Grok read ' + label + ', but no saved ticket matched. Try editing the search, or scan/save the ticket first.',
-                        { title: 'No Match' }
-                    );
-                    return;
-                }
-                if (matches.length === 1) {
-                    openFoundTicket(matches[0]);
-                    return;
-                }
-                const input = document.getElementById('findTicketQuery');
-                if (input) input.value = (ocr && ocr.ticketNumber) ? String(ocr.ticketNumber) : (ocr && ocr.jobNumber ? String(ocr.jobNumber) : '');
-                renderFindTicketResults(matches, 'No match');
-                const hint = document.getElementById('findTicketHint');
-                if (hint) hint.textContent = 'Grok found ' + matches.length + ' possible matches for ' + label + '.';
-            } catch (err) {
-                console.error('[find] photo search failed:', err);
-                hideScanOverlay();
-                await appAlert(formatScanError(err, 'Could not read that photo.'), { title: 'Find Failed' });
-            }
-        }
-
-        async function openFindTicket() {
-            const ready = await ensureGrokReadyForScan();
-            if (!ready) return;
+        function openFindTicket() {
             bindFindTicketOnce();
             const root = document.getElementById('findTicketOverlay');
             if (!root) return;
@@ -2160,7 +1787,7 @@
         }
 
         // ---- Load ticket, staged inside the Edit modal --------------------------------
-        // Red camera = no ticket · blue camera = ticket saved · blue ticket = ticket + OCR info.
+        // Red camera = no ticket · blue camera = photo saved · blue paper = legacy OCR info.
         // Nothing persists until Save is tapped.
         function updateEditTicketUI() {
             if (!editingLoad) return;
@@ -2171,16 +1798,17 @@
             if (!cam || !pending || !status || !viewBtn) return;
             const staged = !!editingLoad.stagedTicket;
             const saved = !!editingLoad.savedTicket && !editingLoad.removeTicket;
+            const hasPhoto = staged || saved;
             const hasInfo = !!(editingLoad.stagedDocument && docHasOcrInfo(editingLoad.stagedDocument)) ||
                 (!!editingLoad.savedDocuments && editingLoad.savedDocuments.some(docHasOcrInfo) && !editingLoad.removeTicket && !staged);
-            cam.classList.toggle('tc-saved', (saved && !staged) || (staged && hasInfo));
-            cam.innerHTML = (hasInfo && ((saved && !staged) || staged)) ? TICKET_ICON_SVG : CAMERA_ICON_SVG;
+            cam.classList.toggle('tc-saved', hasPhoto);
+            cam.innerHTML = (hasInfo && hasPhoto) ? TICKET_ICON_SVG : CAMERA_ICON_SVG;
             pending.style.display = staged ? 'inline-flex' : 'none';
             if (staged) status.textContent = saved ? 'New photo — Save to replace' : 'Captured — Save to keep';
             else if (saved && hasInfo) status.textContent = 'Ticket + info saved';
-            else if (saved) status.textContent = 'Saved to load';
+            else if (saved) status.textContent = 'Photo saved';
             else if (editingLoad.removeTicket) status.textContent = 'Will remove on Save';
-            else status.textContent = 'No ticket — tap to scan';
+            else status.textContent = 'No ticket — tap to add photo';
             viewBtn.style.display = (staged || saved) ? 'inline-flex' : 'none';
         }
 
@@ -2240,37 +1868,20 @@
             overlay.onclick = (e) => { if (e.target === overlay) close(); };
         }
 
-        const GROK_CHAT_MODEL = 'grok-build-0.1'; // cheapest Text+Image chat model that can OCR tickets
-        const GROK_IMAGINE_MODEL = 'grok-imagine-image'; // cheapest Imagine edit model ($0.02) — not -quality ($0.05)
-        const SCAN_UPLOAD_EDGE = 1280; // smaller uploads = less chance of mobile hang on Imagine
-        const SCAN_JPEG_QUALITY = 0.65;
-        const SCAN_CLEAN_TIMEOUT_MS = 90000;
-        const SCAN_OCR_TIMEOUT_MS = 60000;
+        const TICKET_JPEG_EDGE = 1280;
+        const TICKET_JPEG_QUALITY = 0.7;
 
-        let scanAbortController = null;
-        let scanPipelineActive = false;
-
-        const docScan = {
-            active: false,
-            mode: 'direct',
+        const ticketCapture = {
+            mode: 'direct', // direct | add | replace | edit
             sId: null,
             lId: null,
             docId: null,
-            stream: null,
-            track: null,
-            videoReady: false,
-            flashOn: false,
-            capturing: false,
+            busy: false,
             bound: false
         };
 
-        const docReview = {
-            active: false,
-            originalUrl: null,
-            processedUrl: null,
-            ocr: null,
-            wrongTruckAck: null // { ticketTruck, note } after immediate mismatch confirm
-        };
+        // Alias used by duplicateTicketExcludeIds / legacy call sites
+        const docScan = ticketCapture;
 
         const lightboxZoom = {
             scale: 1, x: 0, y: 0,
@@ -2327,7 +1938,7 @@
             resetLightboxZoom();
             // Keep body locked if a parent modal is still open
             const viewerOpen = document.getElementById('docViewer') && document.getElementById('docViewer').classList.contains('active');
-            if (docReview.active || viewerOpen) lockBodyScroll();
+            if (viewerOpen) lockBodyScroll();
             else unlockBodyScroll();
         }
 
@@ -2436,16 +2047,6 @@
             });
         }
 
-        function bindReviewImageTapOnce() {
-            const preview = document.getElementById('docReviewZoom');
-            if (!preview || preview.dataset.bound) return;
-            preview.dataset.bound = '1';
-            preview.addEventListener('click', () => {
-                const url = docReview.processedUrl || docReview.originalUrl ||
-                    (document.getElementById('docReviewImg') && document.getElementById('docReviewImg').src);
-                if (url) openTicketLightbox(url);
-            });
-        }
 
         function bindViewerImageTapOnce() {
             const stage = document.getElementById('docViewerStage');
@@ -2460,9 +2061,6 @@
             });
         }
 
-        // Kept for call-site compatibility — preview tap opens gallery lightbox.
-        function bindReviewZoomOnce() { bindReviewImageTapOnce(); bindLightboxZoomOnce(); }
-        function resetReviewZoom() { /* preview no longer transforms */ }
 
         async function dataUrlToJpegFile(dataUrl, filename) {
             const res = await fetch(dataUrl);
@@ -2488,47 +2086,6 @@
             a.remove();
         }
 
-        function reviewTicketFilename(prefix) {
-            const ticket = (document.getElementById('ocrTicketNo') && document.getElementById('ocrTicketNo').value.trim()) || 'ticket';
-            const safe = String(ticket).replace(/[^a-zA-Z0-9_-]+/g, '').slice(0, 24) || 'ticket';
-            return (prefix || 'ticket') + '-' + safe + '.jpg';
-        }
-
-        async function exportReviewTicket() {
-            const url = docReview.processedUrl || docReview.originalUrl;
-            if (!url) { await appAlert('No ticket image to export.'); return; }
-            const filename = reviewTicketFilename('export');
-            try {
-                const file = await dataUrlToJpegFile(url, filename);
-                if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                    await navigator.share({ files: [file], title: 'Ticket export', text: 'DriverPay ticket' });
-                    return;
-                }
-            } catch (err) {
-                console.warn('[scan] export share failed:', err);
-            }
-            downloadDataUrl(url, filename);
-            await appAlert('Ticket downloaded as ' + filename + '.', { title: 'Exported' });
-        }
-
-        async function saveReviewToPhotos() {
-            const url = docReview.processedUrl || docReview.originalUrl;
-            if (!url) { await appAlert('No ticket image to save.'); return; }
-            const filename = reviewTicketFilename('ticket');
-            try {
-                const file = await dataUrlToJpegFile(url, filename);
-                // iOS share sheet includes “Save Image” / Photos
-                if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                    await navigator.share({ files: [file], title: 'Save ticket' });
-                    return;
-                }
-            } catch (err) {
-                if (err && err.name === 'AbortError') return;
-                console.warn('[scan] save-to-photos share failed:', err);
-            }
-            downloadDataUrl(url, filename);
-            await appAlert('Image downloaded. On iPhone, open the file and tap Share → Save to Photos.', { title: 'Save to Photos' });
-        }
 
         function escapeHtml(str) {
             return String(str)
@@ -2657,7 +2214,7 @@
                     createdAt: null,
                     modifiedAt: null,
                     syncStatus: 'local',
-                    filter: 'grok'
+                    filter: 'photo'
                 }];
             }
             return [];
@@ -2674,182 +2231,6 @@
             try { if (navigator.vibrate) navigator.vibrate(ms || 18); } catch (_) {}
         }
 
-        function showScanOverlay(label, sub) {
-            const ov = document.getElementById('scanOverlay');
-            if (!ov) return;
-            const lab = document.getElementById('scanLabel') || ov.querySelector('.scan-label');
-            const subEl = document.getElementById('scanSublabel');
-            const errEl = document.getElementById('scanError');
-            const spin = document.getElementById('scanSpinner');
-            if (lab && label) lab.textContent = label;
-            if (subEl && sub) subEl.textContent = sub;
-            if (errEl) { errEl.textContent = ''; errEl.classList.remove('show'); }
-            if (spin) spin.style.display = '';
-            ov.classList.add('active');
-            ov.setAttribute('aria-hidden', 'false');
-            lockBodyScroll();
-        }
-        function hideScanOverlay() {
-            const ov = document.getElementById('scanOverlay');
-            if (!ov) return;
-            ov.classList.remove('active');
-            ov.setAttribute('aria-hidden', 'true');
-            const errEl = document.getElementById('scanError');
-            if (errEl) { errEl.textContent = ''; errEl.classList.remove('show'); }
-        }
-        function showScanOverlayError(message) {
-            const ov = document.getElementById('scanOverlay');
-            const errEl = document.getElementById('scanError');
-            const spin = document.getElementById('scanSpinner');
-            const lab = document.getElementById('scanLabel');
-            const subEl = document.getElementById('scanSublabel');
-            if (ov) {
-                ov.classList.add('active');
-                ov.setAttribute('aria-hidden', 'false');
-            }
-            if (spin) spin.style.display = 'none';
-            if (lab) lab.textContent = 'Scan Error';
-            if (subEl) subEl.textContent = 'Tap Cancel to close, then try again';
-            if (errEl) {
-                errEl.textContent = message || 'Unknown scan error';
-                errEl.classList.add('show');
-            }
-            lockBodyScroll();
-        }
-        function cancelActiveScan(reason) {
-            const msg = reason || 'Scan cancelled';
-            console.warn('[scan] cancel:', msg);
-            try { if (scanAbortController) scanAbortController.abort(msg); } catch (_) {}
-            scanAbortController = null;
-            scanPipelineActive = false;
-            hideScanOverlay();
-            pushScanLog('warn', ['scan cancelled:', msg]);
-        }
-        function bindScanOverlayOnce() {
-            const btn = document.getElementById('scanCancelBtn');
-            if (!btn || btn.dataset.bound) return;
-            btn.dataset.bound = '1';
-            btn.onclick = () => {
-                cancelActiveScan('Cancelled by user');
-            };
-        }
-
-        async function fetchWithTimeout(url, options, timeoutMs, label) {
-            const parent = (options && options.signal) || (scanAbortController && scanAbortController.signal) || null;
-            const ctrl = new AbortController();
-            const onParentAbort = () => {
-                try { ctrl.abort(parent && parent.reason ? parent.reason : 'aborted'); } catch (_) { ctrl.abort(); }
-            };
-            if (parent) {
-                if (parent.aborted) onParentAbort();
-                else parent.addEventListener('abort', onParentAbort, { once: true });
-            }
-            const timer = setTimeout(() => {
-                try { ctrl.abort((label || 'Request') + ' timed out after ' + Math.round(timeoutMs / 1000) + 's'); } catch (_) { ctrl.abort(); }
-            }, timeoutMs);
-            try {
-                return await fetch(url, { ...(options || {}), signal: ctrl.signal });
-            } catch (err) {
-                if (err && (err.name === 'AbortError' || err.name === 'TimeoutError')) {
-                    const reason = (ctrl.signal && ctrl.signal.reason) || (err && err.message) || 'aborted';
-                    throw new Error(typeof reason === 'string' ? reason : String(reason));
-                }
-                throw err;
-            } finally {
-                clearTimeout(timer);
-                if (parent) parent.removeEventListener('abort', onParentAbort);
-            }
-        }
-
-        function formatScanError(err, fallback) {
-            if (!err) return fallback || 'Unknown error';
-            if (typeof err === 'string') return err;
-            const msg = err.message || String(err);
-            if (/Failed to fetch|NetworkError|Load failed/i.test(msg)) {
-                return 'Network error talking to api.x.ai. Check Wi‑Fi/signal and try again.';
-            }
-            return msg || fallback || 'Unknown error';
-        }
-
-        function getGrokApiKey() {
-            return (settings && typeof settings.grokApiKey === 'string') ? settings.grokApiKey.trim() : '';
-        }
-
-        function getExpectedTruckNumber() {
-            const v = (settings && typeof settings.expectedTruckNumber === 'string') ? settings.expectedTruckNumber.trim() : '';
-            return v || '1205';
-        }
-
-        function normalizeTruckNumber(v) {
-            if (v == null) return '';
-            return String(v).replace(/[^0-9a-zA-Z]/g, '').replace(/^0+/, '') || String(v).trim();
-        }
-
-        function truckNumbersMatch(a, b) {
-            const na = normalizeTruckNumber(a);
-            const nb = normalizeTruckNumber(b);
-            if (!na || !nb) return true; // missing ticket truck = no mismatch flag
-            return na.toLowerCase() === nb.toLowerCase();
-        }
-
-        let scannerGuideText = '';
-        let scannerGuideLoaded = false;
-        let scannerGuideLoading = null;
-
-        async function loadScannerGuide(force) {
-            if (!getGrokApiKey()) return '';
-            if (scannerGuideLoaded && !force && scannerGuideText) return scannerGuideText;
-            if (scannerGuideLoading && !force) return scannerGuideLoading;
-            scannerGuideLoading = (async () => {
-                try {
-                    const res = await fetch('./scanner.md?v=' + Date.now(), { cache: 'no-store' });
-                    if (!res.ok) throw new Error('HTTP ' + res.status);
-                    scannerGuideText = await res.text();
-                    scannerGuideLoaded = true;
-                    console.log('[scan] scanner.md loaded (' + scannerGuideText.length + ' chars) — kept in memory for Grok');
-                    return scannerGuideText;
-                } catch (err) {
-                    console.warn('[scan] scanner.md load failed:', err);
-                    if (!scannerGuideText) {
-                        scannerGuideText = [
-                            '# scanner.md fallback',
-                            'Known plants: Colorado Materials, Hunter Stone.',
-                            'Hunter Stone may be Martin Marietta (plant line Hunter Stone) or HUNTER STONE division of Colorado Materials.',
-                            'tons = NET tons only. truckNumber = digits from VEHICLE/TRUCK (e.g. 1205 from RST1205).',
-                            'jobNumber = Order No / ORDER / JOB. Single TIME → timeIn only.',
-                            'Extract plant, jobNumber, date, timeIn, timeOut, truckNumber, miles, tons, ticketNumber, rawText.',
-                            'Driver truck number is 1205.'
-                        ].join('\n');
-                    }
-                    return scannerGuideText;
-                } finally {
-                    scannerGuideLoading = null;
-                }
-            })();
-            return scannerGuideLoading;
-        }
-
-        async function ensureGrokReadyForScan() {
-            const key = getGrokApiKey();
-            if (!key) {
-                const go = await appConfirm(
-                    'Add your Grok API key in Settings before scanning tickets. Grok cleans the photo, fixes orientation, and reads the ticket text.',
-                    { title: 'Grok API Key Needed', variant: 'warn', confirmText: 'Open Settings', cancelText: 'Cancel' }
-                );
-                if (go) openSettings();
-                return false;
-            }
-            if (key.indexOf('sk-ant-') === 0) {
-                const go = await appConfirm(
-                    'That key looks like Anthropic’s, not Grok. Paste an xAI Grok key in Settings.',
-                    { title: 'Wrong API Key', variant: 'warn', confirmText: 'Open Settings', cancelText: 'Cancel' }
-                );
-                if (go) openSettings();
-                return false;
-            }
-            await loadScannerGuide();
-            return true;
-        }
 
         function canvasFromImage(img, maxEdge) {
             const w = img.naturalWidth || img.width;
@@ -2872,136 +2253,32 @@
             });
         }
 
-        async function fileToUploadDataUrl(file) {
+        async function fileToJpegDataUrl(file) {
             const url = URL.createObjectURL(file);
             try {
                 const img = await loadImageFromUrl(url);
-                const canvas = canvasFromImage(img, SCAN_UPLOAD_EDGE);
-                return canvas.toDataURL('image/jpeg', SCAN_JPEG_QUALITY);
+                const canvas = canvasFromImage(img, TICKET_JPEG_EDGE);
+                return canvas.toDataURL('image/jpeg', TICKET_JPEG_QUALITY);
             } finally {
                 URL.revokeObjectURL(url);
             }
         }
 
-        async function videoFrameToDataUrl(video) {
-            const canvas = document.createElement('canvas');
-            const scale = Math.min(1, SCAN_UPLOAD_EDGE / Math.max(video.videoWidth || 1, video.videoHeight || 1));
-            canvas.width = Math.max(1, Math.round((video.videoWidth || 1280) * scale));
-            canvas.height = Math.max(1, Math.round((video.videoHeight || 720) * scale));
-            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-            return canvas.toDataURL('image/jpeg', SCAN_JPEG_QUALITY);
+        function getExpectedTruckNumber() {
+            const v = (settings && typeof settings.expectedTruckNumber === 'string') ? settings.expectedTruckNumber.trim() : '';
+            return v || '1205';
         }
 
-        async function urlToDataUrl(url) {
-            if (url && url.indexOf('data:') === 0) return url;
-            const res = await fetch(url);
-            if (!res.ok) throw new Error('Failed to download cleaned image (' + res.status + ')');
-            const blob = await res.blob();
-            return await new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = () => reject(new Error('Failed to read cleaned image'));
-                reader.readAsDataURL(blob);
-            });
+        function normalizeTruckNumber(v) {
+            if (v == null) return '';
+            return String(v).replace(/[^0-9a-zA-Z]/g, '').replace(/^0+/, '') || String(v).trim();
         }
 
-        async function grokCleanTicketImage(dataUrl) {
-            const key = getGrokApiKey();
-            if (!key) throw new Error('No Grok API key set.');
-            const prompt = [
-                'This is a photograph of a trucking load ticket / scale ticket / delivery ticket.',
-                '',
-                'Your job is to perform a pixel-preserving document cleanup, NOT to recreate or reinterpret the document.',
-                '',
-                'The ticket itself is the source of truth. Preserve it exactly.',
-                '',
-                'ABSOLUTE REQUIREMENTS',
-                '',
-                '* Keep the ticket’s exact width, height, aspect ratio, proportions, folds, wrinkles, edges, and perspective.',
-                '* Every character, number, barcode, QR code, line, logo, signature, handwritten note, stamp, and mark must remain exactly as photographed.',
-                '* Do not regenerate any part of the document.',
-                '* Do not redraw text.',
-                '* Do not recreate fonts.',
-                '* Do not “improve” handwriting.',
-                '* Do not infer missing characters.',
-                '* Do not hallucinate information.',
-                '* Do not move, resize, straighten, or reshape anything on the ticket.',
-                '',
-                'DO NOT',
-                '',
-                '* Warp the paper',
-                '* Flatten perspective',
-                '* Stretch or compress the ticket',
-                '* Change margins',
-                '* Change paper dimensions',
-                '* Crop any portion of the ticket',
-                '* Extend the paper',
-                '* Invent missing corners',
-                '* Replace the document with a clean digital version',
-                '* Reformat the layout',
-                '* Reconstruct faded print',
-                '',
-                'ONLY ALLOWED',
-                '',
-                '* Remove the background outside the ticket.',
-                '* Replace the background with solid white.',
-                '* Slightly increase contrast if needed.',
-                '* Mild sharpening only.',
-                '* Mild exposure correction.',
-                '* Mild noise reduction.',
-                '* Rotate only in 90° increments if the image is sideways.',
-                '',
-                'OUTPUT REQUIREMENT',
-                '',
-                'The finished image must look like the original photograph with only the background cleaned and the print slightly easier to read.',
-                '',
-                'If there is any conflict between cleaning the image and preserving the document, preserve the original document exactly and perform less editing.'
-            ].join('\n');
-
-            // Prefer compact JPEG data URLs — huge payloads hang Safari on cellular.
-            let uploadUrl = dataUrl;
-            try {
-                if (dataUrl && dataUrl.indexOf('data:') === 0 && dataUrl.length > 900000) {
-                    const img = await loadImageFromUrl(dataUrl);
-                    uploadUrl = canvasFromImage(img, 1024).toDataURL('image/jpeg', 0.6);
-                    console.log('[scan] shrank cleanup upload', dataUrl.length, '→', uploadUrl.length);
-                }
-            } catch (shrinkErr) {
-                console.warn('[scan] shrink failed, using original:', shrinkErr);
-            }
-
-            console.log('[scan] Grok Imagine cleanup request…', 'bytes≈', uploadUrl.length);
-            pushScanLog('info', ['Imagine cleanup start', 'model=' + GROK_IMAGINE_MODEL, 'bytes≈' + uploadUrl.length]);
-            const res = await fetchWithTimeout('https://api.x.ai/v1/images/edits', {
-                method: 'POST',
-                headers: {
-                    'content-type': 'application/json',
-                    'Authorization': 'Bearer ' + key
-                },
-                body: JSON.stringify({
-                    model: GROK_IMAGINE_MODEL,
-                    prompt,
-                    image: { url: uploadUrl, type: 'image_url' },
-                    response_format: 'b64_json'
-                })
-            }, SCAN_CLEAN_TIMEOUT_MS, 'Grok cleanup');
-            if (!res.ok) {
-                let body = '';
-                try { body = await res.text(); } catch (_) {}
-                console.error('[scan] Imagine error', res.status, body.slice(0, 400));
-                pushScanLog('error', ['Imagine HTTP ' + res.status, body.slice(0, 300)]);
-                throw new Error('Grok image cleanup failed (HTTP ' + res.status + '). Enable Image / ' + GROK_IMAGINE_MODEL + ' on your API key.');
-            }
-            const json = await res.json();
-            const b64 = json && json.data && json.data[0] && (json.data[0].b64_json || null);
-            const outUrl = b64
-                ? ('data:image/png;base64,' + b64)
-                : (json && json.data && json.data[0] && json.data[0].url)
-                    ? json.data[0].url
-                    : (json && json.url) || null;
-            if (!outUrl) throw new Error('Grok returned no cleaned image.');
-            if (outUrl.indexOf('data:') === 0) return outUrl;
-            return await urlToDataUrl(outUrl);
+        function truckNumbersMatch(a, b) {
+            const na = normalizeTruckNumber(a);
+            const nb = normalizeTruckNumber(b);
+            if (!na || !nb) return true;
+            return na.toLowerCase() === nb.toLowerCase();
         }
 
         function emptyOcr(rawText) {
@@ -3012,600 +2289,80 @@
             };
         }
 
-        function normalizePlantName(v) {
-            if (v == null || v === '') return null;
-            const s = String(v).trim();
-            const lower = s.toLowerCase();
-            if (lower.indexOf('hunter') >= 0) return 'Hunter Stone';
-            if (lower.indexOf('colorado materials') >= 0 || lower === 'colorado' || lower.indexOf('colorado mat') >= 0) return 'Colorado Materials';
-            // Martin Marietta alone is not enough — need Hunter Stone in plant line (handled in prompt).
-            if (lower.indexOf('martin marietta') >= 0 && lower.indexOf('hunter') < 0) return null;
-            return null;
-        }
-
-        function extractTruckUnit(v) {
-            if (v == null || v === '') return null;
-            const s = String(v).trim();
-            // Prefer a 3–5 digit unit, optionally prefixed (RST1205, TRK-1205, 1205 JLP…).
-            const prefixed = s.match(/\b(?:RST|TRK|TRUCK|UNIT)?[\s#-]*([0-9]{3,5})\b/i);
-            if (prefixed) return prefixed[1].replace(/^0+/, '') || prefixed[1];
-            const digits = s.match(/([0-9]{3,5})/);
-            return digits ? (digits[1].replace(/^0+/, '') || digits[1]) : s;
-        }
-
-        function normalizeOcr(parsed, fallbackText) {
-            const numOrNull = (v) => {
-                if (v == null || v === '') return null;
-                const n = Number(String(v).replace(/,/g, ''));
-                return isNaN(n) ? null : n;
-            };
-            const plant = normalizePlantName(parsed.plant || parsed.Plant || null);
-            let truckRaw = parsed.truckNumber != null ? parsed.truckNumber
-                : (parsed.vehicle != null ? parsed.vehicle : (parsed.truck != null ? parsed.truck : null));
-            const truckNumber = extractTruckUnit(truckRaw);
-            return {
-                plant,
-                jobNumber: parsed.jobNumber || parsed.job || parsed.orderNumber || parsed.orderNo || null,
-                date: parsed.date || null,
-                timeIn: parsed.timeIn || parsed.time || null,
-                timeOut: parsed.timeOut || null,
-                truckNumber: truckNumber ? String(truckNumber) : null,
-                miles: numOrNull(parsed.miles),
-                tons: numOrNull(parsed.tons != null ? parsed.tons : parsed.netTons),
-                ticketNumber: parsed.ticketNumber || parsed.ticket || null,
-                rawText: parsed.rawText || fallbackText || ''
-            };
-        }
-
-        async function grokReadTicket(dataUrl) {
-            const key = getGrokApiKey();
-            const guide = await loadScannerGuide();
-            const expectedTruck = getExpectedTruckNumber();
-            const prompt = [
-                'You are DriverPay Pro ticket OCR. Follow scanner.md LEARNED layouts EXACTLY (included below).',
-                'Steps: (1) identify plant from logo/header/plant line (2) apply that plant field map (3) return JSON only.',
-                'Return ONLY valid JSON:',
-                '{"plant":string|null,"jobNumber":string|null,"date":string|null,"timeIn":string|null,"timeOut":string|null,"truckNumber":string|null,"miles":number|null,"tons":number|null,"ticketNumber":string|null,"rawText":string}',
-                '',
-                'CRITICAL RULES:',
-                '- plant must be exactly "Colorado Materials" or "Hunter Stone" when known. Third plant TBD — do not invent.',
-                '- Martin Marietta ticket with plant line containing Hunter Stone → plant "Hunter Stone" (NOT Colorado Materials).',
-                '- Header "HUNTER STONE" / Division of Colorado Materials → plant "Hunter Stone".',
-                '- tons = NET tons ONLY (never GROSS, TARE, TODAY, Dispatch Totals, Job To Date).',
-                '- truckNumber = unit digits from VEHICLE/TRUCK only (e.g. 1205 from "RST1205 - ROLLING STONE" or "1205 JLP AGGREGATE").',
-                '- jobNumber = Order No / ORDER / JOB — never Customer No, Carrier, Dispatch, Scale, or PO.',
-                '- Single TIME field → timeIn set, timeOut null. Time In + Time Out → both.',
-                '- Driver expected truck: ' + expectedTruck + '.',
-                '- Missing/unreadable → null. Do not invent.',
-                '',
-                '===== scanner.md =====',
-                guide,
-                '===== end scanner.md ====='
-            ].join('\n');
-
-            console.log('[scan] Grok OCR request (with scanner.md plant memory)…');
-            pushScanLog('info', ['OCR start', 'model=' + GROK_CHAT_MODEL]);
-            const res = await fetchWithTimeout('https://api.x.ai/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'content-type': 'application/json',
-                    'Authorization': 'Bearer ' + key
-                },
-                body: JSON.stringify({
-                    model: GROK_CHAT_MODEL,
-                    temperature: 0,
-                    max_tokens: 1400,
-                    messages: [{
-                        role: 'user',
-                        content: [
-                            { type: 'image_url', image_url: { url: dataUrl, detail: 'high' } },
-                            { type: 'text', text: prompt }
-                        ]
-                    }]
-                })
-            }, SCAN_OCR_TIMEOUT_MS, 'Grok OCR');
-            if (!res.ok) {
-                let body = '';
-                try { body = await res.text(); } catch (_) {}
-                console.error('[scan] OCR error', res.status, body.slice(0, 400));
-                pushScanLog('error', ['OCR HTTP ' + res.status, body.slice(0, 300)]);
-                throw new Error('Grok text read failed (HTTP ' + res.status + '). Enable Chat models (e.g. grok-build-0.1) on your API key.');
-            }
-            const json = await res.json();
-            const text = (json && json.choices && json.choices[0] && json.choices[0].message && json.choices[0].message.content)
-                ? String(json.choices[0].message.content).trim()
-                : '';
-            const m = text.match(/\{[\s\S]*\}/);
-            if (!m) return emptyOcr(text);
-            try {
-                return normalizeOcr(JSON.parse(m[0]), text);
-            } catch (_) {
-                return emptyOcr(text);
-            }
-        }
-
-        async function processWithGrok(originalDataUrl) {
-            bindScanOverlayOnce();
-            showScanOverlay('Grok Cleaning Ticket…', 'Removing background · B&W · upright · sharpening');
-            let cleaned = originalDataUrl;
-            let cleanupError = null;
-            try {
-                cleaned = await grokCleanTicketImage(originalDataUrl);
-                pushScanLog('info', ['Imagine cleanup OK']);
-            } catch (err) {
-                cleanupError = formatScanError(err, 'Cleanup failed');
-                console.error('[scan] cleanup failed, falling back to original:', err);
-                pushScanLog('error', ['cleanup failed', cleanupError]);
-                cleaned = originalDataUrl;
-                // Hide spinner overlay before alert so the user can actually see/tap it.
-                hideScanOverlay();
-                await appAlert(cleanupError + '\n\nContinuing with the original photo for text reading.', { title: 'Grok Cleanup Issue' });
-            }
-
-            if (scanAbortController && scanAbortController.signal.aborted) {
-                throw new Error('Scan cancelled');
-            }
-
-            showScanOverlay('Grok Reading Ticket…', 'Plant · job · times · truck · miles/tons');
-            let ocr = emptyOcr('');
-            try {
-                ocr = await grokReadTicket(cleaned);
-                pushScanLog('info', ['OCR OK', 'plant=' + (ocr.plant || 'null'), 'truck=' + (ocr.truckNumber || 'null')]);
-            } catch (err) {
-                const ocrError = formatScanError(err, 'OCR failed');
-                console.error('[scan] OCR failed:', err);
-                pushScanLog('error', ['OCR failed', ocrError]);
-                hideScanOverlay();
-                await appAlert(ocrError, { title: 'Grok Read Issue' });
-            } finally {
-                hideScanOverlay();
-            }
-            return { cleaned, ocr, cleanupError };
-        }
-
-        async function runGrokPipeline(originalDataUrl) {
-            if (scanPipelineActive) {
-                await appAlert('A scan is already running. Tap Cancel on the scanning screen, then try again.', { title: 'Scan In Progress' });
-                return;
-            }
-            bindScanOverlayOnce();
-            scanPipelineActive = true;
-            scanAbortController = new AbortController();
-            try {
-                const { cleaned, ocr } = await processWithGrok(originalDataUrl);
-                if (scanAbortController && scanAbortController.signal.aborted) return;
-                await openDocReview(originalDataUrl, cleaned, ocr);
-            } catch (err) {
-                const msg = formatScanError(err, 'Scan failed');
-                console.error('[scan] pipeline failed:', err);
-                pushScanLog('error', ['pipeline failed', msg]);
-                if (/cancel/i.test(msg)) {
-                    hideScanOverlay();
-                    return;
-                }
-                showScanOverlayError(msg);
-                await appAlert(msg, { title: 'Scan Failed' });
-                hideScanOverlay();
-            } finally {
-                scanPipelineActive = false;
-                scanAbortController = null;
-                // Safety net — never leave the spinner up after the pipeline ends.
-                const ov = document.getElementById('scanOverlay');
-                const errEl = document.getElementById('scanError');
-                if (ov && ov.classList.contains('active') && !(errEl && errEl.classList.contains('show'))) {
-                    hideScanOverlay();
-                }
-            }
-        }
-
-        async function openDocScanner(opts) {
-            if (!(await ensureGrokReadyForScan())) return;
-            opts = opts || {};
-            docScan.mode = opts.mode || 'direct';
-            docScan.sId = opts.sId != null ? opts.sId : (editingLoad && editingLoad.sId);
-            docScan.lId = opts.lId != null ? opts.lId : (editingLoad && editingLoad.lId);
-            docScan.docId = opts.docId || null;
-            docScan.flashOn = false;
-            docScan.capturing = false;
-            docScan.videoReady = false;
-
-            const root = document.getElementById('docScanner');
-            const perm = document.getElementById('docScannerPerm');
-            if (!root) return;
-            root.classList.add('active');
-            root.setAttribute('aria-hidden', 'false');
-            if (perm) perm.classList.remove('show');
-            lockBodyScroll();
-            docScan.active = true;
-            bindScannerControlsOnce();
-            await startScannerCamera();
-        }
-
-        async function startScannerCamera() {
-            const video = document.getElementById('docScannerVideo');
-            const perm = document.getElementById('docScannerPerm');
-            stopScannerCamera();
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                showCameraPermission('Camera unavailable', 'This device cannot open the camera. Choose a photo from your gallery instead — Grok will still clean and read it.');
-                return false;
-            }
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    audio: false,
-                    video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } }
-                });
-                docScan.stream = stream;
-                docScan.track = stream.getVideoTracks()[0] || null;
-                video.srcObject = stream;
-                await video.play().catch(() => {});
-                docScan.videoReady = true;
-                if (perm) perm.classList.remove('show');
-                return true;
-            } catch (err) {
-                console.error('[scan] getUserMedia failed:', err);
-                showCameraPermission('Camera access needed', 'Allow camera access or choose a photo from your gallery.');
-                return false;
-            }
-        }
-
-        function showCameraPermission(title, msg) {
-            const perm = document.getElementById('docScannerPerm');
-            const t = document.getElementById('docScannerPermTitle');
-            const m = document.getElementById('docScannerPermMsg');
-            if (t) t.textContent = title;
-            if (m) m.textContent = msg;
-            if (perm) perm.classList.add('show');
-        }
-
-        function stopScannerCamera() {
-            try {
-                if (docScan.stream) docScan.stream.getTracks().forEach(t => t.stop());
-            } catch (_) {}
-            docScan.stream = null;
-            docScan.track = null;
-            docScan.videoReady = false;
-            const video = document.getElementById('docScannerVideo');
-            if (video) video.srcObject = null;
-        }
-
-        function closeDocScanner() {
-            stopScannerCamera();
-            const root = document.getElementById('docScanner');
-            if (root) {
-                root.classList.remove('active');
-                root.setAttribute('aria-hidden', 'true');
-            }
-            docScan.active = false;
-            unlockBodyScroll();
-            if (document.getElementById('editOverlay') && document.getElementById('editOverlay').classList.contains('active')) lockBodyScroll();
-        }
-
-        const PHOTOS_ACCEPT = 'image/jpeg,image/png,image/heic,image/heif,.jpg,.jpeg,.png,.heic,.heif';
-
-        function preparePhotosInput(fileInput) {
-            if (!fileInput) return;
-            // capture=environment forces iOS Camera — always strip it.
-            fileInput.removeAttribute('capture');
-            // image/* makes iOS prefer Camera; use explicit types instead.
-            fileInput.setAttribute('accept', PHOTOS_ACCEPT);
-            // multiple is the reliable iOS trick to open the Photos library UI.
-            fileInput.setAttribute('multiple', '');
-        }
-
-        function openPhotosPicker() {
-            const fileInput = document.getElementById('docScannerFile');
-            if (!fileInput) return;
-            preparePhotosInput(fileInput);
-            try { fileInput.value = ''; } catch (_) {}
-            try { fileInput.click(); } catch (_) {}
-        }
-
-        function bindScannerControlsOnce() {
-            if (docScan.bound) return;
-            docScan.bound = true;
-            const fileInput = document.getElementById('docScannerFile');
-            preparePhotosInput(fileInput);
-            document.getElementById('docScannerClose').onclick = () => closeDocScanner();
-            document.getElementById('docScannerPermClose').onclick = () => closeDocScanner();
-            document.getElementById('docScannerRetryCam').onclick = () => startScannerCamera();
-            // Native <label for="docScannerFile"> opens the picker; keep capture stripped on tap.
-            ['docScannerGallery', 'docScannerOpenGallery'].forEach(id => {
-                const el = document.getElementById(id);
-                if (!el) return;
-                el.addEventListener('click', () => preparePhotosInput(fileInput), true);
+        function bindTicketFileInputOnce() {
+            if (ticketCapture.bound) return;
+            ticketCapture.bound = true;
+            const input = document.getElementById('ticketFileInput');
+            if (!input) return;
+            input.addEventListener('change', async () => {
+                const file = input.files && input.files[0];
+                try { input.value = ''; } catch (_) {}
+                if (!file) return;
+                await handleTicketFileChosen(file);
             });
-            document.getElementById('docScannerCapture').onclick = () => captureFromScanner();
-            document.getElementById('docScannerFlash').onclick = async () => {
-                if (!docScan.track || typeof docScan.track.applyConstraints !== 'function') {
-                    await appAlert('Flash/torch is not supported on this camera.');
+        }
+
+        function pickTicketPhoto(opts) {
+            opts = opts || {};
+            ticketCapture.mode = opts.mode || 'direct';
+            ticketCapture.sId = opts.sId != null ? opts.sId : (editingLoad && editingLoad.sId);
+            ticketCapture.lId = opts.lId != null ? opts.lId : (editingLoad && editingLoad.lId);
+            ticketCapture.docId = opts.docId || null;
+            bindTicketFileInputOnce();
+            const input = document.getElementById('ticketFileInput');
+            if (!input) {
+                appAlert('Photo capture is unavailable in this browser.');
+                return;
+            }
+            try { input.value = ''; } catch (_) {}
+            try { input.click(); } catch (_) {
+                appAlert('Could not open the camera or photo library.');
+            }
+        }
+
+        async function handleTicketFileChosen(file) {
+            if (ticketCapture.busy) return;
+            ticketCapture.busy = true;
+            const key = loadKey(ticketCapture.sId, ticketCapture.lId);
+            try {
+                processingLoads.add(key);
+                renderHistory();
+                const dataUrl = await fileToJpegDataUrl(file);
+                const now = new Date().toISOString();
+                const doc = {
+                    id: 'doc_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+                    userId: settings.localUserId || genLocalUserId(),
+                    loadId: ticketCapture.lId,
+                    type: 'ticket',
+                    original: null,
+                    processed: dataUrl,
+                    filter: 'photo',
+                    createdAt: now,
+                    modifiedAt: now,
+                    syncStatus: 'local',
+                    ocr: emptyOcr('')
+                };
+                if (ticketCapture.mode === 'edit') {
+                    if (!editingLoad) return;
+                    editingLoad.stagedTicket = dataUrl;
+                    editingLoad.stagedDocument = doc;
+                    editingLoad.removeTicket = false;
+                    updateEditTicketUI();
+                    haptic(18);
                     return;
                 }
-                docScan.flashOn = !docScan.flashOn;
-                try {
-                    await docScan.track.applyConstraints({ advanced: [{ torch: docScan.flashOn }] });
-                } catch (_) {
-                    docScan.flashOn = false;
-                    await appAlert('Could not toggle flash on this device.');
-                }
-            };
-            if (fileInput) {
-                fileInput.addEventListener('change', async () => {
-                    const file = fileInput.files && fileInput.files[0];
-                    try { fileInput.value = ''; } catch (_) {}
-                    if (!file) return;
-                    console.log('[scan] photo selected from library:', file.name || '(unnamed)', file.type || 'unknown', file.size);
-                    await ingestScannerFile(file);
-                });
-            }
-            document.getElementById('docReviewClose').onclick = () => closeDocReview();
-            document.getElementById('docReviewCancel').onclick = () => closeDocReview();
-            document.getElementById('docReviewRetake').onclick = async () => {
-                closeDocReview();
-                await openDocScanner({ mode: docScan.mode, sId: docScan.sId, lId: docScan.lId, docId: docScan.docId });
-            };
-            document.getElementById('docReviewSave').onclick = () => saveDocReview();
-            const exportBtn = document.getElementById('docReviewExport');
-            const photosBtn = document.getElementById('docReviewSavePhotos');
-            if (exportBtn) exportBtn.onclick = () => exportReviewTicket();
-            if (photosBtn) photosBtn.onclick = () => saveReviewToPhotos();
-            bindReviewZoomOnce();
-        }
-
-        async function captureFromScanner() {
-            if (docScan.capturing) return;
-            const video = document.getElementById('docScannerVideo');
-            if (!docScan.videoReady || !video || !video.videoWidth) {
-                await appAlert('Camera is not ready yet.');
-                return;
-            }
-            docScan.capturing = true;
-            try {
-                haptic(18);
-                const dataUrl = await videoFrameToDataUrl(video);
-                closeDocScanner();
-                await runGrokPipeline(dataUrl);
-            } catch (err) {
-                console.error('[scan] capture failed:', err);
-                await appAlert('Capture failed. Try again or pick a photo from your gallery.');
-            } finally {
-                docScan.capturing = false;
-            }
-        }
-
-        async function ingestScannerFile(file) {
-            if (docScan.capturing) return;
-            docScan.capturing = true;
-            try {
-                const dataUrl = await fileToUploadDataUrl(file);
-                closeDocScanner();
-                await runGrokPipeline(dataUrl);
-            } catch (err) {
-                console.error('[scan] gallery ingest failed:', err);
-                await appAlert('Could not open that image. Try another photo.');
-            } finally {
-                docScan.capturing = false;
-            }
-        }
-
-        function setOcrField(id, value) {
-            const el = document.getElementById(id);
-            if (!el) return;
-            el.value = (value == null || value === '') ? '' : value;
-        }
-
-        async function openDocReview(originalUrl, processedUrl, ocr) {
-            docReview.active = true;
-            docReview.originalUrl = originalUrl;
-            docReview.processedUrl = processedUrl;
-            docReview.ocr = ocr || emptyOcr('');
-            docReview.wrongTruckAck = null;
-            const root = document.getElementById('docReview');
-            const img = document.getElementById('docReviewImg');
-            if (img) {
-                img.onload = () => { resetReviewZoom(); };
-                img.src = processedUrl || originalUrl;
-            }
-            resetReviewZoom();
-            bindReviewZoomOnce();
-            setOcrField('ocrPlant', ocr && ocr.plant);
-            setOcrField('ocrJob', ocr && ocr.jobNumber);
-            setOcrField('ocrDate', ocr && ocr.date);
-            setOcrField('ocrTicketNo', ocr && ocr.ticketNumber);
-            setOcrField('ocrTimeIn', ocr && ocr.timeIn);
-            setOcrField('ocrTimeOut', ocr && ocr.timeOut);
-            setOcrField('ocrTruck', ocr && ocr.truckNumber);
-            setOcrField('ocrMiles', (ocr && ocr.miles != null && !isNaN(ocr.miles)) ? ocr.miles : '');
-            setOcrField('ocrTons', (ocr && ocr.tons != null && !isNaN(ocr.tons)) ? ocr.tons : '');
-            if (root) {
-                root.classList.add('active');
-                root.setAttribute('aria-hidden', 'false');
-            }
-            lockBodyScroll();
-
-            // Flag wrong truck immediately after OCR — before the driver taps Save.
-            const expected = getExpectedTruckNumber();
-            const ticketTruck = ocr && ocr.truckNumber;
-            if (ticketTruck && !truckNumbersMatch(ticketTruck, expected)) {
-                const check = await confirmWrongTruckIfNeeded(ocr);
-                if (!check.proceed) {
-                    closeDocReview();
-                    return false;
-                }
-                docReview.wrongTruckAck = { ticketTruck: String(ticketTruck), note: check.note };
-            }
-            return true;
-        }
-
-        function closeDocReview() {
-            closeTicketLightbox();
-            const root = document.getElementById('docReview');
-            if (root) {
-                root.classList.remove('active');
-                root.setAttribute('aria-hidden', 'true');
-            }
-            docReview.active = false;
-            docReview.wrongTruckAck = null;
-            resetReviewZoom();
-            unlockBodyScroll();
-            if (document.getElementById('editOverlay') && document.getElementById('editOverlay').classList.contains('active')) lockBodyScroll();
-        }
-
-        function readOcrFieldsFromForm() {
-            const milesRaw = document.getElementById('ocrMiles').value.trim();
-            const tonsRaw = document.getElementById('ocrTons').value.trim();
-            const miles = milesRaw === '' ? null : parseFloat(milesRaw);
-            const tons = tonsRaw === '' ? null : parseFloat(tonsRaw);
-            const val = (id) => {
-                const el = document.getElementById(id);
-                const v = el ? el.value.trim() : '';
-                return v || null;
-            };
-            return {
-                plant: val('ocrPlant'),
-                jobNumber: val('ocrJob'),
-                date: val('ocrDate'),
-                timeIn: val('ocrTimeIn'),
-                timeOut: val('ocrTimeOut'),
-                truckNumber: val('ocrTruck'),
-                miles: (miles != null && !isNaN(miles)) ? miles : null,
-                tons: (tons != null && !isNaN(tons)) ? tons : null,
-                ticketNumber: val('ocrTicketNo'),
-                rawText: (docReview.ocr && docReview.ocr.rawText) ? docReview.ocr.rawText : ''
-            };
-        }
-
-        function wrongTruckNote(ticketTruck, expectedTruck) {
-            return 'Wrong truck number on ticket: ' + ticketTruck + ' (expected ' + expectedTruck + ').';
-        }
-
-        async function confirmWrongTruckIfNeeded(ocr) {
-            const expected = getExpectedTruckNumber();
-            const ticketTruck = ocr && ocr.truckNumber;
-            if (!ticketTruck) return { proceed: true, note: null };
-            if (truckNumbersMatch(ticketTruck, expected)) return { proceed: true, note: null };
-            const ok = await appConfirm(
-                'This ticket shows truck #' + ticketTruck + ', but your truck is #' + expected + '. Store it anyway?',
-                { title: 'Wrong Truck Number', variant: 'warn', confirmText: 'Store Anyway', cancelText: 'Cancel' }
-            );
-            return { proceed: !!ok, note: ok ? wrongTruckNote(ticketTruck, expected) : null };
-        }
-
-        async function saveDocReview() {
-            const processed = docReview.processedUrl;
-            const original = docReview.originalUrl;
-            if (!processed) {
-                await appAlert('Nothing to save — processing failed.');
-                return;
-            }
-            const ocr = readOcrFieldsFromForm();
-            if (ocr.plant) ocr.plant = normalizePlantName(ocr.plant) || ocr.plant;
-            // Re-check on save. If the driver already approved this same wrong truck at OCR time, skip a second popup.
-            let truckCheck;
-            const expected = getExpectedTruckNumber();
-            if (ocr.truckNumber && !truckNumbersMatch(ocr.truckNumber, expected)) {
-                const ack = docReview.wrongTruckAck;
-                if (ack && ack.note && truckNumbersMatch(ocr.truckNumber, ack.ticketTruck)) {
-                    truckCheck = { proceed: true, note: ack.note };
-                } else {
-                    truckCheck = await confirmWrongTruckIfNeeded(ocr);
-                }
-            } else {
-                truckCheck = { proceed: true, note: null };
-            }
-            if (!truckCheck.proceed) return;
-            if (truckCheck.note) {
-                ocr.wrongTruck = true;
-                ocr.wrongTruckNote = truckCheck.note;
-            }
-            const dup = findDuplicateTicket(ocr.ticketNumber, { excludeDocIds: duplicateTicketExcludeIds() });
-            if (dup) {
-                await notifyDuplicateTicket(dup, ocr.ticketNumber);
-                return;
-            }
-            const now = new Date().toISOString();
-            const doc = {
-                id: 'doc_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
-                userId: settings.localUserId || genLocalUserId(),
-                loadId: docScan.lId,
-                type: 'ticket',
-                original,
-                processed,
-                filter: 'grok',
-                createdAt: now,
-                modifiedAt: now,
-                syncStatus: 'local',
-                ocr,
-                provider: 'grok'
-            };
-
-            if (docScan.mode === 'edit') {
-                if (!editingLoad) { await appAlert('Load form is no longer open.'); return; }
-                editingLoad.stagedTicket = processed;
-                editingLoad.stagedDocument = doc;
-                editingLoad.removeTicket = false;
-                if (ocr.miles != null) {
-                    editingLoad.miles = ocr.miles;
-                    const info = document.getElementById('editLoadInfo');
-                    if (info) info.textContent = ocr.miles + ' miles';
-                }
-                if (ocr.tons != null) {
-                    editingLoad.tons = ocr.tons;
-                    const tonsInput = document.getElementById('editTons');
-                    if (tonsInput) tonsInput.value = ocr.tons;
-                }
-                if (ocr.rawText) {
-                    const note = document.getElementById('editNote');
-                    if (note && !note.value.trim()) note.value = ocr.rawText.slice(0, 400);
-                }
-                if (truckCheck.note) {
-                    const note = document.getElementById('editNote');
-                    if (note) {
-                        note.value = (note.value ? (note.value.trim() + '\n') : '') + truckCheck.note;
-                    }
-                }
-                try { if (typeof updatePayPreview === 'function') updatePayPreview(); } catch (_) {}
-                updateEditTicketUI();
-                closeDocReview();
-                haptic(20);
-                return;
-            }
-
-            if (docScan.sId == null || docScan.lId == null) {
-                await appAlert('Could not determine which load to attach this scan to.');
-                return;
-            }
-
-            const key = loadKey(docScan.sId, docScan.lId);
-            processingLoads.add(key);
-            renderHistory();
-            try {
-                // Apply OCR miles/tons onto the load when present
-                try {
-                    let h = JSON.parse(localStorage.getItem('driver_history') || '[]');
-                    const sIdx = h.findIndex(s => s && s.id == docScan.sId);
-                    if (sIdx >= 0) {
-                        const lIdx = h[sIdx].loads.findIndex(l => l && l.id == docScan.lId);
-                        if (lIdx >= 0) {
-                            if (ocr.miles != null) h[sIdx].loads[lIdx].miles = ocr.miles;
-                            if (ocr.tons != null) h[sIdx].loads[lIdx].tons = ocr.tons;
-                            if (truckCheck.note) {
-                                const prev = h[sIdx].loads[lIdx].note ? String(h[sIdx].loads[lIdx].note).trim() : '';
-                                h[sIdx].loads[lIdx].note = prev ? (prev + '\n' + truckCheck.note) : truckCheck.note;
-                            }
-                            localStorage.setItem('driver_history', JSON.stringify(h));
-                        }
-                    }
-                } catch (_) {}
-
-                const ok = persistLoadDocument(docScan.sId, docScan.lId, doc, docScan.mode, docScan.docId);
+                const ok = persistLoadDocument(ticketCapture.sId, ticketCapture.lId, doc, ticketCapture.mode, ticketCapture.docId);
                 if (!ok) {
-                    await appAlert('Could not save the scan locally. Free up storage and try again.');
+                    await appAlert('Could not save the photo. Free up storage and try again.');
                     return;
                 }
-                enqueueDocSync(docScan.sId, docScan.lId, doc.id);
-                closeDocReview();
+                enqueueDocSync(ticketCapture.sId, ticketCapture.lId, doc.id);
                 haptic([12, 40, 12]);
+            } catch (err) {
+                console.error('[scan] ticket photo failed:', err);
+                await appAlert((err && err.message) ? err.message : 'Could not save that photo.', { title: 'Photo Failed' });
             } finally {
+                ticketCapture.busy = false;
                 processingLoads.delete(key);
                 renderHistory();
             }
@@ -3690,9 +2447,9 @@
         function captureEditTicket() {
             if (!editingLoad) return;
             const hasSaved = !!editingLoad.savedTicket && !editingLoad.removeTicket;
-            const run = () => openDocScanner({ mode: 'edit', sId: editingLoad.sId, lId: editingLoad.lId });
+            const run = () => pickTicketPhoto({ mode: 'edit', sId: editingLoad.sId, lId: editingLoad.lId });
             if (hasSaved && !editingLoad.stagedTicket) {
-                appConfirm('This load already has a saved ticket. Replace it with a new capture?', { title: 'Replace Ticket', variant: 'warn', confirmText: 'Replace' })
+                appConfirm('This load already has a saved ticket. Replace it with a new photo?', { title: 'Replace Ticket', variant: 'warn', confirmText: 'Replace' })
                     .then(ok => { if (ok) run(); });
             } else {
                 run();
@@ -3701,7 +2458,7 @@
 
         function uploadTicket(sId, lId) {
             document.querySelectorAll('.swipe-container').forEach(c => c.classList.remove('swiped', 'swiped-right'));
-            openDocScanner({ mode: 'direct', sId, lId });
+            pickTicketPhoto({ mode: 'direct', sId, lId });
         }
 
         function saveTicket(sId, lId, dataUrl) {
@@ -3713,7 +2470,7 @@
                 type: 'ticket',
                 original: null,
                 processed: dataUrl,
-                filter: 'auto',
+                filter: 'photo',
                 createdAt: now,
                 modifiedAt: now,
                 syncStatus: 'local'
@@ -3792,15 +2549,15 @@
             viewerControlsBound = true;
             document.getElementById('docViewerClose').onclick = () => closeDocViewer();
             document.getElementById('docViewerReplace').onclick = async () => {
-                const ok = await appConfirm('Replace this saved document with a new scan?', { title: 'Replace Document', variant: 'warn', confirmText: 'Replace' });
+                const ok = await appConfirm('Replace this saved document with a new photo?', { title: 'Replace Document', variant: 'warn', confirmText: 'Replace' });
                 if (!ok) return;
                 const docId = docViewer.docs[docViewer.index] && docViewer.docs[docViewer.index].id;
                 closeDocViewer();
-                openDocScanner({ mode: 'replace', sId: docViewer.sId, lId: docViewer.lId, docId });
+                pickTicketPhoto({ mode: 'replace', sId: docViewer.sId, lId: docViewer.lId, docId });
             };
             document.getElementById('docViewerAdd').onclick = () => {
                 closeDocViewer();
-                openDocScanner({ mode: 'add', sId: docViewer.sId, lId: docViewer.lId });
+                pickTicketPhoto({ mode: 'add', sId: docViewer.sId, lId: docViewer.lId });
             };
             document.getElementById('docViewerDelete').onclick = async () => {
                 const ok = await appConfirm('Delete this document from the load?', { title: 'Delete Document', variant: 'danger', confirmText: 'Delete' });
@@ -4019,7 +2776,7 @@
                         const iconSvg = hasInfo ? ticketSvg : cameraSvg;
                         const countBadge = (!isProcessing && docs.length > 1) ? `<span class="ticket-count" aria-label="${docs.length} documents">${docs.length}</span>` : '';
                         const tapAction = hasTicket ? `viewTicket('${entry.id}','${l.id}')` : `uploadTicket('${entry.id}','${l.id}')`;
-                        const aria = hasInfo ? 'View ticket and info' : (hasTicket ? 'View saved document' : 'Scan document');
+                        const aria = hasInfo ? 'View ticket and info' : (hasTicket ? 'View saved photo' : 'Add ticket photo');
                         return `<div class="swipe-container" id="container-${l.id}" ontouchstart="ts(event, '${l.id}')" ontouchmove="tm(event, '${l.id}')" ontouchend="te(event, '${l.id}')"><div class="edit-box-flat" onclick="openEditModal('${entry.id}','${l.id}')">EDIT</div><div class="delete-box-flat" onclick="removeLoad('${entry.id}', '${l.id}')">DELETE</div><div class="swipe-content"><div class="flex flex-col"><div class="flex items-center"><span class="text-lg font-bold text-gray-100">${l.miles} miles</span><span class="ticket-icon ${iconClass}" role="button" aria-label="${aria}" onclick="event.stopPropagation();${tapAction}">${iconSvg}${countBadge}</span>${l.note ? `<span class="note-icon" onclick="event.stopPropagation();viewNote('${entry.id}','${l.id}')">${noteSvg}</span>` : ''}</div><div class="flex items-center text-[10px] text-gray-500 font-bold uppercase"><span>${l.tons} TONS</span>${isCustom ? '<span class="custom-badge">· CUSTOM</span>' : ''}</div></div><span class="mileage-pay-text">$${l.pay.toFixed(2)}</span></div></div>`;
                     }).join('')}</div></div>`;
                 }
@@ -4399,8 +3156,7 @@
             sanitizeHistory();
             loadScanLog();
             applySettingsToHeader();
-            bindScanOverlayOnce();
-            if (getGrokApiKey()) loadScannerGuide();
+            bindTicketFileInputOnce();
             ['chartOverlay','editOverlay','addOverlay','settingsOverlay','helpOverlay','findTicketOverlay','debugOverlay','settlementOptionsOverlay','exportPickerOverlay'].forEach(id => {
                 const ov = document.getElementById(id);
                 if (!ov) return;
