@@ -2549,6 +2549,41 @@
             return true;
         }
 
+        /** Geometry-only check for overlay drawing (no frame-border rejection). */
+        function isDrawableQuad(pts, w, h) {
+            if (!pts || pts.length !== 4) return false;
+            for (const p of pts) {
+                if (!p || !isFinite(p.x) || !isFinite(p.y)) return false;
+            }
+            let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+            for (const p of pts) {
+                if (p.x < minX) minX = p.x;
+                if (p.x > maxX) maxX = p.x;
+                if (p.y < minY) minY = p.y;
+                if (p.y > maxY) maxY = p.y;
+            }
+            const boxArea = Math.max(1, (maxX - minX) * (maxY - minY));
+            const area = quadArea(pts);
+            if (area < 400) return false;
+            if (area / boxArea < 0.5) return false; // reject diagonal-line collapse
+            // Distinct corners
+            for (let i = 0; i < 4; i++) {
+                for (let j = i + 1; j < 4; j++) {
+                    if (dist2(pts[i], pts[j]) < 36) return false;
+                }
+            }
+            const c = quadCentroid(pts);
+            let sign = 0;
+            for (let i = 0; i < 4; i++) {
+                const a = pts[i], b = pts[(i + 1) % 4];
+                const cross = (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+                const s = cross >= 0 ? 1 : -1;
+                if (!sign) sign = s;
+                else if (s !== sign) return false;
+            }
+            return true;
+        }
+
         function scoreQuadPts(pts, w, h, edgeBonus) {
             if (!isValidDocumentQuad(pts, w, h)) return 0;
             const ordered = orderQuadPoints(pts);
@@ -3116,12 +3151,10 @@
         function drawScannerOverlay(canvas, pts, confidence, detectW, detectH) {
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            // HARD RULE: never draw unless these overlay points still form a valid document quad
-            // Validate in overlay space with scaled thresholds via mapped detect dims.
+            // Only draw a real 4-corner rectangle — never a collapsed diagonal line.
+            // (Do not use frame-border rejection here; mapped corners often sit near screen edges.)
             if (!pts || pts.length !== 4) return;
-            const dw = detectW || canvas.width, dh = detectH || canvas.height;
-            // Map overlay pts back roughly by checking geometry in overlay pixels with area ratios
-            if (!isValidDocumentQuad(pts, canvas.width, canvas.height)) return;
+            if (!isDrawableQuad(pts, canvas.width, canvas.height)) return;
             ctx.save();
             // dim outside
             ctx.fillStyle = 'rgba(0,0,0,0.28)';
