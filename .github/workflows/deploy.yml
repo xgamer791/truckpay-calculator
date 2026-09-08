@@ -8,13 +8,33 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '22'
           cache: 'npm'
-      - run: npm install
-      - run: npm run build
+
+      - name: Install dependencies
+        run: npm install
+
+      # Deploy Convex functions first (when present), then build the web
+      # app so Vite bakes in the production VITE_CONVEX_URL.
+      - name: Deploy Convex backend
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+        run: |
+          if [ ! -d convex ]; then
+            echo "No convex/ directory; skipping Convex deploy (Pages-only)."
+            exit 0
+          fi
+          npx --yes convex deploy --yes
+
+      - name: Build web app
+        env:
+          VITE_CONVEX_URL: ${{ vars.VITE_CONVEX_URL }}
+        run: npm run build
+
       - uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
