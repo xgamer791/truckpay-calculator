@@ -68,6 +68,16 @@ Required GitHub configuration:
 
 Production app: <https://xgamer791.github.io/truckpay-calculator/>
 
+The public production Convex URL is also checked into `.env.production` so a
+local production build retains the cloud connection. Environment overrides must
+contain a valid URL: an empty or invalid value stops the build before assets are
+published. Deployment keys remain in GitHub secrets.
+
+GitHub Pages currently serves the fallback entry in `main`'s `index.html`.
+After `npm run build`, commit `index.html` and the generated `assets/` changes
+together with the source changes. The build updates the asset cache versions
+from their contents, so existing app links request the new bundle automatically.
+
 ## Data behavior
 
 Existing pre-account browser tickets are intentionally not migrated. After a driver signs in and completes a profile, the account's cloud state becomes the source of truth. Signing out clears that account's locally cached driver data from the device.
