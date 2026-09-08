@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#f4f7fb">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="driverpay-build" content="3.0.4">
-    <title>DriverPay Pro v3.0.4</title>
+    <meta name="driverpay-build" content="3.0.5">
+    <title>DriverPay Pro v3.0.5</title>
     <script>
     (function () {
         var meta = document.querySelector('meta[name="driverpay-build"]');
@@ -416,16 +417,104 @@
         .find-ticket-row-title { font-size: 15px; font-weight: 800; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .find-ticket-row-sub { font-size: 11px; color: #94a3b8; font-weight: 700; margin-top: 3px; letter-spacing: 0.02em; }
         .find-ticket-row-meta { font-size: 10px; color: #64748b; font-weight: 800; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.06em; }
+
+        /* Light theme */
+        :root { color-scheme: light; }
+        body { background: #f4f7fb; color: #0f172a; }
+        .btn-primary, .footer-mark-icon { color: #fff; }
+        .glass { background: rgba(255,255,255,0.94); border-color: #dbe4ef; box-shadow: 0 12px 32px rgba(15,23,42,0.07); }
+        textarea, .edit-input, .edit-select, .edit-textarea { background-color: #fff !important; border-color: #cbd5e1 !important; color: #0f172a !important; }
+        input::placeholder, textarea::placeholder { color: #94a3b8; }
+        .expanded > .details-panel, .expanded .settlement-surface > .details-panel, .settlement-card.expanded .details-panel { border-top-color: #e2e8f0; }
+        .swipe-container { background: #e2e8f0; }
+        .swipe-content { background: #fff; }
+        .swipe-content .text-gray-100 { color: #0f172a !important; }
+        .swipe-content .text-gray-500 { color: #64748b !important; }
+        .day-header-text, .custom-badge, .ticket-icon.saved, .ticket-icon.has-ticket, .ticket-icon.has-info, .tc-camera.tc-saved, .ticket-control-view, .settings-ext-link, .export-toggle { color: #2563eb; }
+        .day-total-text, .chart-total, .pay-preview-value, .add-preview, .ton-value, .footer-stat-value { color: #15803d; }
+        .mileage-pay-text { color: #0f172a; }
+        .note-icon, .popup-btn.warn { color: #b45309; }
+        .ticket-control-btn, .menu-btn, .browser-chooser-btn, .chart-close, .edit-btn-cancel, .note-popup-close, .doc-perm-secondary { background: #f8fafc; border-color: #dbe4ef; color: #0f172a; }
+        .ticket-control-status, .header-title p, .browser-chooser-btn.cancel, .pay-preview-label, .edit-label { color: #64748b; }
+        .menu-btn:active, .chart-close:active { background: #eef2f7; }
+        .menu-btn svg { color: #334155; }
+        .menu-popover, .menu-popover::before { background: #fff; border-color: #dbe4ef; }
+        .menu-popover { box-shadow: 0 18px 50px rgba(15,23,42,0.16); }
+        .menu-item { color: #0f172a; }
+        .menu-item + .menu-item { border-top-color: #eef2f7; }
+        .menu-item-icon, .help-section-icon { color: #2563eb; background: #eff6ff; }
+        .chart-overlay, .edit-overlay, .add-overlay, .settings-overlay, .help-overlay,
+        .settlement-options-overlay, .export-picker-overlay,
+        .chart-modal, .edit-modal, .add-modal, .settings-modal, .help-modal,
+        .settlement-options-modal, .export-picker-modal { background: #f4f7fb; color: #0f172a; }
+        .chart-handle { background: #cbd5e1; }
+        .chart-title, .edit-title, .help-section-title, .help-section strong, .note-popup-text,
+        .popup-title, .export-row-title, .find-ticket-row-title { color: #0f172a; }
+        .chart-bars { border-top-color: #e2e8f0; }
+        .chart-bar-value, .chart-bar-label, .chart-empty, .edit-subtitle, .mode-help,
+        .ton-unit, .footer-stat-label, .footer-tagline, .footer-meta, .popup-btn.muted,
+        .export-count, .export-row-sub, .find-ticket-hint, .find-ticket-empty,
+        .find-ticket-row-sub, .find-ticket-row-meta { color: #64748b; }
+        .chart-bar { background: linear-gradient(180deg, #22c55e, #15803d); box-shadow: 0 8px 18px rgba(22,163,74,0.16); }
+        .chart-bar.empty { background: #e2e8f0; }
+        .browser-chooser-btn:active { background: #eff6ff; border-color: #93c5fd; }
+        .mode-tabs { background: #e2e8f0; }
+        .mode-tab { color: #475569; }
+        .mode-tab.active { color: #fff; }
+        .pay-preview { background: #f0fdf4; border-color: #bbf7d0; }
+        .multi-apply { background: #eff6ff; border-color: #bfdbfe; }
+        .multi-apply label, .help-content, .popup-message { color: #334155; }
+        .help-section .kbd { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
+        .help-tip { background: #fffbeb; border-left-color: #f59e0b; color: #92400e; }
+        .help-tip strong { color: #b45309; }
+        .swipe-demo-pill.left { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
+        .swipe-demo-pill.right { background: #fef2f2; border-color: #fecaca; color: #dc2626; }
+        .footer-stat { background: #fff; border-color: #e2e8f0; color: #0f172a; box-shadow: 0 6px 18px rgba(15,23,42,0.05); }
+        .footer-stat:active { background: #f0fdf4; border-color: #bbf7d0; }
+        .footer-stat-icon { color: #15803d; }
+        .footer-meta-dot { background: #94a3b8; }
+        .note-popup, .popup-overlay { background: rgba(15,23,42,0.42); }
+        .note-popup-card, .popup-card { background: #fff; border-color: #dbe4ef; box-shadow: 0 22px 60px rgba(15,23,42,0.2); }
+        .popup-icon.warn { color: #b45309; }
+        .popup-btn { color: #2563eb; }
+        .popup-btn.danger { color: #dc2626; }
+        .doc-perm { background: rgba(241,245,249,0.96); }
+        .doc-perm-card { background: #fff; border-color: #dbe4ef; box-shadow: 0 18px 50px rgba(15,23,42,0.16); color: #0f172a; }
+        .doc-perm-msg { color: #64748b; }
+        .doc-viewer { background: #f4f7fb; color: #0f172a; }
+        .doc-viewer-header, .doc-viewer-thumbs { background: #fff; border-color: #e2e8f0; }
+        .doc-viewer-stage { background: #e9eef5; }
+        .doc-viewer-actions { background: #f4f7fb; }
+        .doc-viewer-actions button { background: #fff; border-color: #dbe4ef; color: #0f172a; }
+        .doc-viewer-actions .danger { color: #dc2626; border-color: #fecaca; }
+        .doc-viewer-info { background: #fff; border-top-color: #e2e8f0; }
+        .doc-info-value { color: #0f172a; }
+        .debug-log { background: #fff; border-color: #dbe4ef; color: #334155; }
+        .settlement-swipe-container { border-color: #dbe4ef; box-shadow: 0 10px 28px rgba(15,23,42,0.06); }
+        .settlement-swipe-content, .settlement-surface { background: #fff; }
+        .settlement-card .text-blue-400, .settlement-card .blink-current { color: #2563eb !important; }
+        .settlement-card .text-green-400 { color: #15803d !important; }
+        .settlement-card .text-red-400 { color: #dc2626 !important; }
+        .doc-viewer .doc-btn { background: #fff; border-color: #dbe4ef; color: #0f172a; }
+        .action-button { color: #0f172a; }
+        .action-button.primary { background: #eff6ff; border-color: #bfdbfe; }
+        .action-button.primary .action-icon { color: #2563eb; }
+        .action-button.danger { background: #fef2f2; border-color: #fecaca; color: #dc2626; }
+        .action-button.danger .action-icon { color: #dc2626; }
+        .export-row, .find-ticket-row { background: #fff; border-color: #dbe4ef; }
+        .export-row:active, .find-ticket-row:active { background: #f8fafc; }
+        .export-row.disabled:active { background: #fff; }
+        .find-ticket-thumb { background: #e2e8f0; }
     </style>
-  <script type="module" crossorigin src="/truckpay-calculator/assets/index-D52smJRi.js"></script>
-  <link rel="stylesheet" crossorigin href="/truckpay-calculator/assets/index-Bp10SB-5.css">
+  <script type="module" crossorigin src="/truckpay-calculator/assets/index-DgXhYV5h.js"></script>
+  <link rel="stylesheet" crossorigin href="/truckpay-calculator/assets/index-CsFhrA6K.css">
 </head>
 <body>
     <div id="convexAuthRoot"></div>
     <header class="app-header">
         <div class="header-title">
             <h1>DriverPay <span>Pro</span></h1>
-            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v3.0.4</p>
+            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v3.0.5</p>
         </div>
         <div class="menu-container">
             <button class="menu-btn" onclick="toggleMenu(event)" aria-label="Menu">
@@ -529,7 +618,7 @@
             </div>
             <div class="footer-tagline">Built for the long haul</div>
             <div class="footer-meta">
-                <span class="footer-version">v3.0.4</span>
+                <span class="footer-version">v3.0.5</span>
                 <span class="footer-meta-dot"></span>
                 <span>© 2026</span>
                 <span class="footer-meta-dot"></span>
@@ -1130,7 +1219,7 @@
 
         function applySettingsToHeader() {
             const sub = document.getElementById('headerSubtitle');
-            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v3.0.4`;
+            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v3.0.5`;
         }
 
         let savedScrollY = 0;
