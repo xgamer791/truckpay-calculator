@@ -2,6 +2,7 @@ import { query } from "./_generated/server";
 import { v } from "convex/values";
 import { ADMIN_EMAIL, requireAdmin } from "./lib/security";
 import { loadDriverState } from "./lib/state";
+import { TRUCKING_COMPANY } from "./lib/fleet";
 
 export const listDrivers = query({
   args: {},
@@ -30,7 +31,7 @@ export const listDrivers = query({
           email: profile.email,
           fullName: profile.fullName,
           phone: profile.phone,
-          company: profile.company,
+          company: TRUCKING_COMPANY,
           truckNumber: profile.truckNumber,
           role: profile.role,
           settlementCount: settlements.length,

@@ -1,5 +1,6 @@
 import type { QueryCtx } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
+import { TRUCKING_COMPANY } from "./fleet";
 
 export async function loadDriverState(ctx: QueryCtx, userId: Id<"users">) {
   const [profile, settlements, loads, tickets] = await Promise.all([
@@ -89,5 +90,8 @@ export async function loadDriverState(ctx: QueryCtx, userId: Id<"users">) {
       }),
     }));
 
-  return { profile, history };
+  return {
+    profile: profile ? { ...profile, company: TRUCKING_COMPANY } : null,
+    history,
+  };
 }

@@ -4,6 +4,7 @@ export const cloudApi = {
   profiles: {
     current: makeFunctionReference("profiles:current"),
     complete: makeFunctionReference("profiles:complete"),
+    availableTrucks: makeFunctionReference("profiles:availableTrucks"),
   },
   sync: {
     getMyState: makeFunctionReference("sync:getMyState"),

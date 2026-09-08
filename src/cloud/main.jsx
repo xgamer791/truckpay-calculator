@@ -173,8 +173,24 @@ function AuthScreen() {
 
 function DriverProfileForm({ profile, email, onDone }) {
   const saveProfile = useMutation(cloudApi.profiles.complete);
+  const fleet = useQuery(cloudApi.profiles.availableTrucks, {});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [truckNumber, setTruckNumber] = useState(profile?.truckNumber || "");
+
+  useEffect(() => {
+    if (!fleet) return;
+    setTruckNumber((current) => {
+      if (fleet.trucks.includes(current)) return current;
+      if (fleet.assignedTruck && fleet.trucks.includes(fleet.assignedTruck)) {
+        return fleet.assignedTruck;
+      }
+      if (profile?.truckNumber && fleet.trucks.includes(profile.truckNumber)) {
+        return profile.truckNumber;
+      }
+      return fleet.trucks[0] || "";
+    });
+  }, [fleet, profile?.truckNumber]);
 
   const submit = async (event) => {
     event.preventDefault();
@@ -185,8 +201,8 @@ function DriverProfileForm({ profile, email, onDone }) {
       await saveProfile({
         fullName: String(data.get("fullName") || ""),
         phone: String(data.get("phone") || ""),
-        company: String(data.get("company") || ""),
-        truckNumber: String(data.get("truckNumber") || ""),
+        company: "JLP Trucking",
+        truckNumber,
       });
       onDone?.();
     } catch (nextError) {
@@ -204,12 +220,23 @@ function DriverProfileForm({ profile, email, onDone }) {
       <input name="fullName" defaultValue={profile?.fullName || ""} autoComplete="name" required />
       <label>Phone</label>
       <input name="phone" type="tel" defaultValue={profile?.phone || ""} autoComplete="tel" required />
-      <label>Company</label>
-      <input name="company" defaultValue={profile?.company || ""} autoComplete="organization" required />
+      <label>Trucking company</label>
+      <input value="JLP Trucking" disabled />
       <label>Truck number</label>
-      <input name="truckNumber" defaultValue={profile?.truckNumber || ""} required />
+      <select
+        name="truckNumber"
+        value={truckNumber}
+        onChange={(event) => setTruckNumber(event.target.value)}
+        disabled={fleet === undefined || fleet.trucks.length === 0}
+        required
+      >
+        {fleet === undefined && <option value="">Loading available trucks…</option>}
+        {fleet?.trucks.length === 0 && <option value="">No trucks are currently available</option>}
+        {fleet?.trucks.map((truck) => <option key={truck} value={truck}>Truck {truck}</option>)}
+      </select>
+      <small className="profile-field-note">Only trucks that are not assigned to another driver are shown.</small>
       {error && <div className="auth-error" role="alert">{error}</div>}
-      <button className="auth-primary" disabled={busy}>{busy ? "Saving…" : "Save Profile"}</button>
+      <button className="auth-primary" disabled={busy || fleet === undefined || !truckNumber}>{busy ? "Saving…" : "Save Profile"}</button>
     </form>
   );
 }

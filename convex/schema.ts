@@ -27,6 +27,7 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_email", ["email"])
+    .index("by_truck", ["truckNumber"])
     .index("by_role", ["role"]),
 
   settlements: defineTable({

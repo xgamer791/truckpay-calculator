@@ -32,7 +32,7 @@
 .auth-card > p { margin: 0 0 24px; color: #94a3b8; font-size: 14px; line-height: 1.55; }
 .auth-card form, .profile-form { display: grid; gap: 9px; }
 .auth-card label, .profile-form label { margin-top: 7px; color: #94a3b8; font-size: 10px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
-.auth-card input, .profile-form input {
+.auth-card input, .profile-form input, .profile-form select {
   width: 100%;
   min-height: 50px;
   padding: 12px 14px;
@@ -43,8 +43,11 @@
   color: #fff;
   font: inherit;
 }
-.auth-card input:focus, .profile-form input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, .15); }
+.auth-card input:focus, .profile-form input:focus, .profile-form select:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, .15); }
 .auth-card input:disabled, .profile-form input:disabled { color: #64748b; }
+.profile-form select { appearance: auto; }
+.profile-form select:disabled { color: #64748b; cursor: not-allowed; }
+.profile-field-note { margin: -2px 2px 3px; color: #64748b; font-size: 10px; font-weight: 700; line-height: 1.4; }
 .auth-primary {
   min-height: 52px;
   margin-top: 12px;

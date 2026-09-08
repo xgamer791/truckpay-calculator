@@ -3,6 +3,7 @@ import { mutation, query } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import { requireUserId } from "./lib/security";
 import { loadDriverState } from "./lib/state";
+import { TRUCKING_COMPANY } from "./lib/fleet";
 
 const pricingMode = v.union(
   v.literal("auto"),
@@ -160,7 +161,7 @@ export const saveSnapshot = mutation({
     const avgTons = Math.min(30, Math.max(17, args.settings.avgTons));
     await ctx.db.patch(profile._id, {
       avgTons,
-      truckNumber: args.settings.truckNumber.trim() || profile.truckNumber,
+      company: TRUCKING_COMPANY,
       updatedAt: now,
     });
 
