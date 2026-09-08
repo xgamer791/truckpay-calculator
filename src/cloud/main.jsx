@@ -292,25 +292,48 @@ function AdminDriverDetails({ userId }) {
 
 function AdminWorkspace() {
   const drivers = useQuery(cloudApi.admin.listDrivers, {});
-  const [selected, setSelected] = useState(null);
-  useEffect(() => {
-    if (!selected && drivers?.length) setSelected(drivers[0].userId);
-  }, [drivers, selected]);
+  const [expandedDriver, setExpandedDriver] = useState(null);
 
   return (
     <div className="admin-layout">
       <aside className="admin-driver-list">
         {drivers === undefined && <div className="admin-empty">Loading drivers…</div>}
-        {drivers?.map((driver) => (
-          <button key={driver.userId} className={selected === driver.userId ? "active" : ""} onClick={() => setSelected(driver.userId)}>
-            <strong>{driver.fullName}</strong>
-            <span>{driver.company} · Truck {driver.truckNumber}</span>
-            <small>{driver.loadCount} loads · {driver.ticketCount} tickets</small>
-          </button>
-        ))}
+        {drivers?.map((driver) => {
+          const expanded = expandedDriver === driver.userId;
+          const detailId = `admin-driver-${driver.userId}`;
+          return (
+            <section key={driver.userId} className={`admin-driver-card${expanded ? " expanded" : ""}`}>
+              <button
+                className="admin-driver-summary"
+                onClick={() => setExpandedDriver(expanded ? null : driver.userId)}
+                aria-expanded={expanded}
+                aria-controls={detailId}
+              >
+                <span className="admin-driver-copy">
+                  <strong>{driver.fullName}</strong>
+                  <span>{driver.company} · Truck {driver.truckNumber}</span>
+                  <small>{driver.loadCount} loads · {driver.ticketCount} tickets</small>
+                </span>
+                <span className="admin-driver-pay">
+                  <small>Total Driver Pay</small>
+                  <strong>${(Number(driver.totalPay) || 0).toFixed(2)}</strong>
+                </span>
+                <span className="admin-driver-chevron" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </span>
+              </button>
+              {expanded && (
+                <div className="admin-driver-expanded" id={detailId}>
+                  <AdminDriverDetails userId={driver.userId} />
+                </div>
+              )}
+            </section>
+          );
+        })}
         {drivers?.length === 0 && <div className="admin-empty">No driver accounts yet.</div>}
       </aside>
-      <AdminDriverDetails userId={selected} />
     </div>
   );
 }
@@ -338,7 +361,7 @@ function AdminHelpModal({ onClose }) {
           <button className="cloud-close" onClick={onClose} aria-label="Close">×</button>
         </div>
         <div className="admin-help-content">
-          <section><strong>Select a driver</strong><p>Choose a driver account to review their profile, settlements, loads, pay totals, and uploaded tickets.</p></section>
+          <section><strong>Expand a driver</strong><p>Tap a driver card to review their profile, settlements, loads, pay totals, and uploaded tickets.</p></section>
           <section><strong>Open a ticket</strong><p>Tap any ticket thumbnail to open the stored image at full size.</p></section>
           <section><strong>Automatic updates</strong><p>The dashboard refreshes automatically when drivers synchronize new records.</p></section>
         </div>
