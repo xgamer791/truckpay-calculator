@@ -290,7 +290,7 @@ function AdminDriverDetails({ userId }) {
   );
 }
 
-function AdminModal({ onClose }) {
+function AdminWorkspace() {
   const drivers = useQuery(cloudApi.admin.listDrivers, {});
   const [selected, setSelected] = useState(null);
   useEffect(() => {
@@ -298,27 +298,72 @@ function AdminModal({ onClose }) {
   }, [drivers, selected]);
 
   return (
+    <div className="admin-layout">
+      <aside className="admin-driver-list">
+        {drivers === undefined && <div className="admin-empty">Loading drivers…</div>}
+        {drivers?.map((driver) => (
+          <button key={driver.userId} className={selected === driver.userId ? "active" : ""} onClick={() => setSelected(driver.userId)}>
+            <strong>{driver.fullName}</strong>
+            <span>{driver.company} · Truck {driver.truckNumber}</span>
+            <small>{driver.loadCount} loads · {driver.ticketCount} tickets</small>
+          </button>
+        ))}
+        {drivers?.length === 0 && <div className="admin-empty">No driver accounts yet.</div>}
+      </aside>
+      <AdminDriverDetails userId={selected} />
+    </div>
+  );
+}
+
+function AdminModal({ onClose }) {
+  return (
     <div className="cloud-modal" role="dialog" aria-modal="true" aria-label="Fleet administration">
       <div className="cloud-panel">
         <div className="cloud-panel-head">
           <div><div className="auth-kicker">ADMIN</div><h2>Driver Accounts</h2></div>
           <button className="cloud-close" onClick={onClose} aria-label="Close">×</button>
         </div>
-        <div className="admin-layout">
-          <aside className="admin-driver-list">
-            {drivers === undefined && <div className="admin-empty">Loading drivers…</div>}
-            {drivers?.map((driver) => (
-              <button key={driver.userId} className={selected === driver.userId ? "active" : ""} onClick={() => setSelected(driver.userId)}>
-                <strong>{driver.fullName}</strong>
-                <span>{driver.company} · Truck {driver.truckNumber}</span>
-                <small>{driver.loadCount} loads · {driver.ticketCount} tickets</small>
-              </button>
-            ))}
-            {drivers?.length === 0 && <div className="admin-empty">No driver accounts yet.</div>}
-          </aside>
-          <AdminDriverDetails userId={selected} />
-        </div>
+        <AdminWorkspace />
       </div>
+    </div>
+  );
+}
+
+function AdminHome({ profileState }) {
+  const { signOut } = useAuthActions();
+  const [accountOpen, setAccountOpen] = useState(false);
+
+  const logout = async () => {
+    window.driverPayClearLocalData?.();
+    await signOut();
+  };
+
+  return (
+    <div className="admin-home">
+      <div className="admin-home-shell">
+        <header className="admin-home-header">
+          <div>
+            <div className="auth-brand">DriverPay <span>Pro</span></div>
+            <div className="admin-home-title"><span>ADMIN</span> Fleet Dashboard</div>
+          </div>
+          <div className="admin-home-actions">
+            <div className="admin-home-account">
+              <strong>{profileState.profile.fullName}</strong>
+              <span>{profileState.user?.email}</span>
+            </div>
+            <button onClick={() => setAccountOpen(true)}>Account</button>
+            <button className="admin-signout" onClick={logout}>Sign Out</button>
+          </div>
+        </header>
+        <main className="admin-home-panel">
+          <div className="admin-home-panel-head">
+            <div><div className="auth-kicker">DRIVERS</div><h1>Driver Accounts</h1></div>
+            <p>Review every driver’s loads, pay, and uploaded tickets.</p>
+          </div>
+          <AdminWorkspace />
+        </main>
+      </div>
+      {accountOpen && <AccountModal profileState={profileState} onClose={() => setAccountOpen(false)} />}
     </div>
   );
 }
@@ -443,6 +488,7 @@ function AuthenticatedApp() {
   const profileState = useQuery(cloudApi.profiles.current, {});
   if (profileState === undefined) return <LoadingGate />;
   if (!profileState.profile) return <ProfileGate profileState={profileState} />;
+  if (profileState.profile.role === "admin") return <AdminHome profileState={profileState} />;
   return <CloudSession profileState={profileState} />;
 }
 

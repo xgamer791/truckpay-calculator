@@ -1,13 +1,14 @@
 import { query } from "./_generated/server";
 import { v } from "convex/values";
-import { requireAdmin } from "./lib/security";
+import { ADMIN_EMAIL, requireAdmin } from "./lib/security";
 import { loadDriverState } from "./lib/state";
 
 export const listDrivers = query({
   args: {},
   handler: async (ctx) => {
     await requireAdmin(ctx);
-    const profiles = await ctx.db.query("driverProfiles").collect();
+    const profiles = (await ctx.db.query("driverProfiles").collect())
+      .filter((profile) => profile.email !== ADMIN_EMAIL);
     const summaries = await Promise.all(
       profiles.map(async (profile) => {
         const [settlements, loads, tickets] = await Promise.all([

@@ -76,8 +76,7 @@ describe("Convex account isolation", () => {
     await onboard(driver.client, "Driver One");
 
     const drivers = await admin.client.query(listDrivers, {});
-    expect(drivers.map((item: { email: string }) => item.email).sort()).toEqual([
-      "chris@mangomarketeers.com",
+    expect(drivers.map((item: { email: string }) => item.email)).toEqual([
       "driver@example.com",
     ]);
     await expect(driver.client.query(listDrivers, {})).rejects.toThrow("Administrator");
