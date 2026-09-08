@@ -100,6 +100,22 @@ describe("Convex account isolation", () => {
     await expect(driver.client.query(listDrivers, {})).rejects.toThrow("Administrator");
   });
 
+  it("automatically grants Rolling Stone LLC access to the admin dashboard", async () => {
+    const t = convexTest(schema, modules);
+    const rollingStone = await createUser(t, "RollingStoneLLC@Yahoo.com");
+    const driver = await createUser(t, "driver@example.com");
+    await onboard(rollingStone.client, "Rolling Stone LLC", "None");
+    await onboard(driver.client, "Driver One", "1203");
+
+    const currentAdmin = await rollingStone.client.query(currentProfile, {});
+    const drivers = await rollingStone.client.query(listDrivers, {});
+
+    expect(currentAdmin.profile?.role).toBe("admin");
+    expect(drivers.map((item: { email: string }) => item.email)).toEqual([
+      "driver@example.com",
+    ]);
+  });
+
   it("locks profiles to JLP Trucking and shows only open fleet trucks", async () => {
     const t = convexTest(schema, modules);
     const owner = await createUser(t, "owner@example.com");
@@ -115,7 +131,7 @@ describe("Convex account isolation", () => {
 
     const driverOptions = await driver.client.query(availableTrucks, {});
     expect(driverOptions.company).toBe("JLP Trucking");
-    expect(driverOptions.trucks).toEqual(["1203", "1204", "1211", "1210"]);
+    expect(driverOptions.trucks).toEqual(["None", "1203", "1204", "1211", "1210"]);
     await expect(onboard(driver.client, "Other Driver", "1205")).rejects.toThrow("assigned to another driver");
     await expect(onboard(driver.client, "Other Driver", "9999")).rejects.toThrow("JLP Trucking fleet");
   });
@@ -131,5 +147,20 @@ describe("Convex account isolation", () => {
     expect(firstOptions.trucks).toContain("1203");
     expect(secondOptions.trucks).not.toContain("1203");
     await expect(onboard(second.client, "Second Driver", "1203")).rejects.toThrow("just assigned");
+  });
+
+  it("lets multiple drivers choose None without claiming a fleet truck", async () => {
+    const t = convexTest(schema, modules);
+    const first = await createUser(t, "first@example.com");
+    const second = await createUser(t, "second@example.com");
+
+    await onboard(first.client, "First Driver", "None");
+    await onboard(second.client, "Second Driver", "None");
+
+    const firstOptions = await first.client.query(availableTrucks, {});
+    const secondOptions = await second.client.query(availableTrucks, {});
+    expect(firstOptions.trucks[0]).toBe("None");
+    expect(secondOptions.trucks[0]).toBe("None");
+    expect(secondOptions.trucks).toContain("1203");
   });
 });

@@ -27,6 +27,10 @@ function messageFrom(error) {
   return message.replace(/^\[CONVEX [^\]]+\]\s*/i, "").replace(/^Uncaught (Error|ConvexError):\s*/i, "");
 }
 
+function truckLabel(truckNumber) {
+  return truckNumber === "None" ? "No truck assigned" : `Truck ${truckNumber}`;
+}
+
 function FullScreen({ children, subtle = false }) {
   return <div className={`cloud-gate${subtle ? " cloud-gate--subtle" : ""}`}>{children}</div>;
 }
@@ -234,7 +238,7 @@ function DriverProfileForm({ profile, email, onDone }) {
       >
         {fleet === undefined && <option value="">Loading available trucks…</option>}
         {fleet?.trucks.length === 0 && <option value="">No trucks are currently available</option>}
-        {fleet?.trucks.map((truck) => <option key={truck} value={truck}>Truck {truck}</option>)}
+        {fleet?.trucks.map((truck) => <option key={truck} value={truck}>{truck === "None" ? "None" : `Truck ${truck}`}</option>)}
       </select>
       <small className="profile-field-note">Only trucks that are not assigned to another driver are shown.</small>
       {error && <div className="auth-error" role="alert">{error}</div>}
@@ -285,7 +289,7 @@ function AdminDriverDetails({ userId }) {
       <div className="admin-profile-line">
         <strong>{state.profile?.fullName}</strong>
         <span>{state.profile?.email}</span>
-        <span>{state.profile?.company} · Truck {state.profile?.truckNumber}</span>
+        <span>{state.profile?.company} · {truckLabel(state.profile?.truckNumber)}</span>
       </div>
       <div className="admin-stat-grid">
         <div><strong>{totals.settlements}</strong><span>Settlements</span></div>
@@ -340,7 +344,7 @@ function AdminWorkspace() {
               >
                 <span className="admin-driver-copy">
                   <strong>{driver.fullName}</strong>
-                  <span>{driver.company} · Truck {driver.truckNumber}</span>
+                  <span>{driver.company} · {truckLabel(driver.truckNumber)}</span>
                   <small>{driver.loadCount} loads · {driver.ticketCount} tickets</small>
                 </span>
                 <span className="admin-driver-pay">
