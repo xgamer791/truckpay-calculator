@@ -6,8 +6,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="driverpay-build" content="3.0.3">
-    <title>DriverPay Pro v3.0.3</title>
+    <meta name="driverpay-build" content="3.0.4">
+    <title>DriverPay Pro v3.0.4</title>
     <script>
     (function () {
         var meta = document.querySelector('meta[name="driverpay-build"]');
@@ -417,15 +417,15 @@
         .find-ticket-row-sub { font-size: 11px; color: #94a3b8; font-weight: 700; margin-top: 3px; letter-spacing: 0.02em; }
         .find-ticket-row-meta { font-size: 10px; color: #64748b; font-weight: 800; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.06em; }
     </style>
-  <script type="module" crossorigin src="/truckpay-calculator/assets/index-GKjZLIBw.js"></script>
-  <link rel="stylesheet" crossorigin href="/truckpay-calculator/assets/index-D9o9EQQL.css">
+  <script type="module" crossorigin src="/truckpay-calculator/assets/index-D52smJRi.js"></script>
+  <link rel="stylesheet" crossorigin href="/truckpay-calculator/assets/index-Bp10SB-5.css">
 </head>
 <body>
     <div id="convexAuthRoot"></div>
     <header class="app-header">
         <div class="header-title">
             <h1>DriverPay <span>Pro</span></h1>
-            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v3.0.3</p>
+            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v3.0.4</p>
         </div>
         <div class="menu-container">
             <button class="menu-btn" onclick="toggleMenu(event)" aria-label="Menu">
@@ -529,7 +529,7 @@
             </div>
             <div class="footer-tagline">Built for the long haul</div>
             <div class="footer-meta">
-                <span class="footer-version">v3.0.3</span>
+                <span class="footer-version">v3.0.4</span>
                 <span class="footer-meta-dot"></span>
                 <span>© 2026</span>
                 <span class="footer-meta-dot"></span>
@@ -657,8 +657,8 @@
             <div style="margin-top: 28px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.06);">
                 <div class="edit-eyebrow">TRUCK</div>
                 <div class="edit-title" style="font-size: 18px; margin: 6px 0 4px;">My Truck Number</div>
-                <div class="edit-subtitle" style="margin-bottom: 14px;">Synced securely to your DriverPay Pro account.</div>
-                <input type="text" id="truckNumberInput" class="edit-input" inputmode="numeric" placeholder="1205" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+                <div class="edit-subtitle" style="margin-bottom: 14px;">Assigned through your DriverPay Pro account profile.</div>
+                <input type="text" id="truckNumberInput" class="edit-input" value="" disabled>
             </div>
 
             <div class="edit-actions">
@@ -1130,7 +1130,7 @@
 
         function applySettingsToHeader() {
             const sub = document.getElementById('headerSubtitle');
-            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v3.0.3`;
+            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v3.0.4`;
         }
 
         let savedScrollY = 0;
@@ -1468,9 +1468,6 @@
             v = Math.max(17, Math.min(30, v));
             v = Math.round(v * 10) / 10;
             settings.avgTons = v;
-            const truckInput = document.getElementById('truckNumberInput');
-            const truckVal = truckInput ? truckInput.value.trim() : '';
-            settings.expectedTruckNumber = truckVal || '1205';
             settings = {
                 avgTons: settings.avgTons,
                 expectedTruckNumber: settings.expectedTruckNumber || '1205',
