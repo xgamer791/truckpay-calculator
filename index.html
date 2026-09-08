@@ -6,8 +6,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="driverpay-build" content="2.12.39">
-    <title>DriverPay Pro v2.12.39</title>
+    <meta name="driverpay-build" content="2.12.40">
+    <title>DriverPay Pro v2.12.40</title>
     <script>
     (function () {
         var meta = document.querySelector('meta[name="driverpay-build"]');
@@ -240,6 +240,18 @@
             color: #e2e8f0; white-space: nowrap; pointer-events: none;
         }
         .doc-scanner-status.locked { color: #86efac; background: rgba(22,101,52,0.55); }
+        .doc-scanner-offline-note {
+            position: absolute; left: 16px; right: 16px;
+            top: calc(104px + env(safe-area-inset-top, 0px));
+            z-index: 3; pointer-events: none;
+            background: rgba(251,191,36,0.12);
+            border: 1px solid rgba(251,191,36,0.35);
+            border-left: 3px solid #fbbf24;
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-size: 12px; font-weight: 800; line-height: 1.35;
+            color: #fde68a; text-align: center;
+        }
         .doc-scanner-bottom {
             position: absolute; left: 0; right: 0; bottom: 0; z-index: 3;
             display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px;
@@ -384,7 +396,7 @@
     <header class="app-header">
         <div class="header-title">
             <h1>DriverPay <span>Pro</span></h1>
-            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v2.12.39</p>
+            <p id="headerSubtitle">25 Ton Avg @ 30% Commission · v2.12.40</p>
         </div>
         <div class="menu-container">
             <button class="menu-btn" onclick="toggleMenu(event)" aria-label="Menu">
@@ -487,7 +499,7 @@
             </div>
             <div class="footer-tagline">Built for the long haul</div>
             <div class="footer-meta">
-                <span class="footer-version">v2.12.39</span>
+                <span class="footer-version">v2.12.40</span>
                 <span class="footer-meta-dot"></span>
                 <span>© 2026</span>
                 <span class="footer-meta-dot"></span>
@@ -555,6 +567,7 @@
                     <span class="ticket-control-status" id="editTicketStatus">No ticket — tap to add photo</span>
                     <button type="button" class="ticket-control-view" id="editTicketView" style="display:none;" onclick="viewEditTicket()">View</button>
                 </div>
+                <div class="help-tip" style="margin-top:10px;"><strong>Note:</strong> Camera scanner is not working at this time.</div>
             </div>
             <div class="edit-row">
                 <label class="edit-label">Day</label>
@@ -658,8 +671,8 @@
                         <span class="help-section-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span>
                         Load Tickets
                     </div>
-                    <p>Every load has a camera icon. <strong style="color:#ef4444;">Red</strong> = no ticket yet. <strong style="color:#60a5fa;">Blue</strong> = photo saved on this device. Tap the camera to open the in-app scanner — it finds a paper ticket outline with OpenCV, locks after a steady hold, then tap capture. Use <strong>Photos</strong> to import from your library. Saved on this device only.</p>
-                    <div class="help-tip"><strong>Tip:</strong> Capturing inside Edit stages the photo until you tap Save.</div>
+                    <p>Every load has a camera icon. <strong style="color:#ef4444;">Red</strong> = no ticket yet. <strong style="color:#60a5fa;">Blue</strong> = photo saved on this device.</p>
+                    <div class="help-tip"><strong>Note:</strong> Camera scanner functionality is not working at this time.</div>
                 </div>
                 <div class="help-section">
                     <div class="help-section-title">
@@ -807,6 +820,7 @@
                 </button>
             </div>
             <div class="doc-scanner-status" id="docScannerStatus">Find a document</div>
+            <div class="doc-scanner-offline-note">Note: Camera scanner is not working at this time.</div>
             <div class="doc-scanner-bottom">
                 <label class="doc-photos-btn" for="ticketGalleryInput" id="docScannerGallery">
                     <span class="doc-photos-icon">
@@ -1037,7 +1051,7 @@
 
         function applySettingsToHeader() {
             const sub = document.getElementById('headerSubtitle');
-            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v2.12.39`;
+            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v2.12.40`;
         }
 
         let savedScrollY = 0;
