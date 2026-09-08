@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DriverPay Pro — How to Use It</title>
+    <style>
+        :root {
+            --bg: #0b1220;
+            --card: #111827;
+            --line: rgba(255, 255, 255, 0.08);
+            --text: #f8fafc;
+            --muted: #94a3b8;
+            --blue: #3b82f6;
+        }
+        * { box-sizing: border-box; }
+        html, body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+        .toolbar {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            padding: 14px 20px;
+            background: rgba(11, 18, 32, 0.92);
+            border-bottom: 1px solid var(--line);
+            backdrop-filter: blur(10px);
+        }
+        .toolbar h1 {
+            margin: 0;
+            font-size: 15px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+        .toolbar p {
+            margin: 2px 0 0;
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .print-btn {
+            appearance: none;
+            border: 0;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            font: inherit;
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            padding: 12px 18px;
+            border-radius: 12px;
+            cursor: pointer;
+        }
+        .print-btn:active { transform: scale(0.98); }
+        .sheet {
+            width: min(900px, calc(100% - 32px));
+            margin: 24px auto 48px;
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+        }
+        .sheet img {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+        @media print {
+            @page { size: letter portrait; margin: 0; }
+            html, body { background: white; }
+            .toolbar { display: none; }
+            .sheet {
+                width: 100%;
+                margin: 0;
+                border: 0;
+                border-radius: 0;
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="toolbar">
+        <div>
+            <h1>DriverPay Pro</h1>
+            <p>Print this one-page guide for the truck or office.</p>
+        </div>
+        <button class="print-btn" type="button" onclick="window.print()">Print flyer</button>
+    </div>
+    <div class="sheet">
+        <img src="flyer/driverpay-pro-how-to-use.jpg" alt="DriverPay Pro how-to-use flyer with five simple steps: type miles, tap Add to Current Period, check pay, photo the ticket, and swipe to edit or delete.">
+    </div>
+</body>
+</html>
