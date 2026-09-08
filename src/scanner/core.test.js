@@ -61,6 +61,21 @@ describe('original ticket vision',()=>{
 
 const stable={corners:[{x:.2,y:.12},{x:.8,y:.12},{x:.8,y:.88},{x:.2,y:.88}],confidence:.93,areaRatio:.45,brightness:210,sharpness:220,inkRatio:.08,clipped:false};
 describe('capture and smoothing',()=>{
+  it('accepts small hand tremor and detector jitter without restarting the countdown',()=>{
+    const gate=new CaptureGate();let captured=false;
+    for(let time=0;time<=1600;time+=100){
+      const offset=time%200===0?.005:-.005;
+      const result={...stable,corners:stable.corners.map(p=>({x:p.x+offset,y:p.y}))};
+      captured=gate.update(result,time).capture||captured;
+    }
+    expect(captured).toBe(true);
+  });
+  it('requires several observations even when processing is slow',()=>{
+    const gate=new CaptureGate();
+    expect(gate.update(stable,0).capture).toBe(false);
+    expect(gate.update(stable,1200).capture).toBe(false);
+    expect(gate.update(stable,2400).capture).toBe(true);
+  });
   it('captures once after a stable interval, resets for movement, blur, loss and stale observations',()=>{
     for(const interruption of [null,{...stable,sharpness:12},{...stable,corners:stable.corners.map(p=>({x:p.x+.04,y:p.y}))}]){
       const gate=new CaptureGate();for(let t=0;t<=700;t+=100)expect(gate.update(stable,t).capture).toBe(false);

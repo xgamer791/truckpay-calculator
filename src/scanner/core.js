@@ -265,17 +265,21 @@ export class OutlineFilter {
 
 export class CaptureGate {
   constructor(){this.reset();}
-  reset(){this.anchor=null;this.last=null;this.start=0;this.time=0;this.latched=false;}
+  reset(){this.anchor=null;this.last=null;this.start=0;this.time=0;this.samples=0;this.latched=false;}
   update(result,time){
     if(this.latched)return {capture:false,progress:1,message:'Captured'};
     const good=result&&result.confidence>=.68&&!result.clipped&&result.areaRatio>=.13&&result.brightness>=85&&result.sharpness>=65&&result.inkRatio>.008&&result.inkRatio<.5;
-    if(!good){this.anchor=null;this.last=null;this.start=0;this.time=time;return {capture:false,progress:0,message:!result?'Show all four ticket edges':result.clipped?'Keep the entire ticket in view':result.areaRatio<.13?'Move closer to the ticket':result.brightness<85?'Add more light':result.sharpness<65?'Waiting for a clear image':'Center the ticket in view'};}
+    if(!good){this.anchor=null;this.last=null;this.start=0;this.samples=0;this.time=time;return {capture:false,progress:0,message:!result?'Show all four ticket edges':result.clipped?'Keep the entire ticket in view':result.areaRatio<.13?'Move closer to the ticket':result.brightness<85?'Add more light':result.sharpness<65?'Waiting for a clear image':'Center the ticket in view'};}
     const q=alignCorners(result.corners,this.last);
-    if(!this.anchor||time-this.time>320||cornerMotion(this.anchor,q)>.012||(this.last&&cornerMotion(this.last,q)>.006)){
-      this.anchor=q;this.start=time;
+    // Detection runs serially. Mobile processing can take hundreds of ms;
+    // require repeated observations rather than desktop-speed frame intervals.
+    // Use raw corners with a small tremor allowance, preserving the anchor to
+    // reject cumulative drift even when individual steps are small.
+    if(!this.anchor||time-this.time>1500||time<=this.time||cornerMotion(this.anchor,q)>.025||(this.last&&cornerMotion(this.last,q)>.018)){
+      this.anchor=q;this.start=time;this.samples=0;
     }
-    this.last=q;this.time=time;
-    const progress=clamp((time-this.start)/1100,0,1);
+    this.last=q;this.time=time;this.samples++;
+    const progress=Math.min(clamp((time-this.start)/1100,0,1),this.samples>=3?1:.9);
     if(progress===1)this.latched=true;
     return {capture:this.latched,progress,message:progress>.1?'Hold steady · capturing automatically':'Ticket found · hold steady'};
   }

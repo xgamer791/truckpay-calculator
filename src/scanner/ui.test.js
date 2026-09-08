@@ -3,13 +3,13 @@ import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 
 let scanner,stop,requests,frames,clock;
 const good={corners:[{x:64,y:34},{x:256,y:34},{x:256,y:246},{x:64,y:246}],confidence:.94,areaRatio:.45,brightness:210,sharpness:200,inkRatio:.08,clipped:false};
-let detection;
+let detection, detectionDelay;
 class TestWorker {
   postMessage(message){
     requests.push(message);
     if(message.type==='reset')return;
     const result=message.type==='detect'?detection:{width:190,height:210,pixels:new Uint8ClampedArray(190*210*4).fill(255)};
-    setTimeout(()=>this.onmessage?.({data:{id:message.id,result}}),1);
+    setTimeout(()=>this.onmessage?.({data:{id:message.id,result}}),message.type==='detect'?detectionDelay:1);
   }
   terminate(){this.onmessage=null;}
 }
@@ -17,7 +17,7 @@ class TestWorker {
 beforeEach(async()=>{
   vi.resetModules();vi.useFakeTimers({toFake:['setTimeout','clearTimeout','performance']});
   document.body.innerHTML='<button id="launch">Open camera</button>';
-  requests=[];frames=0;clock=0;detection=good;
+  requests=[];frames=0;clock=0;detection=good;detectionDelay=1;
   stop=vi.fn();
   vi.stubGlobal('Worker',TestWorker);vi.stubGlobal('ResizeObserver',class{observe(){} disconnect(){}});
   vi.stubGlobal('requestAnimationFrame',cb=>setTimeout(()=>cb(performance.now()),16));vi.stubGlobal('cancelAnimationFrame',id=>clearTimeout(id));
@@ -36,6 +36,21 @@ beforeEach(async()=>{
 afterEach(()=>{scanner?.close();document.removeEventListener('visibilitychange',scanner?.onVisibility);vi.useRealTimers();vi.restoreAllMocks();vi.unstubAllGlobals();});
 
 describe('scanner camera lifecycle',()=>{
+  it.each([450,800])('auto captures with %i ms of camera processing latency',async(delay)=>{
+    detectionDelay=delay;
+    await scanner.open({onSave:vi.fn()});
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(scanner.mode).toBe('review');
+    expect(requests.filter(r=>r.type==='process')).toHaveLength(1);
+    expect(stop).toHaveBeenCalled();
+  });
+  it('does not auto capture a stalled worker result',async()=>{
+    detectionDelay=2000;
+    await scanner.open({onSave:vi.fn()});
+    await vi.advanceTimersByTimeAsync(6500);
+    expect(scanner.mode).toBe('live');
+    expect(requests.filter(r=>r.type==='process')).toHaveLength(0);
+  });
   it('automatically captures once, stops the stream and saves only after review',async()=>{
     const onSave=vi.fn().mockResolvedValue();await scanner.open({onSave});
     await vi.advanceTimersByTimeAsync(1800);

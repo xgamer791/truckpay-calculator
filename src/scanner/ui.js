@@ -152,7 +152,9 @@ class TicketScanner {
       const source=this.snapshot(this.video),small=this.snapshot(source,480),image=small.getContext('2d',{willReadFrequently:true}).getImageData(0,0,small.width,small.height);
       const result=await this.request('detect',image);
       if(!this.root||session!==this.session||this.mode!=='live'||document.hidden)return;
-      const fresh=performance.now()-now<300;
+      // Keep the matching sensor frame for capture. A 300 ms deadline discarded
+      // every result on slower phones, so the countdown could never start.
+      const fresh=performance.now()-now<1200;
       if(result){
         const normalized=alignCorners(result.corners.map(p=>({x:p.x/small.width,y:p.y/small.height})),this.filter.raw);
         this.target=this.filter.update(normalized,now);this.lastSeen=performance.now();
