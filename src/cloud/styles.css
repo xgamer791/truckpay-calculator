@@ -146,14 +146,16 @@
 .admin-home-account strong, .admin-home-account span { display: block; }
 .admin-home-account strong { font-size: 13px; }
 .admin-home-account span { margin-top: 2px; color: #64748b; font-size: 10px; }
-.admin-home-actions button { min-height: 40px; padding: 9px 14px; border: 1px solid rgba(148, 163, 184, .18); border-radius: 11px; background: rgba(255, 255, 255, .05); color: #cbd5e1; font: inherit; font-size: 12px; font-weight: 850; cursor: pointer; }
-.admin-home-actions .admin-signout { color: #fca5a5; }
 .admin-home-panel { display: flex; flex: 1; flex-direction: column; min-height: 0; overflow: hidden; border: 1px solid rgba(148, 163, 184, .14); border-radius: 22px; background: #0f172a; box-shadow: 0 28px 80px rgba(0, 0, 0, .35); }
 .admin-home-panel-head { display: flex; justify-content: space-between; align-items: end; gap: 20px; padding: 18px 22px; border-bottom: 1px solid rgba(148, 163, 184, .12); }
 .admin-home-panel-head .auth-kicker { margin: 0; }
 .admin-home-panel-head h1 { margin: 7px 0 0; font-size: 22px; letter-spacing: -.03em; }
 .admin-home-panel-head p { margin: 0; color: #64748b; font-size: 12px; }
 .admin-home-panel > .admin-layout { flex: 1; min-height: 0; height: auto; }
+.admin-help-content { display: grid; gap: 10px; padding: 18px 22px 2px; }
+.admin-help-content section { padding: 14px; border: 1px solid rgba(148, 163, 184, .1); border-radius: 13px; background: rgba(255, 255, 255, .035); }
+.admin-help-content strong { font-size: 13px; }
+.admin-help-content p { margin: 6px 0 0; color: #94a3b8; font-size: 12px; line-height: 1.5; }
 
 @media (max-width: 720px) {
   .auth-card { padding: 25px 20px; }
@@ -168,7 +170,6 @@
   .admin-home-header .auth-brand { font-size: 21px; }
   .admin-home-title { font-size: 11px; }
   .admin-home-account { display: none; }
-  .admin-home-actions button { min-height: 38px; padding: 8px 10px; font-size: 11px; }
   .admin-home-panel { border-right: 0; border-bottom: 0; border-left: 0; border-radius: 20px 20px 0 0; }
   .admin-home-panel-head { display: block; padding: 15px 16px 13px; }
   .admin-home-panel-head h1 { font-size: 19px; }

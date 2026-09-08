@@ -329,11 +329,41 @@ function AdminModal({ onClose }) {
   );
 }
 
+function AdminHelpModal({ onClose }) {
+  return (
+    <div className="cloud-modal" role="dialog" aria-modal="true" aria-label="Admin dashboard help">
+      <div className="cloud-panel cloud-panel--compact admin-help-panel">
+        <div className="cloud-panel-head">
+          <div><div className="auth-kicker">HELP</div><h2>Admin Dashboard</h2></div>
+          <button className="cloud-close" onClick={onClose} aria-label="Close">×</button>
+        </div>
+        <div className="admin-help-content">
+          <section><strong>Select a driver</strong><p>Choose a driver account to review their profile, settlements, loads, pay totals, and uploaded tickets.</p></section>
+          <section><strong>Open a ticket</strong><p>Tap any ticket thumbnail to open the stored image at full size.</p></section>
+          <section><strong>Automatic updates</strong><p>The dashboard refreshes automatically when drivers synchronize new records.</p></section>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AdminHome({ profileState }) {
   const { signOut } = useAuthActions();
   const [accountOpen, setAccountOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+    const closeOnEscape = (event) => {
+      if (event.key === "Escape") setMenuOpen(false);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [menuOpen]);
 
   const logout = async () => {
+    setMenuOpen(false);
     window.driverPayClearLocalData?.();
     await signOut();
   };
@@ -351,8 +381,73 @@ function AdminHome({ profileState }) {
               <strong>{profileState.profile.fullName}</strong>
               <span>{profileState.user?.email}</span>
             </div>
-            <button onClick={() => setAccountOpen(true)}>Account</button>
-            <button className="admin-signout" onClick={logout}>Sign Out</button>
+            <div className="menu-container">
+              <button
+                className="menu-btn"
+                onClick={() => setMenuOpen((open) => !open)}
+                aria-label="Admin menu"
+                aria-expanded={menuOpen}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="3" y1="6" x2="21" y2="6" />
+                  <line x1="3" y1="12" x2="21" y2="12" />
+                  <line x1="3" y1="18" x2="21" y2="18" />
+                </svg>
+              </button>
+              {menuOpen && (
+                <>
+                  <div className="menu-popover active">
+                    <div className="cloud-menu-section">
+                      <div className="cloud-menu-account">
+                        <strong>{profileState.profile.fullName}</strong>
+                        <span>Administrator</span>
+                      </div>
+                      <button className="menu-item" onClick={() => setMenuOpen(false)}>
+                        <span className="menu-item-icon">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M3 11 12 3l9 8" /><path d="M5 10v11h14V10" /><path d="M9 21v-7h6v7" />
+                          </svg>
+                        </span>
+                        Dashboard
+                      </button>
+                      <button className="menu-item" onClick={() => { setMenuOpen(false); setAccountOpen(true); }}>
+                        <span className="menu-item-icon">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" />
+                          </svg>
+                        </span>
+                        Account
+                      </button>
+                    </div>
+                    <button className="menu-item" onClick={() => window.location.reload()}>
+                      <span className="menu-item-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="23 4 23 10 17 10" /><path d="M20.49 15A9 9 0 1 1 18.36 5.64L23 10" />
+                        </svg>
+                      </span>
+                      Refresh Dashboard
+                    </button>
+                    <button className="menu-item" onClick={() => { setMenuOpen(false); setHelpOpen(true); }}>
+                      <span className="menu-item-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" /><line x1="12" y1="17" x2="12.01" y2="17" />
+                        </svg>
+                      </span>
+                      Help
+                    </button>
+                    <button className="menu-item cloud-signout" onClick={logout}>
+                      <span className="menu-item-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M10 17l5-5-5-5" /><path d="M15 12H3" /><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                        </svg>
+                      </span>
+                      Sign Out
+                    </button>
+                  </div>
+                  <button className="menu-backdrop active" onClick={() => setMenuOpen(false)} aria-label="Close menu" />
+                </>
+              )}
+            </div>
           </div>
         </header>
         <main className="admin-home-panel">
@@ -364,6 +459,7 @@ function AdminHome({ profileState }) {
         </main>
       </div>
       {accountOpen && <AccountModal profileState={profileState} onClose={() => setAccountOpen(false)} />}
+      {helpOpen && <AdminHelpModal onClose={() => setHelpOpen(false)} />}
     </div>
   );
 }
