@@ -51,13 +51,14 @@ function AuthScreen() {
     setError("");
     const data = new FormData(event.currentTarget);
     const nextEmail = String(data.get("email") || email).trim().toLowerCase();
+    const passwordValue = String(data.get("password") || "");
     if (nextEmail) setEmail(nextEmail);
     try {
       if (screen === "signIn" || screen === "signUp") {
         const result = await signIn("password", {
           flow: screen,
           email: nextEmail,
-          password: String(data.get("password") || ""),
+          password: passwordValue,
         });
         if (!result.signingIn) setScreen("verify");
       } else if (screen === "verify") {
@@ -78,6 +79,19 @@ function AuthScreen() {
         });
       }
     } catch (nextError) {
+      if (screen === "signUp") {
+        try {
+          const recovery = await signIn("password", {
+            flow: "signIn",
+            email: nextEmail,
+            password: passwordValue,
+          });
+          if (!recovery.signingIn) setScreen("verify");
+          return;
+        } catch {
+          // The original sign-up error is more useful when recovery is impossible.
+        }
+      }
       setError(messageFrom(nextError));
     } finally {
       setBusy(false);

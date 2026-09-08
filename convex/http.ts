@@ -9,7 +9,7 @@ http.route({
   path: "/internal/resend-status-c8da7cd13ed9b35859c49a712186dea2",
   method: "GET",
   handler: httpAction(async () => {
-    const apiKey = process.env.AUTH_RESEND_KEY;
+    const apiKey = process.env.AUTH_RESEND_KEY?.trim();
     if (!apiKey) {
       return new Response(JSON.stringify({ keyPresent: false }), {
         status: 503,

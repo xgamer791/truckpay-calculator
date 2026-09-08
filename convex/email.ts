@@ -1,6 +1,7 @@
 import ResendProvider from "@auth/core/providers/resend";
 
 const FROM = "DriverPay Pro <noreply@freedomaminos.com>";
+const RESEND_API_KEY = process.env.AUTH_RESEND_KEY?.trim();
 
 function generateOtp() {
   const values = new Uint32Array(1);
@@ -31,7 +32,7 @@ function makeOtpProvider(options: {
 }) {
   return ResendProvider({
     id: options.id,
-    apiKey: process.env.AUTH_RESEND_KEY,
+    apiKey: RESEND_API_KEY,
     from: FROM,
     maxAge: 15 * 60,
     async generateVerificationToken() {
