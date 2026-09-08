@@ -7,13 +7,16 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
+      # No npm cache: package-lock.json is gitignored, and setup-node
+      # fails when cache: npm cannot find a lockfile.
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'npm'
 
       - name: Install dependencies
         run: npm install
