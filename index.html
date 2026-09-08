@@ -6,8 +6,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="driverpay-build" content="2.12.40">
-    <title>DriverPay Pro v2.12.40</title>
+    <meta name="driverpay-build" content="3.0.0">
+    <title>DriverPay Pro v3.0.0</title>
     <script>
     (function () {
         var meta = document.querySelector('meta[name="driverpay-build"]');
@@ -24,6 +24,32 @@
                 location.replace(next);
             })
             .catch(function () {});
+    })();
+    </script>
+    <script>
+    (function () {
+        var nativeSetItem = Storage.prototype.setItem;
+        var nativeRemoveItem = Storage.prototype.removeItem;
+        window.__driverPayNativeSetItem = function (key, value) {
+            nativeSetItem.call(window.localStorage, key, value);
+        };
+        window.__driverPayNativeRemoveItem = function (key) {
+            nativeRemoveItem.call(window.localStorage, key);
+        };
+        Storage.prototype.setItem = function (key, value) {
+            nativeSetItem.call(this, key, value);
+            if (this === window.localStorage && !window.__driverPayCloudSuppress &&
+                (key === 'driver_history' || key === 'driverpay_settings')) {
+                window.dispatchEvent(new CustomEvent('driverpay:local-change', { detail: { key: key } }));
+            }
+        };
+        Storage.prototype.removeItem = function (key) {
+            nativeRemoveItem.call(this, key);
+            if (this === window.localStorage && !window.__driverPayCloudSuppress &&
+                (key === 'driver_history' || key === 'driverpay_settings')) {
+                window.dispatchEvent(new CustomEvent('driverpay:local-change', { detail: { key: key } }));
+            }
+        };
     })();
     </script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -393,6 +419,7 @@
     </style>
 </head>
 <body>
+    <div id="convexAuthRoot"></div>
     <header class="app-header">
         <div class="header-title">
             <h1>DriverPay <span>Pro</span></h1>
@@ -407,6 +434,7 @@
                 </svg>
             </button>
             <div class="menu-popover" id="menuPopover">
+        <div id="cloudMenuRoot"></div>
         <button class="menu-item" onclick="closeMenu(); openFindTicket()">
             <span class="menu-item-icon">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -627,7 +655,7 @@
             <div style="margin-top: 28px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.06);">
                 <div class="edit-eyebrow">TRUCK</div>
                 <div class="edit-title" style="font-size: 18px; margin: 6px 0 4px;">My Truck Number</div>
-                <div class="edit-subtitle" style="margin-bottom: 14px;">Stored on this device for your records (and future features).</div>
+                <div class="edit-subtitle" style="margin-bottom: 14px;">Synced securely to your DriverPay Pro account.</div>
                 <input type="text" id="truckNumberInput" class="edit-input" inputmode="numeric" placeholder="1205" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
             </div>
 
@@ -671,7 +699,7 @@
                         <span class="help-section-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span>
                         Load Tickets
                     </div>
-                    <p>Every load has a camera icon. <strong style="color:#ef4444;">Red</strong> = no ticket yet. <strong style="color:#60a5fa;">Blue</strong> = photo saved on this device.</p>
+                    <p>Every load has a camera icon. <strong style="color:#ef4444;">Red</strong> = no ticket yet. <strong style="color:#60a5fa;">Blue</strong> = photo saved to your account.</p>
                     <div class="help-tip"><strong>Note:</strong> Camera scanner functionality is not working at this time.</div>
                 </div>
                 <div class="help-section">
@@ -718,7 +746,7 @@
                         <span class="help-section-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span>
                         Your Data
                     </div>
-                    <p>All data lives <strong>locally on this device only</strong> — nothing is sent anywhere. Clearing browser data or switching devices wipes your history, so screenshot the revenue chart at year-end if you want a paper trail.</p>
+                    <p>Your profile, loads, settlements, and ticket photos are securely synced to your account. Each driver can access only their own records, and your data follows you when you sign in on another device.</p>
                 </div>
             </div>
             <button class="chart-close" onclick="closeHelp()">CLOSE</button>
@@ -734,7 +762,7 @@
             <div class="find-ticket-search">
                 <input type="search" id="findTicketQuery" class="edit-input" placeholder="Ticket #, job, plant…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="search">
             </div>
-            <div class="find-ticket-hint" id="findTicketHint">Type to search saved tickets on this device.</div>
+            <div class="find-ticket-hint" id="findTicketHint">Type to search tickets saved to your account.</div>
             <div class="find-ticket-results" id="findTicketResults"></div>
             <button class="chart-close" onclick="closeFindTicket()">CLOSE</button>
         </div>
@@ -1049,9 +1077,58 @@
         function saveSettingsObj(s) { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); }
         let settings = loadSettings();
 
+        window.driverPayReadLocalSnapshot = function () {
+            let history = [];
+            try {
+                const parsed = JSON.parse(localStorage.getItem('driver_history') || '[]');
+                history = Array.isArray(parsed) ? parsed : [];
+            } catch (_) {}
+            return {
+                history,
+                settings: {
+                    avgTons: Number(settings.avgTons) || 25,
+                    truckNumber: settings.expectedTruckNumber || '1205'
+                }
+            };
+        };
+
+        window.driverPayApplyCloudSnapshot = function (history, profile) {
+            window.__driverPayCloudSuppress = true;
+            try {
+                const safeHistory = Array.isArray(history) ? history : [];
+                window.__driverPayNativeSetItem('driver_history', JSON.stringify(safeHistory));
+                const nextSettings = {
+                    avgTons: Number(profile && profile.avgTons) || 25,
+                    expectedTruckNumber: (profile && profile.truckNumber) || '1205',
+                    localUserId: String(profile && profile.userId || '')
+                };
+                window.__driverPayNativeSetItem(SETTINGS_KEY, JSON.stringify(nextSettings));
+                settings = loadSettings();
+                sanitizeHistory();
+                applySettingsToHeader();
+                renderHistory();
+            } finally {
+                window.__driverPayCloudSuppress = false;
+            }
+        };
+
+        window.driverPayClearLocalData = function () {
+            window.__driverPayCloudSuppress = true;
+            try {
+                window.__driverPayNativeSetItem('driver_history', '[]');
+                window.__driverPayNativeSetItem(DOC_SYNC_KEY, '[]');
+                settings = { ...DEFAULT_SETTINGS, localUserId: genLocalUserId() };
+                window.__driverPayNativeSetItem(SETTINGS_KEY, JSON.stringify(settings));
+                applySettingsToHeader();
+                renderHistory();
+            } finally {
+                window.__driverPayCloudSuppress = false;
+            }
+        };
+
         function applySettingsToHeader() {
             const sub = document.getElementById('headerSubtitle');
-            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v2.12.40`;
+            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v3.0.0`;
         }
 
         let savedScrollY = 0;
@@ -1541,7 +1618,7 @@
                 const n = findTicketState.matches.length;
                 hint.textContent = n
                     ? (n + ' ticket' + (n === 1 ? '' : 's') + ' found — tap to open.')
-                    : 'Type to search saved tickets on this device.';
+                    : 'Type to search tickets saved to your account.';
             }
             if (!findTicketState.matches.length) {
                 root.innerHTML = '<div class="find-ticket-empty">' + escapeHtml(emptyMsg || 'No matching tickets yet. Save a ticket photo on a load, then search here.') + '</div>';
@@ -3512,7 +3589,7 @@
         }
 
         function enqueueDocSync(sId, lId, docId) {
-            // Offline-first queue. No cloud backend yet — mark local and keep queue for future sync.
+            // Offline-first queue. The authenticated cloud bridge drains this after Convex confirms the snapshot.
             let q = [];
             try { q = JSON.parse(localStorage.getItem(DOC_SYNC_KEY) || '[]'); } catch (_) { q = []; }
             if (!Array.isArray(q)) q = [];
@@ -3521,7 +3598,6 @@
                 q.push({ sId, lId, docId, userId: settings.localUserId, queuedAt: Date.now(), attempts: 0, status: 'local' });
                 try { localStorage.setItem(DOC_SYNC_KEY, JSON.stringify(q.slice(-200))); } catch (_) {}
             }
-            // When online, we currently confirm local persistence as success (no remote endpoint).
             flushDocSyncQueue();
         }
 
@@ -3530,8 +3606,7 @@
             let q = [];
             try { q = JSON.parse(localStorage.getItem(DOC_SYNC_KEY) || '[]'); } catch (_) { return; }
             if (!Array.isArray(q) || !q.length) return;
-            // No remote API in this app — keep entries marked local/synced-local without deleting images.
-            const next = q.map(item => item ? { ...item, status: 'local', lastTriedAt: Date.now() } : item);
+            const next = q.map(item => item ? { ...item, status: 'queued', lastTriedAt: Date.now() } : item);
             try { localStorage.setItem(DOC_SYNC_KEY, JSON.stringify(next)); } catch (_) {}
         }
         window.addEventListener('online', flushDocSyncQueue);
@@ -4270,5 +4345,6 @@
             renderHistory();
         } catch (err) { appAlert('Startup error: ' + (err && err.message ? err.message : err)); }
     </script>
+    <script type="module" src="/src/cloud/main.jsx"></script>
 </body>
 </html>

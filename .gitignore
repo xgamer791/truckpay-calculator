@@ -1,4 +1,7 @@
 .firecrawl/
 node_modules/
+dist/
 verify-scanner.mjs
-package-lock.json
+.env
+.env.local
+.env.*.local

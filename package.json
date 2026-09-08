@@ -1,25 +1,38 @@
 {
   "name": "truckpay-calculator",
   "private": true,
-  "version": "1.0.0",
+  "version": "3.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "deploy": "gh-pages -d dist"
+    "deploy": "gh-pages -d dist",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "check": "npm run typecheck && npm test && npm run build"
   },
   "dependencies": {
+    "@auth/core": "^0.41.1",
+    "@convex-dev/auth": "^0.0.95",
+    "convex": "^1.45.0",
+    "jose": "^6.2.12",
+    "lucide-react": "^0.263.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "lucide-react": "^0.263.1",
+    "resend": "^6.26.0",
     "tesseract.js": "^4.1.1"
   },
   "devDependencies": {
+    "@types/node": "^24.13.3",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
     "@vitejs/plugin-react": "^4.2.0",
+    "convex-test": "^0.0.56",
+    "gh-pages": "^6.1.0",
+    "jsdom": "^24.1.3",
+    "typescript": "^5.9.3",
     "vite": "^5.0.0",
-    "gh-pages": "^6.1.0"
+    "vitest": "^2.1.9"
   }
 }

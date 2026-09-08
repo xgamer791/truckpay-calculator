@@ -1,41 +1,37 @@
-name: Deploy
+name: Test and Deploy
 
 on:
   push:
     branches: [ main ]
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: 'npm'
-
-      - name: Install dependencies
-        run: npm install
-
-      # Deploy Convex functions first (when present), then build the web
-      # app so Vite bakes in the production VITE_CONVEX_URL.
-      - name: Deploy Convex backend
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - name: Initialize Convex Auth
+        run: node scripts/init-convex-auth.mjs
         env:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
-        run: |
-          if [ ! -d convex ]; then
-            echo "No convex/ directory; skipping Convex deploy (Pages-only)."
-            exit 0
-          fi
-          npx --yes convex deploy --yes
-
+          DRIVERPAY_SITE_URL: https://xgamer791.github.io/truckpay-calculator/
+      - name: Deploy Convex backend
+        run: npx convex deploy --yes
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
       - name: Build web app
+        run: npm run build
         env:
           VITE_CONVEX_URL: ${{ vars.VITE_CONVEX_URL }}
-        run: npm run build
-
-      - uses: peaceiris/actions-gh-pages@v3
+      - uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist

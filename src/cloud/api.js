@@ -1,0 +1,17 @@
+import { makeFunctionReference } from "convex/server";
+
+export const cloudApi = {
+  profiles: {
+    current: makeFunctionReference("profiles:current"),
+    complete: makeFunctionReference("profiles:complete"),
+  },
+  sync: {
+    getMyState: makeFunctionReference("sync:getMyState"),
+    generateTicketUploadUrl: makeFunctionReference("sync:generateTicketUploadUrl"),
+    saveSnapshot: makeFunctionReference("sync:saveSnapshot"),
+  },
+  admin: {
+    listDrivers: makeFunctionReference("admin:listDrivers"),
+    getDriverState: makeFunctionReference("admin:getDriverState"),
+  },
+};
