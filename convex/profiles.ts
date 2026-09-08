@@ -11,10 +11,11 @@ export const current = query({
       .query("driverProfiles")
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .unique();
+    const role = normalizedEmail(user?.email) === ADMIN_EMAIL ? "admin" : "driver";
 
     return {
       user: user ? { id: user._id, email: user.email ?? "" } : null,
-      profile,
+      profile: profile ? { ...profile, role } : null,
     };
   },
 });

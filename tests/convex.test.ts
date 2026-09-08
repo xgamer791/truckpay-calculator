@@ -75,7 +75,18 @@ describe("Convex account isolation", () => {
     await onboard(admin.client, "Chris Admin");
     await onboard(driver.client, "Driver One");
 
+    await t.run(async (ctx) => {
+      const savedAdminProfile = await ctx.db
+        .query("driverProfiles")
+        .withIndex("by_user", (q) => q.eq("userId", admin.userId))
+        .unique();
+      if (!savedAdminProfile) throw new Error("Missing admin profile");
+      await ctx.db.patch(savedAdminProfile._id, { role: "driver" });
+    });
+
     const drivers = await admin.client.query(listDrivers, {});
+    const currentAdmin = await admin.client.query(currentProfile, {});
+    expect(currentAdmin.profile?.role).toBe("admin");
     expect(drivers.map((item: { email: string }) => item.email)).toEqual([
       "driver@example.com",
     ]);
