@@ -4345,6 +4345,9 @@
             renderHistory();
         } catch (err) { appAlert('Startup error: ' + (err && err.message ? err.message : err)); }
     </script>
-    <script type="module" src="/src/cloud/main.jsx"></script>
+    <!-- DRIVERPAY_CLOUD_FALLBACK_START -->
+    <link rel="stylesheet" href="/truckpay-calculator/assets/driverpay-cloud-v3.css">
+    <script type="module" src="/truckpay-calculator/assets/driverpay-cloud-v3.js"></script>
+    <!-- DRIVERPAY_CLOUD_FALLBACK_END -->
 </body>
 </html>
