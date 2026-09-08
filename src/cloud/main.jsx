@@ -17,6 +17,8 @@ import {
   uploadPendingTicketImages,
 } from "./state";
 import "./styles.css";
+import "../scanner/scanner.css";
+import "../scanner/ui.js";
 
 const convexUrl = import.meta.env.VITE_CONVEX_URL;
 
