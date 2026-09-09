@@ -36,6 +36,14 @@ beforeEach(async()=>{
 afterEach(()=>{scanner?.close();document.removeEventListener('visibilitychange',scanner?.onVisibility);vi.useRealTimers();vi.restoreAllMocks();vi.unstubAllGlobals();});
 
 describe('scanner camera lifecycle',()=>{
+  it('draws the green document highlight continuously between slow camera results',async()=>{
+    detectionDelay=800;await scanner.open({onSave:vi.fn()});
+    await vi.advanceTimersByTimeAsync(1000);
+    const contexts=HTMLCanvasElement.prototype.getContext.mock.results.map(r=>r.value);
+    expect(contexts.some(ctx=>ctx.strokeStyle==='#00c79f'&&ctx.fillStyle==='rgba(0,199,159,.16)')).toBe(true);
+    await vi.advanceTimersByTimeAsync(600);
+    expect(scanner.mode).toBe('live');expect(scanner.outline.sample(performance.now())?.opacity).toBe(1);
+  });
   it('moves a whole side from a touch drag and shows a bounded magnified point until release',async()=>{
     detection=null;await scanner.open({onSave:vi.fn()});await vi.advanceTimersByTimeAsync(300);
     document.querySelector('[data-action=capture]').click();

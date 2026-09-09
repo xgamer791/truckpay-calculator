@@ -1,5 +1,6 @@
-import { OutlineFilter, CaptureGate, alignCorners, validQuad } from './core.js';
+import { CaptureGate, alignCorners, validQuad } from './core.js';
 import { moveCropHandle, loupePosition } from './crop-controls.js';
+import { LiveOutline, drawTicketOutline } from './outline.js';
 
 const icons={
   close:'<path d="m7 7 14 14M21 7 7 21"/>',
@@ -15,7 +16,7 @@ const bounded=(v,a,b)=>Math.max(a,Math.min(b,v));
 
 class TicketScanner {
   constructor(){
-    this.session=0;this.requests=new Map();this.requestId=0;this.filter=new OutlineFilter();this.gate=new CaptureGate();
+    this.session=0;this.requests=new Map();this.requestId=0;this.outline=new LiveOutline();this.filter=this.outline.filter;this.gate=new CaptureGate();
     this.onVisibility=()=>{if(document.hidden&&this.root){this.stopCamera();this.gate.reset();if(this.mode==='live'||this.mode==='loading')this.showError('Camera paused','Tap Resume Camera when you are ready.');}};
     document.addEventListener('visibilitychange',this.onVisibility);
     window.addEventListener('pagehide',()=>this.close());
@@ -109,7 +110,7 @@ class TicketScanner {
     else if(this.frameCallback!=null)cancelAnimationFrame(this.frameCallback);
     this.frameCallback=null;this.stream?.getTracks().forEach(track=>track.stop());this.stream=null;
     if(this.video){this.video.pause();this.video.srcObject=null;}
-    this.target=null;this.display=null;this.filter.reset();this.gate.reset();this.lastDetection=null;
+    this.target=null;this.display=null;this.outline.reset();this.gate.reset();this.lastDetection=null;
     this.button('flash')?.setAttribute('hidden','');
   }
   async startCamera(){
@@ -168,14 +169,13 @@ class TicketScanner {
       if(!fresh)this.gate.reset();
       if(result){
         const normalized=alignCorners(result.corners.map(p=>({x:p.x/small.width,y:p.y/small.height})),this.filter.raw);
-        this.target=this.filter.update(normalized,now);this.lastSeen=performance.now();
+        if(fresh)this.outline.update(normalized,performance.now());
         this.lastDetection={source,corners:normalized,time:now};
         const gate=this.gate.update(fresh?{...result,corners:normalized}:null,now);
         this.status(this.auto?gate.message:'Ticket found · tap capture',this.auto?gate.progress:0);
         if(this.auto&&gate.capture){this.source=source;this.corners=normalized;this.stopCamera();await this.process();}
       }else{
         const gate=this.gate.update(null,now);this.lastDetection=null;this.status(this.auto?gate.message:'Show all four ticket edges',this.auto?gate.progress:0);
-        if(performance.now()-this.lastSeen>250){this.target=null;this.display=null;this.filter.reset();}
       }
     }catch(error){if(this.root&&session===this.session&&this.mode==='live'){this.stopCamera();this.showError('Scanner paused',error.message);}}
     finally{if(session===this.session)this.busy=false;}
@@ -190,19 +190,17 @@ class TicketScanner {
     const rect=this.stage.getBoundingClientRect(),dpr=Math.min(2,window.devicePixelRatio||1),width=Math.round(rect.width*dpr),height=Math.round(rect.height*dpr);
     if(this.overlay.width!==width||this.overlay.height!==height){this.overlay.width=width;this.overlay.height=height;}
     const ctx=this.overlay.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,rect.width,rect.height);
-    let corners=null;
+    let corners=null,opacity=1;
     if(this.mode==='crop')corners=this.corners;
-    else if(this.mode==='live'&&this.target&&performance.now()-this.lastSeen<350){
-      if(!this.display)this.display=this.target.map(p=>({...p}));
-      const now=performance.now(),dt=Math.min(50,now-(this.lastPaint||now));this.lastPaint=now;const alpha=1-Math.exp(-dt/28);
-      this.display=this.display.map((p,i)=>({x:p.x+(this.target[i].x-p.x)*alpha,y:p.y+(this.target[i].y-p.y)*alpha}));corners=this.display;
+    else if(this.mode==='live'){
+      const visible=this.outline.sample(performance.now());
+      if(visible){corners=visible.corners;opacity=visible.opacity;}
     }
     if(!corners)return;
     const fit=this.mode==='crop'?this.fit(this.source.width,this.source.height):this.fit(this.video.videoWidth||1,this.video.videoHeight||1),pts=corners.map(p=>({x:fit.x+p.x*fit.w,y:fit.y+p.y*fit.h}));
-    ctx.fillStyle='rgba(6,18,30,.38)';ctx.beginPath();ctx.rect(0,0,rect.width,rect.height);ctx.moveTo(pts[0].x,pts[0].y);for(let i=3;i>=0;i--)ctx.lineTo(pts[i].x,pts[i].y);ctx.fill('evenodd');
-    ctx.strokeStyle=this.progress>.15?'#34d399':'#60a5fa';ctx.lineWidth=2.5;ctx.lineJoin='round';ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();ctx.stroke();
+    ctx.globalAlpha=opacity;ctx.fillStyle=this.mode==='live'?'rgba(6,18,30,.12)':'rgba(6,18,30,.38)';ctx.beginPath();ctx.rect(0,0,rect.width,rect.height);ctx.moveTo(pts[0].x,pts[0].y);for(let i=3;i>=0;i--)ctx.lineTo(pts[i].x,pts[i].y);ctx.fill('evenodd');ctx.globalAlpha=1;
+    drawTicketOutline(ctx,pts,{live:this.mode==='live',opacity});
     for(let i=0;i<4;i++){
-      ctx.beginPath();ctx.fillStyle='#fff';ctx.arc(pts[i].x,pts[i].y,4,0,Math.PI*2);ctx.fill();
       if(this.mode==='crop'){
         const button=this.root.querySelector(`[data-corner="${i}"]`);button.style.left=`${pts[i].x}px`;button.style.top=`${pts[i].y}px`;
         const next=pts[(i+1)%4],side=this.root.querySelector(`[data-side="${i}"]`);

@@ -277,7 +277,7 @@ export class OutlineFilter {
   reset(){this.points=null;this.raw=null;this.time=null;this.speed=0;}
   constructor(){this.reset();}
   update(q,time){
-    if(!this.points||time-this.time>400){this.points=q.map(p=>({...p}));this.raw=q;this.time=time;return this.points;}
+    if(!this.points||time-this.time>1200){this.points=q.map(p=>({...p}));this.raw=q;this.time=time;return this.points;}
     q=alignCorners(q,this.raw);
     const dt=clamp((time-this.time)/1000,.008,.25),speed=cornerMotion(this.raw,q)/dt;
     this.speed+=(speed-this.speed)*(1-Math.exp(-dt*12));
