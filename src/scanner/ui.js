@@ -1,11 +1,13 @@
 import { OutlineFilter, CaptureGate, alignCorners, validQuad } from './core.js';
+import { moveCropHandle, loupePosition } from './crop-controls.js';
 
 const icons={
   close:'<path d="m7 7 14 14M21 7 7 21"/>',
   flash:'<path d="m16 3-10 13h8l-2 9 10-14h-8z"/>',
   photo:'<rect x="4" y="5" width="20" height="18" rx="3"/><circle cx="10" cy="11" r="2"/><path d="m5 21 7-7 4 4 4-6 4 6"/>',
   crop:'<path d="M8 3v17h17M3 8h17v17"/>',
-  check:'<path d="m6 14 5 5 11-12"/>'
+  check:'<path d="m6 14 5 5 11-12"/>',
+  rotate:'<path d="M23 10a10 10 0 1 0 1 8M23 3v7h-7"/>'
 };
 const icon=name=>`<svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icons[name]}</svg>`;
 const makeCanvas=()=>document.createElement('canvas');
@@ -39,6 +41,7 @@ class TicketScanner {
       if(action==='auto'){this.auto=!this.auto;this.gate.reset();const button=this.button('auto');button.setAttribute('aria-pressed',String(this.auto));button.querySelector('span').textContent=this.auto?'Auto on':'Auto off';}
       if(action==='capture')this.manualCapture();
       if(action==='crop')this.editCrop();
+      if(action==='rotate'&&this.mode==='review'){this.quarterTurns=(this.quarterTurns+1)%4;this.renderReview();}
       if(action==='apply')this.process();
       if(action==='save')this.save();
     });
@@ -52,6 +55,12 @@ class TicketScanner {
       }
     });
     this.root.querySelector('input').addEventListener('change',event=>{const file=event.target.files[0];event.target.value='';if(file)this.importPhoto(file);});
+    const handles=this.root.querySelector('.ticket-camera-corners');
+    handles.insertAdjacentHTML('beforeend',['Top','Right','Bottom','Left'].map((label,i)=>`<button type="button" data-side="${i}" aria-label="${label} crop side. Drag to move the whole side."></button>`).join(''));
+    this.loupe=makeCanvas();this.loupe.className='ticket-camera-loupe';this.loupe.hidden=true;this.loupe.setAttribute('aria-hidden','true');this.stage.append(this.loupe);
+    const rotate=document.createElement('button');rotate.type='button';rotate.dataset.action='rotate';rotate.setAttribute('aria-label','Rotate ticket 90 degrees clockwise');rotate.innerHTML=`${icon('rotate')} Rotate`;
+    this.button('crop').before(rotate);
+    this.button('crop').innerHTML=`${icon('crop')} Adjust crop`;
     this.bindCorners();this.button('close').focus();
     this.resize=new ResizeObserver(()=>this.paint());this.resize.observe(this.stage);
     await this.startCamera();
@@ -66,13 +75,14 @@ class TicketScanner {
   }
   setMode(mode){
     this.mode=mode;if(!this.root)return;
+    if(mode!=='crop'){this.adjustment=null;if(this.loupe)this.loupe.hidden=true;}
     this.root.dataset.mode=mode;
     this.root.querySelector('.ticket-camera-live-actions').hidden=!['live','loading','error'].includes(mode);
     this.root.querySelector('.ticket-camera-review-actions').hidden=!['review','saving'].includes(mode);
     this.root.querySelector('.ticket-camera-crop-actions').hidden=mode!=='crop';
     this.root.querySelector('.ticket-camera-corners').hidden=mode!=='crop';
     this.video.hidden=!['live','loading','error'].includes(mode);this.preview.hidden=['live','loading','error'].includes(mode);
-    this.root.querySelector('.ticket-camera-hint').textContent=mode==='crop'?'Drag the four circles to the ticket corners.':mode==='review'?'Cropped, straightened and cleaned. Check the ticket before saving.':'Show the whole ticket. Capture starts when the outline is steady.';
+    this.root.querySelector('.ticket-camera-hint').textContent=mode==='crop'?'Drag a corner or side. The zoom preview shows the exact adjustment point.':mode==='review'?'Rotate or adjust the crop, then save your ticket.':'Show the whole ticket. Capture starts when the outline is steady.';
   }
   workerReady(){
     if(this.worker)return;
@@ -105,7 +115,7 @@ class TicketScanner {
   async startCamera(){
     if(!this.root)return;
     this.stopCamera();this.session++;const session=this.session,attempt=this.cameraAttempt;
-    this.source=null;this.dataUrl=null;this.corners=null;this.busy=false;this.lastVideoTime=-1;this.lastAnalysis=0;
+    this.source=null;this.processed=null;this.quarterTurns=0;this.dataUrl=null;this.corners=null;this.busy=false;this.lastVideoTime=-1;this.lastAnalysis=0;
     this.root.querySelector('.ticket-camera-error').hidden=true;this.setMode('loading');this.status('Opening camera…');this.button('capture').disabled=true;
     this.preview.getContext('2d').clearRect(0,0,this.preview.width,this.preview.height);this.paint();
     try {
@@ -155,6 +165,7 @@ class TicketScanner {
       // Keep the matching sensor frame for capture. A 300 ms deadline discarded
       // every result on slower phones, so the countdown could never start.
       const fresh=performance.now()-now<1200;
+      if(!fresh)this.gate.reset();
       if(result){
         const normalized=alignCorners(result.corners.map(p=>({x:p.x/small.width,y:p.y/small.height})),this.filter.raw);
         this.target=this.filter.update(normalized,now);this.lastSeen=performance.now();
@@ -163,7 +174,7 @@ class TicketScanner {
         this.status(this.auto?gate.message:'Ticket found · tap capture',this.auto?gate.progress:0);
         if(this.auto&&gate.capture){this.source=source;this.corners=normalized;this.stopCamera();await this.process();}
       }else{
-        this.gate.update(null,now);this.lastDetection=null;this.status('Show all four ticket edges');
+        const gate=this.gate.update(null,now);this.lastDetection=null;this.status(this.auto?gate.message:'Show all four ticket edges',this.auto?gate.progress:0);
         if(performance.now()-this.lastSeen>250){this.target=null;this.display=null;this.filter.reset();}
       }
     }catch(error){if(this.root&&session===this.session&&this.mode==='live'){this.stopCamera();this.showError('Scanner paused',error.message);}}
@@ -192,7 +203,33 @@ class TicketScanner {
     ctx.strokeStyle=this.progress>.15?'#34d399':'#60a5fa';ctx.lineWidth=2.5;ctx.lineJoin='round';ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();ctx.stroke();
     for(let i=0;i<4;i++){
       ctx.beginPath();ctx.fillStyle='#fff';ctx.arc(pts[i].x,pts[i].y,4,0,Math.PI*2);ctx.fill();
-      if(this.mode==='crop'){const button=this.root.querySelector(`[data-corner="${i}"]`);button.style.left=`${pts[i].x}px`;button.style.top=`${pts[i].y}px`;}
+      if(this.mode==='crop'){
+        const button=this.root.querySelector(`[data-corner="${i}"]`);button.style.left=`${pts[i].x}px`;button.style.top=`${pts[i].y}px`;
+        const next=pts[(i+1)%4],side=this.root.querySelector(`[data-side="${i}"]`);
+        side.style.left=`${(pts[i].x+next.x)/2}px`;side.style.top=`${(pts[i].y+next.y)/2}px`;
+        side.style.setProperty('--edge-angle',`${Math.atan2(next.y-pts[i].y,next.x-pts[i].x)}rad`);
+      }
+    }
+    this.paintLoupe(fit,rect);
+  }
+  adjustmentPoint(kind,index){
+    const a=this.corners[index],b=this.corners[(index+1)%4];
+    return kind==='side'?{x:(a.x+b.x)/2,y:(a.y+b.y)/2}:a;
+  }
+  paintLoupe(fit,rect){
+    if(!this.loupe||!this.adjustment||this.mode!=='crop')return;
+    const {kind,index,finger}=this.adjustment,point=this.adjustmentPoint(kind,index);
+    const position=loupePosition(finger||{x:fit.x+point.x*fit.w,y:fit.y+point.y*fit.h},rect.width,rect.height);
+    this.loupe.hidden=false;this.loupe.style.left=`${position.x-position.size/2}px`;this.loupe.style.top=`${position.y-position.size/2}px`;
+    this.loupe.style.width=`${position.size}px`;this.loupe.style.height=`${position.size}px`;
+    const dpr=Math.min(2,window.devicePixelRatio||1);this.loupe.width=this.loupe.height=Math.round(position.size*dpr);
+    const ctx=this.loupe.getContext('2d'),mid=position.size/2,scale=fit.w/this.source.width*2.5;
+    ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle='#111827';ctx.fillRect(0,0,position.size,position.size);
+    ctx.drawImage(this.source,mid-point.x*this.source.width*scale,mid-point.y*this.source.height*scale,this.source.width*scale,this.source.height*scale);
+    ctx.strokeStyle='#60a5fa';ctx.lineWidth=1.5;ctx.beginPath();
+    this.corners.forEach((p,i)=>{const x=mid+(p.x-point.x)*this.source.width*scale,y=mid+(p.y-point.y)*this.source.height*scale;i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.closePath();ctx.stroke();
+    for(const [color,width] of [['#fff',4],['#1d4ed8',1.5]]){
+      ctx.strokeStyle=color;ctx.lineWidth=width;ctx.beginPath();ctx.moveTo(mid-12,mid);ctx.lineTo(mid+12,mid);ctx.moveTo(mid,mid-12);ctx.lineTo(mid,mid+12);ctx.stroke();
     }
   }
   async manualCapture(){
@@ -204,6 +241,7 @@ class TicketScanner {
   }
   async importPhoto(file){
     const session=++this.session;this.stopCamera();this.setMode('processing');this.status('Opening photo…');this.root.querySelector('.ticket-camera-error').hidden=true;
+    this.quarterTurns=0;this.processed=null;
     const url=URL.createObjectURL(file);
     try{
       const image=new Image();image.src=url;await image.decode();if(!this.root||session!==this.session)return;
@@ -216,23 +254,29 @@ class TicketScanner {
   }
   editCrop(){
     if(!this.source)return;
-    this.setMode('crop');this.status('Adjust the four ticket corners');
+    this.setMode('crop');this.status('Adjust the ticket corners or sides');
     this.corners ||= [{x:.12,y:.1},{x:.88,y:.1},{x:.88,y:.9},{x:.12,y:.9}];
     this.preview.width=this.source.width;this.preview.height=this.source.height;this.preview.getContext('2d').drawImage(this.source,0,0);this.paint();
   }
   bindCorners(){
-    for(const button of this.root.querySelectorAll('[data-corner]')){
-      const i=Number(button.dataset.corner);let dragging=false;
-      button.addEventListener('pointerdown',event=>{if(this.mode!=='crop')return;event.preventDefault();dragging=true;button.setPointerCapture(event.pointerId);});
-      button.addEventListener('pointerup',()=>{dragging=false;});button.addEventListener('pointercancel',()=>{dragging=false;});
+    for(const button of this.root.querySelectorAll('[data-corner],[data-side]')){
+      const kind=button.hasAttribute('data-side')?'side':'corner',i=Number(button.dataset.side??button.dataset.corner);let drag=null;
+      const end=()=>{drag=null;this.adjustment=null;this.loupe.hidden=true;};
+      button.addEventListener('pointerdown',event=>{
+        if(this.mode!=='crop'||this.adjustment?.finger)return;event.preventDefault();
+        drag={id:event.pointerId,x:event.clientX,y:event.clientY,corners:this.corners.map(p=>({...p}))};button.setPointerCapture(event.pointerId);
+        const box=this.stage.getBoundingClientRect();this.adjustment={kind,index:i,finger:{x:event.clientX-box.left,y:event.clientY-box.top}};this.paint();
+      });
+      button.addEventListener('pointerup',event=>{if(drag?.id===event.pointerId)end();});button.addEventListener('pointercancel',end);button.addEventListener('lostpointercapture',end);button.addEventListener('blur',end);
       button.addEventListener('pointermove',event=>{
-        if(!dragging||this.mode!=='crop')return;
+        if(!drag||drag.id!==event.pointerId||this.mode!=='crop')return;
         const box=this.stage.getBoundingClientRect(),fit=this.fit(this.source.width,this.source.height);
-        this.corners[i]={x:bounded((event.clientX-box.left-fit.x)/fit.w,.001,.999),y:bounded((event.clientY-box.top-fit.y)/fit.h,.001,.999)};this.paint();
+        this.corners=moveCropHandle(drag.corners,kind,i,(event.clientX-drag.x)/fit.w,(event.clientY-drag.y)/fit.h,this.source.width,this.source.height);
+        this.adjustment={kind,index:i,finger:{x:event.clientX-box.left,y:event.clientY-box.top}};this.paint();
       });
       button.addEventListener('keydown',event=>{
         const delta={ArrowLeft:[-.002,0],ArrowRight:[.002,0],ArrowUp:[0,-.002],ArrowDown:[0,.002]}[event.key];
-        if(!delta)return;event.preventDefault();this.corners[i]={x:bounded(this.corners[i].x+delta[0],.001,.999),y:bounded(this.corners[i].y+delta[1],.001,.999)};this.paint();
+        if(!delta||this.mode!=='crop')return;event.preventDefault();this.corners=moveCropHandle(this.corners,kind,i,delta[0],delta[1],this.source.width,this.source.height);this.adjustment={kind,index:i};this.paint();
       });
     }
   }
@@ -244,9 +288,16 @@ class TicketScanner {
     try{
       const data=this.source.getContext('2d',{willReadFrequently:true}).getImageData(0,0,this.source.width,this.source.height),result=await this.request('process',data,corners);
       if(!this.root||session!==this.session)return;
-      this.preview.width=result.width;this.preview.height=result.height;this.preview.getContext('2d').putImageData(new ImageData(result.pixels,result.width,result.height),0,0);
-      this.dataUrl=this.preview.toDataURL('image/jpeg',.94);this.setMode('review');this.status('Ticket captured',1);navigator.vibrate?.(30);this.button('save').focus();
+      this.processed=makeCanvas();this.processed.width=result.width;this.processed.height=result.height;this.processed.getContext('2d').putImageData(new ImageData(result.pixels,result.width,result.height),0,0);
+      this.renderReview();navigator.vibrate?.(30);this.button('save').focus();
     }catch(error){if(this.root&&session===this.session){this.editCrop();this.status(error.message);}}
+  }
+  renderReview(){
+    if(!this.processed)return;
+    const turns=this.quarterTurns||0,w=this.processed.width,h=this.processed.height;
+    this.preview.width=turns%2?h:w;this.preview.height=turns%2?w:h;
+    const ctx=this.preview.getContext('2d');ctx.translate(this.preview.width/2,this.preview.height/2);ctx.rotate(turns*Math.PI/2);ctx.drawImage(this.processed,-w/2,-h/2);
+    this.dataUrl=this.preview.toDataURL('image/jpeg',.94);this.setMode('review');this.status('Ticket captured',1);this.paint();
   }
   async save(){
     if(this.mode!=='review'||!this.dataUrl)return;
@@ -256,7 +307,7 @@ class TicketScanner {
   }
   close(){
     if(!this.root)return;
-    this.session++;this.stopCamera();this.disposeWorker();this.resize?.disconnect();this.root.remove();this.root=null;this.source=null;this.dataUrl=null;this.options?.onClose?.();this.priorFocus?.focus?.();
+    this.session++;this.stopCamera();this.disposeWorker();this.resize?.disconnect();this.root.remove();this.root=null;this.source=null;this.processed=null;this.adjustment=null;this.dataUrl=null;this.options?.onClose?.();this.priorFocus?.focus?.();
   }
 }
 

@@ -15,6 +15,22 @@ function scene({width=320,height=280,quad=[{x:56,y:27},{x:264,y:40},{x:249,y:249
 }
 
 describe('original ticket vision',()=>{
+  it('finds the outer paper of a narrow ruled ticket and reaches automatic capture',()=>{
+    const width=320,height=480,quad=[{x:85,y:30},{x:235,y:30},{x:235,y:450},{x:85,y:450}];
+    const image=scene({width,height,quad});
+    for(let y=37;y<=443;y++)for(let x=92;x<=228;x++){
+      if(x<96||x>224||y<41||y>439){const p=(y*width+x)*4;image.data[p]=image.data[p+1]=image.data[p+2]=28;}
+    }
+    let previous=null,captured=false;const gate=new CaptureGate();
+    for(let frame=0;frame<18;frame++){
+      const found=detectTicket(image.data,width,height,previous,frame);
+      expect(found).not.toBeNull();
+      expect(cornerMotion(found.corners,quad)).toBeLessThan(5);
+      const state=gate.update({...found,corners:found.corners.map(p=>({x:p.x/width,y:p.y/height}))},frame*100);
+      captured ||= state.capture;previous=found.corners;
+    }
+    expect(captured).toBe(true);
+  });
   it('finds a perspective ticket on a colored background with shadows and sensor noise',()=>{
     const image=scene({shadow:true,noise:5}),found=detectTicket(image.data,image.width,image.height);
     expect(found).not.toBeNull();
@@ -77,7 +93,7 @@ describe('capture and smoothing',()=>{
     expect(gate.update(stable,2400).capture).toBe(true);
   });
   it('captures once after a stable interval, resets for movement, blur, loss and stale observations',()=>{
-    for(const interruption of [null,{...stable,sharpness:12},{...stable,corners:stable.corners.map(p=>({x:p.x+.04,y:p.y}))}]){
+    for(const interruption of [{...stable,sharpness:12},{...stable,corners:stable.corners.map(p=>({x:p.x+.04,y:p.y}))}]){
       const gate=new CaptureGate();for(let t=0;t<=700;t+=100)expect(gate.update(stable,t).capture).toBe(false);
       expect(gate.update(interruption,800).capture).toBe(false);
       expect(gate.update(stable,900).capture).toBe(false);
@@ -90,6 +106,19 @@ describe('capture and smoothing',()=>{
     for(const bad of [{...stable,clipped:true},{...stable,inkRatio:0},{...stable,areaRatio:.08}]){
       const gate=new CaptureGate();for(let t=0;t<3000;t+=100)expect(gate.update(bad,t).capture).toBe(false);
     }
+  });
+  it('pauses for brief lost edges but captures only after a valid reacquisition',()=>{
+    const gate=new CaptureGate();let captured=false;
+    for(let t=0;t<=2200;t+=100){
+      const missing=t%400===300;
+      const result=gate.update(missing?null:stable,t);
+      if(missing)expect(result.capture).toBe(false);
+      captured ||= result.capture;
+    }
+    expect(captured).toBe(true);
+    const lost=new CaptureGate();for(let t=0;t<=800;t+=100)lost.update(stable,t);
+    for(let t=900;t<2000;t+=100)expect(lost.update(null,t).capture).toBe(false);
+    expect(lost.update(stable,2000).progress).toBe(0);
   });
   it('reduces stationary jitter while following intentional movement',()=>{
     const filter=new OutlineFilter();let rawError=0,filteredError=0;

@@ -49,6 +49,25 @@ export function localMean(src,w,h,radius) {
   return out;
 }
 
+// Close thin printed rules before finding the paper component. Otherwise a
+// ticket's boxes split the white page into disconnected islands, and the
+// detector mistakes an interior printed box for the paper boundary.
+function closePaper(gray,w,h,radius=3) {
+  function pass(src,horizontal,maximum) {
+    const out=new Float32Array(src.length);
+    for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+      let value=maximum?0:255;
+      for(let d=-radius;d<=radius;d++){
+        const sample=src[(horizontal?y:clamp(y+d,0,h-1))*w+(horizontal?clamp(x+d,0,w-1):x)];
+        value=maximum?Math.max(value,sample):Math.min(value,sample);
+      }
+      out[y*w+x]=value;
+    }
+    return out;
+  }
+  return pass(pass(pass(pass(gray,true,true),false,true),true,false),false,false);
+}
+
 function otsu(gray) {
   const bins=new Uint32Array(256); let sum=0;
   for(const v of gray) { bins[Math.round(v)]++; sum+=Math.round(v); }
@@ -216,24 +235,29 @@ function evaluate(q,gray,w,h) {
 }
 
 export function detectTicket(rgba,w,h,previous=null,frame=0) {
-  const gray=luminance(rgba,w,h),smooth=localMean(gray,w,h,1),candidates=[];
-  if(previous&&validQuad(previous,w,h)){
-    const tracked=refine(previous,smooth,w,h,22);
-    if(tracked)candidates.push(tracked);
-  }
-  // Reacquire globally regularly, while local line fitting follows every frame.
-  if(!candidates.length || frame%3===0){
-    const t=otsu(smooth);
-    for(const threshold of new Set([clamp(t,65,210),clamp(t+30,100,235),clamp(t-25,50,190)]))candidates.push(...paperComponents(smooth,w,h,threshold));
-    if(!candidates.length)candidates.push(...edgeCandidates(smooth,w,h));
-  }
+  const gray=luminance(rgba,w,h),smooth=localMean(gray,w,h,1);
   let best=null,bestRank=0;
-  for(const initial of candidates){
+  const consider=initial=>{
     const q=refine(initial,smooth,w,h,6)||initial,result=evaluate(q,gray,w,h);
-    if(!result)continue;
+    if(!result)return;
     const continuity=previous?Math.max(0,1-cornerMotion(previous,q)/Math.hypot(w,h)*8):0;
     const rank=result.confidence+continuity*.05+Math.min(result.areaRatio,.65)*.1;
     if(rank>bestRank){best=result;bestRank=rank;}
+  };
+  if(previous&&validQuad(previous,w,h)){
+    const tracked=refine(previous,smooth,w,h,22);
+    if(tracked)consider(tracked);
+  }
+  // Reacquire globally regularly, while local line fitting follows every frame.
+  // A refined polygon is not necessarily valid paper: reacquire immediately
+  // if its contrast/printing check failed, rather than waiting several frames.
+  if(!best || frame%3===0){
+    const t=otsu(smooth);
+    const closed=closePaper(smooth,w,h);
+    for(const threshold of new Set([clamp(t,50,210),clamp(t+30,75,235),clamp(t-25,40,190)])){
+      for(const q of paperComponents(closed,w,h,threshold))consider(q);
+    }
+    if(!best)for(const q of edgeCandidates(smooth,w,h))consider(q);
   }
   return best;
 }
@@ -265,11 +289,22 @@ export class OutlineFilter {
 
 export class CaptureGate {
   constructor(){this.reset();}
-  reset(){this.anchor=null;this.last=null;this.start=0;this.time=0;this.samples=0;this.latched=false;}
+  reset(){this.anchor=null;this.last=null;this.start=0;this.time=0;this.samples=0;this.missingSince=null;this.latched=false;}
   update(result,time){
     if(this.latched)return {capture:false,progress:1,message:'Captured'};
+    // A brief missed detection pauses readiness; it must never take a photo
+    // without a current valid ticket, or count the missing time as steady.
+    if(!result&&this.anchor&&time-this.time<=400){
+      this.missingSince??=time;
+      return {capture:false,progress:Math.min(.9,clamp((this.missingSince-this.start)/1100,0,1)),message:'Hold steady · finding ticket edges'};
+    }
     const good=result&&result.confidence>=.68&&!result.clipped&&result.areaRatio>=.13&&result.brightness>=85&&result.sharpness>=65&&result.inkRatio>.008&&result.inkRatio<.5;
-    if(!good){this.anchor=null;this.last=null;this.start=0;this.samples=0;this.time=time;return {capture:false,progress:0,message:!result?'Show all four ticket edges':result.clipped?'Keep the entire ticket in view':result.areaRatio<.13?'Move closer to the ticket':result.brightness<85?'Add more light':result.sharpness<65?'Waiting for a clear image':'Center the ticket in view'};}
+    if(!good){this.reset();this.time=time;return {capture:false,progress:0,message:!result?'Show all four ticket edges':result.clipped?'Keep the entire ticket in view':result.areaRatio<.13?'Move closer to the ticket':result.brightness<85?'Add more light':result.sharpness<65?'Waiting for a clear image':'Center the ticket in view'};}
+    if(this.missingSince!==null){
+      if(time-this.time>400){this.anchor=null;this.samples=0;}
+      else this.start+=time-this.missingSince;
+      this.missingSince=null;
+    }
     const q=alignCorners(result.corners,this.last);
     // Detection runs serially. Mobile processing can take hundreds of ms;
     // require repeated observations rather than desktop-speed frame intervals.

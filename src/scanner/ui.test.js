@@ -28,7 +28,7 @@ beforeEach(async()=>{
   Object.defineProperties(HTMLVideoElement.prototype,{videoWidth:{configurable:true,get:()=>320},videoHeight:{configurable:true,get:()=>280},readyState:{configurable:true,get:()=>4}});
   HTMLVideoElement.prototype.requestVideoFrameCallback=function(callback){return setTimeout(()=>{frames++;clock+=.1;callback(performance.now(),{mediaTime:clock});},100);};
   HTMLVideoElement.prototype.cancelVideoFrameCallback=id=>clearTimeout(id);
-  vi.spyOn(HTMLCanvasElement.prototype,'getContext').mockImplementation(function(){const canvas=this;return {drawImage:vi.fn(),clearRect:vi.fn(),setTransform:vi.fn(),beginPath:vi.fn(),rect:vi.fn(),moveTo:vi.fn(),lineTo:vi.fn(),fill:vi.fn(),stroke:vi.fn(),closePath:vi.fn(),arc:vi.fn(),putImageData:vi.fn(),getImageData:()=>({width:canvas.width,height:canvas.height,data:new Uint8ClampedArray(canvas.width*canvas.height*4)})};});
+  vi.spyOn(HTMLCanvasElement.prototype,'getContext').mockImplementation(function(){const canvas=this;return {drawImage:vi.fn(),clearRect:vi.fn(),fillRect:vi.fn(),translate:vi.fn(),rotate:vi.fn(),setTransform:vi.fn(),beginPath:vi.fn(),rect:vi.fn(),moveTo:vi.fn(),lineTo:vi.fn(),fill:vi.fn(),stroke:vi.fn(),closePath:vi.fn(),arc:vi.fn(),putImageData:vi.fn(),getImageData:()=>({width:canvas.width,height:canvas.height,data:new Uint8ClampedArray(canvas.width*canvas.height*4)})};});
   vi.spyOn(HTMLCanvasElement.prototype,'toDataURL').mockReturnValue('data:image/jpeg;base64,TEST');
   vi.spyOn(Element.prototype,'getBoundingClientRect').mockReturnValue({width:390,height:600,left:0,top:0,right:390,bottom:600});
   await import('./ui.js');scanner=window.DriverTicketScanner;
@@ -36,6 +36,44 @@ beforeEach(async()=>{
 afterEach(()=>{scanner?.close();document.removeEventListener('visibilitychange',scanner?.onVisibility);vi.useRealTimers();vi.restoreAllMocks();vi.unstubAllGlobals();});
 
 describe('scanner camera lifecycle',()=>{
+  it('moves a whole side from a touch drag and shows a bounded magnified point until release',async()=>{
+    detection=null;await scanner.open({onSave:vi.fn()});await vi.advanceTimersByTimeAsync(300);
+    document.querySelector('[data-action=capture]').click();
+    const side=document.querySelector('[data-side="1"]'),before=scanner.corners.map(p=>({...p}));
+    side.setPointerCapture=vi.fn();
+    const pointer=(type,x,y)=>{const event=new MouseEvent(type,{bubbles:true,clientX:x,clientY:y});Object.defineProperty(event,'pointerId',{value:1});side.dispatchEvent(event);};
+    pointer('pointerdown',343,300);pointer('pointermove',304,300);
+    expect(scanner.corners[1].x).toBeCloseTo(before[1].x-.1);
+    expect(scanner.corners[2].x).toBeCloseTo(before[2].x-.1);
+    expect(scanner.corners[0]).toEqual(before[0]);expect(scanner.corners[3]).toEqual(before[3]);
+    expect(scanner.loupe.hidden).toBe(false);
+    expect(parseFloat(scanner.loupe.style.left)).toBeGreaterThanOrEqual(0);
+    expect(parseFloat(scanner.loupe.style.left)+parseFloat(scanner.loupe.style.width)).toBeLessThanOrEqual(390);
+    pointer('pointerup',304,300);expect(scanner.loupe.hidden).toBe(true);
+    side.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowLeft',bubbles:true}));
+    expect(scanner.corners[1].x).toBeCloseTo(before[1].x-.102);
+    side.dispatchEvent(new Event('blur'));expect(scanner.loupe.hidden).toBe(true);
+  });
+  it('auto captures through brief lost edges in the live camera loop',async()=>{
+    await scanner.open({onSave:vi.fn()});
+    for(let i=0;i<26&&scanner.mode==='live';i++){
+      detection=i%4===3?null:good;await vi.advanceTimersByTimeAsync(100);
+    }
+    await vi.advanceTimersByTimeAsync(20);
+    expect(scanner.mode).toBe('review');expect(requests.filter(r=>r.type==='process')).toHaveLength(1);
+  });
+  it('rotates the saved image and preserves orientation after adjusting the crop',async()=>{
+    await scanner.open({onSave:vi.fn()});await vi.advanceTimersByTimeAsync(1800);
+    const rotate=document.querySelector('[data-action=rotate]');
+    expect(rotate.textContent).toContain('Rotate');
+    rotate.click();expect(scanner.preview.width).toBe(210);expect(scanner.preview.height).toBe(190);
+    document.querySelector('[data-action=crop]').click();
+    expect(document.querySelectorAll('[data-side]')).toHaveLength(4);
+    document.querySelector('[data-action=apply]').click();await vi.advanceTimersByTimeAsync(20);
+    expect(scanner.preview.width).toBe(210);expect(scanner.preview.height).toBe(190);
+    for(let i=0;i<3;i++)rotate.click();
+    expect(scanner.preview.width).toBe(190);expect(scanner.preview.height).toBe(210);
+  });
   it.each([450,800])('auto captures with %i ms of camera processing latency',async(delay)=>{
     detectionDelay=delay;
     await scanner.open({onSave:vi.fn()});
