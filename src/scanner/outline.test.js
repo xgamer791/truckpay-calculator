@@ -3,12 +3,15 @@ import { LiveOutline } from './outline.js';
 import { cornerMotion } from './core.js';
 const quad=[{x:.2,y:.15},{x:.8,y:.15},{x:.8,y:.85},{x:.2,y:.85}];
 describe('live document outline',()=>{
-  it('stays visible between slow detections, fades after loss, and clears stale geometry',()=>{
-    const outline=new LiveOutline();outline.update(quad,0);
+  it('always shows a green guide before detection, during tracking loss, and after recovery',()=>{
+    const outline=new LiveOutline();
+    expect(outline.sample(0)).toMatchObject({opacity:1,tracked:false});
+    outline.update(quad,0);
     expect(outline.sample(0).opacity).toBe(1);
     expect(outline.sample(800).opacity).toBe(1);
-    expect(outline.sample(1075).opacity).toBeCloseTo(.5);
-    expect(outline.sample(1200)).toBeNull();
+    expect(outline.sample(1075).opacity).toBe(1);
+    expect(outline.sample(1200)).toMatchObject({opacity:1,tracked:false,corners:quad});
+    expect(outline.sample(60000)).toMatchObject({opacity:1,tracked:false,corners:quad});
     outline.update(quad.map(p=>({x:p.x-.1,y:p.y})),1300);
     expect(outline.sample(1300).corners[0].x).toBeCloseTo(.1);
   });

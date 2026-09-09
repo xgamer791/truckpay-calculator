@@ -8,7 +8,7 @@ class TestWorker {
   postMessage(message){
     requests.push(message);
     if(message.type==='reset')return;
-    const result=message.type==='detect'?detection:{width:190,height:210,pixels:new Uint8ClampedArray(190*210*4).fill(255)};
+    const result=message.type==='detect'?(detection?{...detection,corners:detection.corners.map(p=>({x:p.x*message.width/320,y:p.y*message.height/280}))}:null):{width:190,height:210,pixels:new Uint8ClampedArray(190*210*4).fill(255)};
     setTimeout(()=>this.onmessage?.({data:{id:message.id,result}}),message.type==='detect'?detectionDelay:1);
   }
   terminate(){this.onmessage=null;}
@@ -25,10 +25,10 @@ beforeEach(async()=>{
   Object.defineProperty(navigator,'mediaDevices',{configurable:true,value:{getUserMedia:vi.fn(async()=>({getTracks:()=>[{stop}],getVideoTracks:()=>[{stop,getCapabilities:()=>({}),applyConstraints:vi.fn()}]}))}});
   Object.defineProperty(document,'hidden',{configurable:true,get:()=>false});
   vi.spyOn(HTMLMediaElement.prototype,'play').mockResolvedValue();vi.spyOn(HTMLMediaElement.prototype,'pause').mockImplementation(()=>{});
-  Object.defineProperties(HTMLVideoElement.prototype,{videoWidth:{configurable:true,get:()=>320},videoHeight:{configurable:true,get:()=>280},readyState:{configurable:true,get:()=>4}});
+  Object.defineProperties(HTMLVideoElement.prototype,{videoWidth:{configurable:true,get:()=>320},videoHeight:{configurable:true,get:()=>280},readyState:{configurable:true,get:()=>4},currentTime:{configurable:true,get:()=>0}});
   HTMLVideoElement.prototype.requestVideoFrameCallback=function(callback){return setTimeout(()=>{frames++;clock+=.1;callback(performance.now(),{mediaTime:clock});},100);};
   HTMLVideoElement.prototype.cancelVideoFrameCallback=id=>clearTimeout(id);
-  vi.spyOn(HTMLCanvasElement.prototype,'getContext').mockImplementation(function(){const canvas=this;return {drawImage:vi.fn(),clearRect:vi.fn(),fillRect:vi.fn(),translate:vi.fn(),rotate:vi.fn(),setTransform:vi.fn(),beginPath:vi.fn(),rect:vi.fn(),moveTo:vi.fn(),lineTo:vi.fn(),fill:vi.fn(),stroke:vi.fn(),closePath:vi.fn(),arc:vi.fn(),putImageData:vi.fn(),getImageData:()=>({width:canvas.width,height:canvas.height,data:new Uint8ClampedArray(canvas.width*canvas.height*4)})};});
+  vi.spyOn(HTMLCanvasElement.prototype,'getContext').mockImplementation(function(){const canvas=this;return {drawImage:vi.fn(),clearRect:vi.fn(),fillRect:vi.fn(),translate:vi.fn(),rotate:vi.fn(),setTransform:vi.fn(),setLineDash:vi.fn(),beginPath:vi.fn(),rect:vi.fn(),moveTo:vi.fn(),lineTo:vi.fn(),fill:vi.fn(),stroke:vi.fn(),closePath:vi.fn(),arc:vi.fn(),putImageData:vi.fn(),getImageData:()=>({width:canvas.width,height:canvas.height,data:new Uint8ClampedArray(canvas.width*canvas.height*4)})};});
   vi.spyOn(HTMLCanvasElement.prototype,'toDataURL').mockReturnValue('data:image/jpeg;base64,TEST');
   vi.spyOn(Element.prototype,'getBoundingClientRect').mockReturnValue({width:390,height:600,left:0,top:0,right:390,bottom:600});
   await import('./ui.js');scanner=window.DriverTicketScanner;
@@ -36,6 +36,42 @@ beforeEach(async()=>{
 afterEach(()=>{scanner?.close();document.removeEventListener('visibilitychange',scanner?.onVisibility);vi.useRealTimers();vi.restoreAllMocks();vi.unstubAllGlobals();});
 
 describe('scanner camera lifecycle',()=>{
+  it('keeps the guide visible through complete detection loss and follows the document again',async()=>{
+    await scanner.open({onSave:vi.fn()});scanner.auto=false;
+    await vi.advanceTimersByTimeAsync(600);
+    expect(scanner.outline.sample(performance.now()).tracked).toBe(true);
+    detection=null;await vi.advanceTimersByTimeAsync(3000);
+    expect(scanner.outline.sample(performance.now())).toMatchObject({opacity:1,tracked:false});
+    detection=good;await vi.advanceTimersByTimeAsync(300);
+    expect(scanner.outline.sample(performance.now())).toMatchObject({opacity:1,tracked:true});
+  });
+  it('shows a guide but never auto captures when callbacks and camera pixels are frozen',async()=>{
+    HTMLVideoElement.prototype.requestVideoFrameCallback=()=>999999;
+    await scanner.open({onSave:vi.fn()});await vi.advanceTimersByTimeAsync(3500);
+    expect(scanner.outline.sample(performance.now()).opacity).toBe(1);
+    expect(scanner.mode).toBe('live');expect(requests.filter(r=>r.type==='process')).toHaveLength(0);
+    scanner.close();const count=requests.length;await vi.advanceTimersByTimeAsync(1000);
+    expect(requests).toHaveLength(count);
+  });
+  it('can auto capture using the recovery loop when callbacks never arrive but video advances',async()=>{
+    HTMLVideoElement.prototype.requestVideoFrameCallback=()=>999999;
+    Object.defineProperty(HTMLVideoElement.prototype,'currentTime',{configurable:true,get:()=>performance.now()/1000});
+    await scanner.open({onSave:vi.fn()});await vi.advanceTimersByTimeAsync(3500);
+    expect(scanner.mode).toBe('review');expect(requests.filter(r=>r.type==='process')).toHaveLength(1);
+  });
+  it('keeps scanning when video frame callbacks stop after the first frame',async()=>{
+    let callbacks=0;
+    HTMLVideoElement.prototype.requestVideoFrameCallback=function(cb){
+      if(callbacks++)return 999999;
+      return setTimeout(()=>cb(performance.now(),{mediaTime:.1}),100);
+    };
+    Object.defineProperty(HTMLVideoElement.prototype,'currentTime',{configurable:true,get:()=>performance.now()/1000});
+    await scanner.open({onSave:vi.fn()});scanner.auto=false;
+    await vi.advanceTimersByTimeAsync(3500);
+    expect(requests.filter(r=>r.type==='detect').length).toBeGreaterThan(5);
+    expect(scanner.outline.sample(performance.now())?.opacity).toBe(1);
+    expect(scanner.mode).toBe('live');
+  });
   it('draws the green document highlight continuously between slow camera results',async()=>{
     detectionDelay=800;await scanner.open({onSave:vi.fn()});
     await vi.advanceTimersByTimeAsync(1000);

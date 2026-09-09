@@ -1,7 +1,8 @@
 import { OutlineFilter } from './core.js';
 
 // Detection arrives at camera-processing speed; drawing runs at display speed.
-// Hold through brief misses, then fade instead of flashing off between frames.
+// The green guide is always visible, even before detection or after tracking loss.
+const GUIDE=[{x:.12,y:.1},{x:.88,y:.1},{x:.88,y:.9},{x:.12,y:.9}];
 export class LiveOutline {
   constructor(){this.filter=new OutlineFilter();this.reset();}
   reset(){this.filter.reset();this.target=null;this.points=null;this.velocity=null;this.seen=null;this.painted=null;}
@@ -19,9 +20,9 @@ export class LiveOutline {
     this.target=next;this.seen=time;
   }
   sample(time){
-    if(!this.target)return null;
+    if(!this.target)return {corners:GUIDE.map(p=>({...p})),opacity:1,tracked:false};
     const age=time-this.seen;
-    if(age>=1200){this.reset();return null;}
+    if(age>=1200)return {corners:this.points||this.target,opacity:1,tracked:false};
     if(!this.points)this.points=this.target.map(p=>({...p}));
     const dt=Math.max(0,Math.min(50,time-(this.painted??time))),alpha=1-Math.exp(-dt/32);
     this.painted=time;
@@ -32,15 +33,16 @@ export class LiveOutline {
       x:p.x+(clamp(this.target[i].x+(this.velocity?.[i].x||0)*horizon)-p.x)*alpha,
       y:p.y+(clamp(this.target[i].y+(this.velocity?.[i].y||0)*horizon)-p.y)*alpha
     }));
-    return {corners:this.points,opacity:Math.min(1,(1200-age)/250)};
+    return {corners:this.points,opacity:1,tracked:true};
   }
 }
 
-export function drawTicketOutline(ctx,points,{live=false,opacity=1}={}){
+export function drawTicketOutline(ctx,points,{live=false,opacity=1,tracked=true}={}){
   const path=()=>{ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();};
   ctx.globalAlpha=opacity;
-  if(live){path();ctx.fillStyle='rgba(0,199,159,.16)';ctx.fill();}
+  if(live){path();ctx.fillStyle=tracked?'rgba(0,199,159,.16)':'rgba(0,199,159,.06)';ctx.fill();}
+  ctx.setLineDash(live&&!tracked?[8,6]:[]);
   path();ctx.strokeStyle=live?'#00c79f':'#60a5fa';ctx.lineWidth=live?3:2.5;ctx.lineJoin='round';ctx.stroke();
   if(!live)for(const p of points){ctx.beginPath();ctx.fillStyle='#fff';ctx.arc(p.x,p.y,4,0,Math.PI*2);ctx.fill();}
-  ctx.globalAlpha=1;
+  ctx.setLineDash([]);ctx.globalAlpha=1;
 }

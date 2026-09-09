@@ -105,6 +105,7 @@ class TicketScanner {
   }
   stopCamera(){
     this.cameraAttempt=(this.cameraAttempt||0)+1;
+    clearTimeout(this.frameWatchdog);this.frameWatchdog=null;
     cancelAnimationFrame(this.raf);this.raf=0;
     if(this.frameCallback!=null&&this.video?.cancelVideoFrameCallback)this.video.cancelVideoFrameCallback(this.frameCallback);
     else if(this.frameCallback!=null)cancelAnimationFrame(this.frameCallback);
@@ -116,7 +117,7 @@ class TicketScanner {
   async startCamera(){
     if(!this.root)return;
     this.stopCamera();this.session++;const session=this.session,attempt=this.cameraAttempt;
-    this.source=null;this.processed=null;this.quarterTurns=0;this.dataUrl=null;this.corners=null;this.busy=false;this.lastVideoTime=-1;this.lastAnalysis=0;
+    this.source=null;this.processed=null;this.quarterTurns=0;this.dataUrl=null;this.corners=null;this.busy=false;this.lastVideoTime=-1;this.lastAnalysis=0;this.lastFrameFingerprint=null;this.analysisMaxEdge=480;
     this.root.querySelector('.ticket-camera-error').hidden=true;this.setMode('loading');this.status('Opening camera…');this.button('capture').disabled=true;
     this.preview.getContext('2d').clearRect(0,0,this.preview.width,this.preview.height);this.paint();
     try {
@@ -141,14 +142,29 @@ class TicketScanner {
     const panel=this.root.querySelector('.ticket-camera-error');panel.hidden=false;panel.querySelector('strong').textContent=title;panel.querySelector('p').textContent=message;this.status('Camera paused');
   }
   startFrames(session){
-    const tick=(now,metadata)=>{
+    this.lastFrameCallback=performance.now();
+    const tick=(_now,metadata)=>{
       if(!this.root||this.mode!=='live'||session!==this.session)return;
+      this.lastFrameCallback=performance.now();
       this.queueFrame(tick);
-      const mediaTime=metadata?.mediaTime??this.video.currentTime;
-      if(document.hidden||this.busy||now-this.lastAnalysis<85||mediaTime===this.lastVideoTime||this.video.readyState<2)return;
-      this.lastAnalysis=now;this.lastVideoTime=mediaTime;this.analyze(session,now);
+      this.scanFrame(session,metadata?.mediaTime??this.video.currentTime);
     };
     this.queueFrame(tick);
+    // Some embedded camera views stop delivering video-frame callbacks while
+    // their preview continues playing. Keep an independent recovery clock.
+    const watchdog=()=>{
+      if(!this.root||this.mode!=='live'||session!==this.session)return;
+      if(performance.now()-this.lastFrameCallback>=350)this.scanFrame(session,this.video.currentTime);
+      this.frameWatchdog=setTimeout(watchdog,250);
+    };
+    this.frameWatchdog=setTimeout(watchdog,250);
+  }
+  scanFrame(session,mediaTime){
+    const now=performance.now();
+    if(document.hidden||this.busy||now-this.lastAnalysis<85||this.video.readyState<2)return;
+    const clockAdvanced=mediaTime!==this.lastVideoTime;
+    if(!clockAdvanced&&now-this.lastAnalysis<250)return;
+    this.lastAnalysis=now;this.lastVideoTime=mediaTime;this.analyze(session,now,clockAdvanced);
   }
   queueFrame(callback){this.frameCallback=this.video.requestVideoFrameCallback?this.video.requestVideoFrameCallback(callback):requestAnimationFrame(callback);}
   snapshot(source,maxEdge=2000){
@@ -156,16 +172,23 @@ class TicketScanner {
     if(!w||!h)throw new Error('The camera is not ready yet.');
     const scale=Math.min(1,maxEdge/Math.max(w,h)),canvas=makeCanvas();canvas.width=Math.round(w*scale);canvas.height=Math.round(h*scale);canvas.getContext('2d').drawImage(source,0,0,canvas.width,canvas.height);return canvas;
   }
-  async analyze(session,now){
+  async analyze(session,now,clockAdvanced=true){
     this.busy=true;
     try {
       // Retain the exact full-resolution frame whose edges are being measured.
-      const source=this.snapshot(this.video),small=this.snapshot(source,480),image=small.getContext('2d',{willReadFrequently:true}).getImageData(0,0,small.width,small.height);
+      const source=this.snapshot(this.video),small=this.snapshot(source,this.analysisMaxEdge),image=small.getContext('2d',{willReadFrequently:true}).getImageData(0,0,small.width,small.height);
+      // A recovery timer must not turn one frozen camera frame into multiple
+      // steady observations. If the clock stalls, require changed sensor pixels.
+      let fingerprint=2166136261;
+      for(let i=0;i<image.data.length;i+=Math.max(4,Math.floor(image.data.length/4096/4)*4))fingerprint=Math.imul(fingerprint^(image.data[i]|image.data[i+1]<<8|image.data[i+2]<<16),16777619);
+      const changed=fingerprint!==this.lastFrameFingerprint;this.lastFrameFingerprint=fingerprint;
+      if(!clockAdvanced&&!changed){this.gate.reset();this.lastDetection=null;this.status('Waiting for the camera to resume');return;}
       const result=await this.request('detect',image);
       if(!this.root||session!==this.session||this.mode!=='live'||document.hidden)return;
       // Keep the matching sensor frame for capture. A 300 ms deadline discarded
       // every result on slower phones, so the countdown could never start.
-      const fresh=performance.now()-now<1200;
+      const elapsed=performance.now()-now,fresh=elapsed<1200;
+      if(elapsed>500)this.analysisMaxEdge=Math.max(240,Math.round(this.analysisMaxEdge*.75));
       if(!fresh)this.gate.reset();
       if(result){
         const normalized=alignCorners(result.corners.map(p=>({x:p.x/small.width,y:p.y/small.height})),this.filter.raw);
@@ -190,16 +213,16 @@ class TicketScanner {
     const rect=this.stage.getBoundingClientRect(),dpr=Math.min(2,window.devicePixelRatio||1),width=Math.round(rect.width*dpr),height=Math.round(rect.height*dpr);
     if(this.overlay.width!==width||this.overlay.height!==height){this.overlay.width=width;this.overlay.height=height;}
     const ctx=this.overlay.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,rect.width,rect.height);
-    let corners=null,opacity=1;
+    let corners=null,opacity=1,tracked=true;
     if(this.mode==='crop')corners=this.corners;
-    else if(this.mode==='live'){
+    else if(this.mode==='live'||this.mode==='loading'){
       const visible=this.outline.sample(performance.now());
-      if(visible){corners=visible.corners;opacity=visible.opacity;}
+      corners=visible.corners;opacity=visible.opacity;tracked=visible.tracked;
     }
     if(!corners)return;
     const fit=this.mode==='crop'?this.fit(this.source.width,this.source.height):this.fit(this.video.videoWidth||1,this.video.videoHeight||1),pts=corners.map(p=>({x:fit.x+p.x*fit.w,y:fit.y+p.y*fit.h}));
     ctx.globalAlpha=opacity;ctx.fillStyle=this.mode==='live'?'rgba(6,18,30,.12)':'rgba(6,18,30,.38)';ctx.beginPath();ctx.rect(0,0,rect.width,rect.height);ctx.moveTo(pts[0].x,pts[0].y);for(let i=3;i>=0;i--)ctx.lineTo(pts[i].x,pts[i].y);ctx.fill('evenodd');ctx.globalAlpha=1;
-    drawTicketOutline(ctx,pts,{live:this.mode==='live',opacity});
+    drawTicketOutline(ctx,pts,{live:this.mode==='live'||this.mode==='loading',opacity,tracked});
     for(let i=0;i<4;i++){
       if(this.mode==='crop'){
         const button=this.root.querySelector(`[data-corner="${i}"]`);button.style.left=`${pts[i].x}px`;button.style.top=`${pts[i].y}px`;
