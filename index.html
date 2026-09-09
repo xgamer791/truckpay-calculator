@@ -425,8 +425,8 @@
         .export-row.disabled:active { background: #fff; }
         .find-ticket-thumb { background: #e2e8f0; }
     </style>
-  <script type="module" crossorigin src="/truckpay-calculator/assets/index-wOsvxwF5.js"></script>
-  <link rel="stylesheet" crossorigin href="/truckpay-calculator/assets/index-F3k85eTZ.css">
+  <script type="module" crossorigin src="/truckpay-calculator/assets/index-rlwK55DH.js"></script>
+  <link rel="stylesheet" crossorigin href="/truckpay-calculator/assets/index-C0_DXGXW.css">
 </head>
 <body>
     <div id="convexAuthRoot"></div>
@@ -2441,7 +2441,7 @@
                 })]);
                 lockBodyScroll();
                 await window.DriverTicketScanner.open({
-                    onSave: (dataUrl, filter) => ingestTicketJpegDataUrl(dataUrl, filter),
+                    onSave: (dataUrl, filter, metadata) => ingestTicketJpegDataUrl(dataUrl, filter, metadata),
                     onClose: () => {
                         if (document.querySelector('.edit-overlay.active, .doc-viewer.active')) lockBodyScroll();
                         else unlockBodyScroll();
@@ -2451,7 +2451,7 @@
             finally { clearTimeout(timeout); }
         }
 
-        async function ingestTicketJpegDataUrl(dataUrl, filterName) {
+        async function ingestTicketJpegDataUrl(dataUrl, filterName, metadata = {}) {
             if (ticketCapture.busy) return;
             ticketCapture.busy = true;
             const key = loadKey(ticketCapture.sId, ticketCapture.lId);
@@ -2467,6 +2467,7 @@
                     original: null,
                     processed: dataUrl,
                     filter: filterName || 'scan',
+                    orientationVersion: metadata.orientationVersion,
                     createdAt: now,
                     modifiedAt: now,
                     syncStatus: 'local',
