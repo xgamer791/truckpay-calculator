@@ -32,6 +32,10 @@ jobs:
         run: npm run build
         env:
           VITE_CONVEX_URL: ${{ vars.VITE_CONVEX_URL }}
+      - name: Orient existing ticket images
+        run: node scripts/orient-existing-tickets.mjs
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
       - uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}

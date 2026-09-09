@@ -50,6 +50,15 @@ export async function uploadPendingTicketImages(history, generateUploadUrl) {
       const documents = Array.isArray(load.documents) ? load.documents : [];
       for (const document of documents) {
         if (!document.storageId) {
+          if (document.orientationVersion !== 1) {
+            const { orientDataUrl } = await import('../scanner/orientation.js');
+            const source=document.processed || document.original || load.ticket;
+            try{
+              const oriented=await orientDataUrl(source);
+              if(oriented.dataUrl!==source){document.original ||= source;document.processed=oriented.dataUrl;if(load.ticket===source)load.ticket=oriented.dataUrl;}
+              document.orientationVersion=1;
+            }catch{ /* Keep cloud saving available; the original remains eligible for migration. */ }
+          }
           const processed = await sourceToBlob(document.processed || document.original || load.ticket);
           document.storageId = await uploadBlob(processed, generateUploadUrl);
           changed = true;
@@ -94,6 +103,7 @@ export function buildSnapshot(history, settings) {
           storageId: document.storageId,
         };
         optional(ticket, "originalStorageId", document.originalStorageId);
+        optional(ticket, "orientationVersion", document.orientationVersion);
         optional(ticket, "filter", document.filter);
         if (document.ocr !== undefined) ticket.ocr = document.ocr;
         optional(ticket, "capturedAt", document.createdAt);

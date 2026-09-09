@@ -31,6 +31,7 @@
     "convex-test": "^0.0.56",
     "gh-pages": "^6.1.0",
     "jsdom": "^24.1.3",
+    "sharp": "^0.35.4",
     "typescript": "^5.9.3",
     "vite": "^5.0.0",
     "vitest": "^2.1.9"

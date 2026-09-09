@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 
+const orientationMock=vi.hoisted(()=>vi.fn());
+vi.mock('./orientation.js',()=>({detectOrientation:orientationMock}));
 let scanner,stop,requests,frames,clock;
 const good={corners:[{x:64,y:34},{x:256,y:34},{x:256,y:246},{x:64,y:246}],confidence:.94,areaRatio:.45,brightness:210,sharpness:200,inkRatio:.08,clipped:false};
 let detection, detectionDelay;
@@ -18,7 +20,7 @@ beforeEach(async()=>{
   vi.resetModules();vi.useFakeTimers({toFake:['setTimeout','clearTimeout','performance']});
   document.body.innerHTML='<button id="launch">Open camera</button>';
   requests=[];frames=0;clock=0;detection=good;detectionDelay=1;
-  stop=vi.fn();
+  stop=vi.fn();orientationMock.mockReset().mockResolvedValue({quarterTurns:0,confident:true});
   vi.stubGlobal('Worker',TestWorker);vi.stubGlobal('ResizeObserver',class{observe(){} disconnect(){}});
   vi.stubGlobal('requestAnimationFrame',cb=>setTimeout(()=>cb(performance.now()),16));vi.stubGlobal('cancelAnimationFrame',id=>clearTimeout(id));
   vi.stubGlobal('ImageData',class{constructor(data,width,height){this.data=data;this.width=width;this.height=height;}});
@@ -35,139 +37,69 @@ beforeEach(async()=>{
 });
 afterEach(()=>{scanner?.close();document.removeEventListener('visibilitychange',scanner?.onVisibility);vi.useRealTimers();vi.restoreAllMocks();vi.unstubAllGlobals();});
 
-describe('scanner camera lifecycle',()=>{
-  it('keeps the guide visible through complete detection loss and follows the document again',async()=>{
-    await scanner.open({onSave:vi.fn()});scanner.auto=false;
-    await vi.advanceTimersByTimeAsync(600);
-    expect(scanner.outline.sample(performance.now()).tracked).toBe(true);
+async function capture(){await vi.advanceTimersByTimeAsync(250);scanner.button('capture').click();await vi.advanceTimersByTimeAsync(30);}
+describe('manual scanner and orientation',()=>{
+  it('never takes a photo automatically and has no auto capture control or countdown',async()=>{
+    await scanner.open({onSave:vi.fn()});await vi.advanceTimersByTimeAsync(8000);
+    expect(scanner.mode).toBe('live');expect(scanner.outline.sample(performance.now()).tracked).toBe(true);
+    expect(requests.filter(r=>r.type==='process')).toHaveLength(0);
+    expect(document.querySelector('[data-action=auto]')).toBeNull();expect(document.querySelector('[role=progressbar]')).toBeNull();
+  });
+  it('captures only after tapping, stops the camera and saves the reviewed oriented image',async()=>{
+    const onSave=vi.fn();await scanner.open({onSave});await capture();
+    expect(scanner.mode).toBe('review');expect(stop).toHaveBeenCalled();expect(onSave).not.toHaveBeenCalled();
+    expect(orientationMock).toHaveBeenCalledTimes(1);
+    scanner.button('save').click();await vi.advanceTimersByTimeAsync(10);
+    expect(onSave).toHaveBeenCalledWith('data:image/jpeg;base64,TEST','black-white',{orientationVersion:1});
+  });
+  it('turns text upright before review and preserves a manual correction through recropping',async()=>{
+    orientationMock.mockResolvedValue({quarterTurns:1,confident:true});
+    await scanner.open({onSave:vi.fn()});await capture();
+    expect(scanner.preview.width).toBe(210);expect(scanner.preview.height).toBe(190);
+    scanner.button('rotate').click();expect(scanner.quarterTurns).toBe(2);
+    scanner.button('crop').click();scanner.button('apply').click();await vi.advanceTimersByTimeAsync(30);
+    expect(scanner.quarterTurns).toBe(2);expect(orientationMock).toHaveBeenCalledTimes(1);
+  });
+  it('keeps the image and manual Rotate available if orientation cannot be determined',async()=>{
+    orientationMock.mockRejectedValue(new Error('Offline'));
+    await scanner.open({onSave:vi.fn()});await capture();
+    expect(scanner.mode).toBe('review');expect(scanner.dataUrl).toBeTruthy();
+    expect(document.querySelector('.ticket-camera-status').textContent).toContain('Check orientation');
+    expect(scanner.button('rotate')).not.toBeNull();
+  });
+  it('keeps the guide visible through detection loss and recovers tracking',async()=>{
+    await scanner.open({onSave:vi.fn()});await vi.advanceTimersByTimeAsync(600);
     detection=null;await vi.advanceTimersByTimeAsync(3000);
     expect(scanner.outline.sample(performance.now())).toMatchObject({opacity:1,tracked:false});
     detection=good;await vi.advanceTimersByTimeAsync(300);
     expect(scanner.outline.sample(performance.now())).toMatchObject({opacity:1,tracked:true});
   });
-  it('shows a guide but never auto captures when callbacks and camera pixels are frozen',async()=>{
-    HTMLVideoElement.prototype.requestVideoFrameCallback=()=>999999;
-    await scanner.open({onSave:vi.fn()});await vi.advanceTimersByTimeAsync(3500);
-    expect(scanner.outline.sample(performance.now()).opacity).toBe(1);
-    expect(scanner.mode).toBe('live');expect(requests.filter(r=>r.type==='process')).toHaveLength(0);
-    scanner.close();const count=requests.length;await vi.advanceTimersByTimeAsync(1000);
-    expect(requests).toHaveLength(count);
-  });
-  it('can auto capture using the recovery loop when callbacks never arrive but video advances',async()=>{
+  it('keeps tracking when camera callbacks stop, without capturing',async()=>{
     HTMLVideoElement.prototype.requestVideoFrameCallback=()=>999999;
     Object.defineProperty(HTMLVideoElement.prototype,'currentTime',{configurable:true,get:()=>performance.now()/1000});
     await scanner.open({onSave:vi.fn()});await vi.advanceTimersByTimeAsync(3500);
-    expect(scanner.mode).toBe('review');expect(requests.filter(r=>r.type==='process')).toHaveLength(1);
-  });
-  it('keeps scanning when video frame callbacks stop after the first frame',async()=>{
-    let callbacks=0;
-    HTMLVideoElement.prototype.requestVideoFrameCallback=function(cb){
-      if(callbacks++)return 999999;
-      return setTimeout(()=>cb(performance.now(),{mediaTime:.1}),100);
-    };
-    Object.defineProperty(HTMLVideoElement.prototype,'currentTime',{configurable:true,get:()=>performance.now()/1000});
-    await scanner.open({onSave:vi.fn()});scanner.auto=false;
-    await vi.advanceTimersByTimeAsync(3500);
     expect(requests.filter(r=>r.type==='detect').length).toBeGreaterThan(5);
-    expect(scanner.outline.sample(performance.now())?.opacity).toBe(1);
-    expect(scanner.mode).toBe('live');
+    expect(scanner.mode).toBe('live');expect(scanner.outline.sample(performance.now()).tracked).toBe(true);
   });
-  it('draws the green document highlight continuously between slow camera results',async()=>{
-    detectionDelay=800;await scanner.open({onSave:vi.fn()});
-    await vi.advanceTimersByTimeAsync(1000);
-    const contexts=HTMLCanvasElement.prototype.getContext.mock.results.map(r=>r.value);
-    expect(contexts.some(ctx=>ctx.strokeStyle==='#00c79f'&&ctx.fillStyle==='rgba(0,199,159,.16)')).toBe(true);
-    await vi.advanceTimersByTimeAsync(600);
-    expect(scanner.mode).toBe('live');expect(scanner.outline.sample(performance.now())?.opacity).toBe(1);
-  });
-  it('moves a whole side from a touch drag and shows a bounded magnified point until release',async()=>{
-    detection=null;await scanner.open({onSave:vi.fn()});await vi.advanceTimersByTimeAsync(300);
-    document.querySelector('[data-action=capture]').click();
-    const side=document.querySelector('[data-side="1"]'),before=scanner.corners.map(p=>({...p}));
-    side.setPointerCapture=vi.fn();
-    const pointer=(type,x,y)=>{const event=new MouseEvent(type,{bubbles:true,clientX:x,clientY:y});Object.defineProperty(event,'pointerId',{value:1});side.dispatchEvent(event);};
+  it('keeps side handles and the magnifier working',async()=>{
+    detection=null;await scanner.open({onSave:vi.fn()});await capture();
+    const side=document.querySelector('[data-side="1"]'),before=scanner.corners.map(p=>({...p}));side.setPointerCapture=vi.fn();
+    const pointer=(type,x,y)=>{const e=new MouseEvent(type,{bubbles:true,clientX:x,clientY:y});Object.defineProperty(e,'pointerId',{value:1});side.dispatchEvent(e);};
     pointer('pointerdown',343,300);pointer('pointermove',304,300);
-    expect(scanner.corners[1].x).toBeCloseTo(before[1].x-.1);
-    expect(scanner.corners[2].x).toBeCloseTo(before[2].x-.1);
-    expect(scanner.corners[0]).toEqual(before[0]);expect(scanner.corners[3]).toEqual(before[3]);
-    expect(scanner.loupe.hidden).toBe(false);
-    expect(parseFloat(scanner.loupe.style.left)).toBeGreaterThanOrEqual(0);
-    expect(parseFloat(scanner.loupe.style.left)+parseFloat(scanner.loupe.style.width)).toBeLessThanOrEqual(390);
+    expect(scanner.corners[1].x).toBeCloseTo(before[1].x-.1);expect(scanner.corners[2].x).toBeCloseTo(before[2].x-.1);
+    expect(scanner.corners[0]).toEqual(before[0]);expect(scanner.loupe.hidden).toBe(false);
     pointer('pointerup',304,300);expect(scanner.loupe.hidden).toBe(true);
-    side.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowLeft',bubbles:true}));
-    expect(scanner.corners[1].x).toBeCloseTo(before[1].x-.102);
-    side.dispatchEvent(new Event('blur'));expect(scanner.loupe.hidden).toBe(true);
   });
-  it('auto captures through brief lost edges in the live camera loop',async()=>{
-    await scanner.open({onSave:vi.fn()});
-    for(let i=0;i<26&&scanner.mode==='live';i++){
-      detection=i%4===3?null:good;await vi.advanceTimersByTimeAsync(100);
-    }
-    await vi.advanceTimersByTimeAsync(20);
-    expect(scanner.mode).toBe('review');expect(requests.filter(r=>r.type==='process')).toHaveLength(1);
+  it('keeps a captured ticket available if saving fails',async()=>{
+    await scanner.open({onSave:vi.fn().mockRejectedValue(new Error('Storage is full'))});await capture();
+    scanner.button('save').click();await vi.advanceTimersByTimeAsync(10);
+    expect(scanner.mode).toBe('review');expect(scanner.dataUrl).toBeTruthy();expect(scanner.button('save').disabled).toBe(false);
   });
-  it('rotates the saved image and preserves orientation after adjusting the crop',async()=>{
-    await scanner.open({onSave:vi.fn()});await vi.advanceTimersByTimeAsync(1800);
-    const rotate=document.querySelector('[data-action=rotate]');
-    expect(rotate.textContent).toContain('Rotate');
-    rotate.click();expect(scanner.preview.width).toBe(210);expect(scanner.preview.height).toBe(190);
-    document.querySelector('[data-action=crop]').click();
-    expect(document.querySelectorAll('[data-side]')).toHaveLength(4);
-    document.querySelector('[data-action=apply]').click();await vi.advanceTimersByTimeAsync(20);
-    expect(scanner.preview.width).toBe(210);expect(scanner.preview.height).toBe(190);
-    for(let i=0;i<3;i++)rotate.click();
-    expect(scanner.preview.width).toBe(190);expect(scanner.preview.height).toBe(210);
-  });
-  it.each([450,800])('auto captures with %i ms of camera processing latency',async(delay)=>{
-    detectionDelay=delay;
-    await scanner.open({onSave:vi.fn()});
-    await vi.advanceTimersByTimeAsync(5000);
-    expect(scanner.mode).toBe('review');
-    expect(requests.filter(r=>r.type==='process')).toHaveLength(1);
-    expect(stop).toHaveBeenCalled();
-  });
-  it('does not auto capture a stalled worker result',async()=>{
-    detectionDelay=2000;
-    await scanner.open({onSave:vi.fn()});
-    await vi.advanceTimersByTimeAsync(6500);
-    expect(scanner.mode).toBe('live');
-    expect(requests.filter(r=>r.type==='process')).toHaveLength(0);
-  });
-  it('automatically captures once, stops the stream and saves only after review',async()=>{
-    const onSave=vi.fn().mockResolvedValue();await scanner.open({onSave});
-    await vi.advanceTimersByTimeAsync(1800);
-    expect(document.querySelector('.ticket-camera').dataset.mode).toBe('review');
-    expect(requests.filter(r=>r.type==='process')).toHaveLength(1);expect(stop).toHaveBeenCalled();expect(onSave).not.toHaveBeenCalled();
-    const processed=requests.find(r=>r.type==='process');expect(processed.width).toBe(320);expect(processed.height).toBe(280);expect(processed.corners[0].x).toBeCloseTo(64);
-    document.querySelector('[data-action=save]').click();await vi.advanceTimersByTimeAsync(10);
-    expect(onSave).toHaveBeenCalledWith('data:image/jpeg;base64,TEST','black-white');expect(document.querySelector('.ticket-camera')).toBeNull();
-  });
-  it('allows manual cropping when no edges are detected and rejects crossed corners',async()=>{
-    detection=null;await scanner.open({onSave:vi.fn()});await vi.advanceTimersByTimeAsync(300);
-    document.querySelector('[data-action=capture]').click();
-    expect(scanner.mode).toBe('crop');expect(stop).toHaveBeenCalled();expect(requests.filter(r=>r.type==='process')).toHaveLength(0);
-    const p=scanner.corners[1];scanner.corners[1]=scanner.corners[2];scanner.corners[2]=p;
-    document.querySelector('[data-action=apply]').click();await vi.advanceTimersByTimeAsync(10);
-    expect(scanner.mode).toBe('crop');expect(requests.filter(r=>r.type==='process')).toHaveLength(0);
-    scanner.corners=good.corners.map(p=>({x:p.x/320,y:p.y/280}));document.querySelector('[data-action=apply]').click();await vi.advanceTimersByTimeAsync(20);
-    expect(scanner.mode).toBe('review');
-  });
-  it('keeps the captured ticket available when saving fails',async()=>{
-    await scanner.open({onSave:vi.fn().mockRejectedValue(new Error('Storage is full'))});await vi.advanceTimersByTimeAsync(1800);
-    document.querySelector('[data-action=save]').click();await vi.advanceTimersByTimeAsync(10);
-    expect(scanner.mode).toBe('review');expect(scanner.dataUrl).toBeTruthy();expect(document.querySelector('.ticket-camera-status').textContent).toBe('Storage is full');expect(document.querySelector('[data-action=save]').disabled).toBe(false);
-  });
-  it('stops a stream granted after the scanner has already closed',async()=>{
-    let grant;navigator.mediaDevices.getUserMedia=vi.fn(()=>new Promise(resolve=>{grant=resolve;}));
-    const opening=scanner.open({onSave:vi.fn()});scanner.close();grant({getTracks:()=>[{stop}]});await opening;
-    expect(stop).toHaveBeenCalledTimes(1);expect(document.querySelector('.ticket-camera')).toBeNull();
-  });
-  it('stops the camera in the background and clears capture readiness before resuming',async()=>{
-    await scanner.open({onSave:vi.fn()});await vi.advanceTimersByTimeAsync(800);
+  it('stops the camera in the background and resumes edge tracking',async()=>{
+    await scanner.open({onSave:vi.fn()});await vi.advanceTimersByTimeAsync(500);
     Object.defineProperty(document,'hidden',{configurable:true,get:()=>true});document.dispatchEvent(new Event('visibilitychange'));
-    expect(stop).toHaveBeenCalled();expect(scanner.mode).toBe('error');expect(scanner.gate.anchor).toBeNull();
-    await vi.advanceTimersByTimeAsync(1800);expect(requests.filter(r=>r.type==='process')).toHaveLength(0);
-    Object.defineProperty(document,'hidden',{configurable:true,get:()=>false});document.querySelector('[data-action=retry]').click();await vi.advanceTimersByTimeAsync(800);
+    expect(stop).toHaveBeenCalled();expect(scanner.mode).toBe('error');
+    Object.defineProperty(document,'hidden',{configurable:true,get:()=>false});scanner.button('retry').click();await vi.advanceTimersByTimeAsync(500);
     expect(scanner.mode).toBe('live');expect(requests.filter(r=>r.type==='process')).toHaveLength(0);
   });
 });

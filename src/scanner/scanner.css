@@ -20,9 +20,7 @@
 .ticket-camera-loupe { position:absolute; z-index:3; pointer-events:none; border:3px solid #fff; border-radius:14px; box-shadow:0 5px 22px #0008; box-sizing:border-box; }
 .ticket-camera-footer { flex-shrink:0; padding:16px 20px calc(12px + env(safe-area-inset-bottom,0px)); background:#fff; }
 .ticket-camera-status { text-align:center; font-size:14px; line-height:1.4; font-weight:750; min-height:20px; }
-.ticket-camera-progress { width:min(280px,75%); height:4px; border-radius:4px; overflow:hidden; background:#e2e8f0; margin:12px auto 16px; }
-.ticket-camera-progress span { display:block; height:100%; width:0; background:#10b981; transition:width .12s linear; }
-.ticket-camera-live-actions { display:grid; grid-template-columns:1fr 90px 1fr; align-items:center; gap:14px; max-width:460px; margin:0 auto; }
+.ticket-camera-live-actions { display:grid; grid-template-columns:1fr 90px 1fr; align-items:center; gap:14px; max-width:460px; margin:16px auto 0; }
 .ticket-camera-secondary { border:0; background:none; color:#475569; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:5px; font-weight:750; font-size:12px; padding:8px; }
 .ticket-camera-secondary[aria-pressed=true] { color:#2563eb; }
 .ticket-camera-shutter { width:74px; height:74px; padding:5px; justify-self:center; border-radius:50%; border:3px solid #2563eb; background:#fff; }
@@ -44,4 +42,4 @@
 .ticket-camera-file { position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; }
 .ticket-camera[data-mode=processing] .ticket-camera-status { color:#2563eb; }
 @media (orientation:landscape) and (max-height:600px) { .ticket-camera { display:grid; grid-template-columns:1fr 240px; grid-template-rows:auto 1fr; } .ticket-camera-header { grid-column:1/-1; padding:6px 14px; } .ticket-camera-footer { grid-column:2; grid-row:2; display:flex; flex-direction:column; justify-content:center; padding:12px; } .ticket-camera-stage { grid-column:1; grid-row:2; } .ticket-camera-live-actions { gap:0; grid-template-columns:1fr 76px 1fr; } .ticket-camera-review-actions { grid-template-columns:repeat(2,minmax(0,1fr)); margin:0; } .ticket-camera-review-actions [data-action=crop] { grid-column:1/-1; } }
-@media (prefers-reduced-motion:reduce) { .ticket-camera-progress span,.ticket-camera-shutter span { transition:none; } }
+@media (prefers-reduced-motion:reduce) { .ticket-camera-shutter span { transition:none; } }

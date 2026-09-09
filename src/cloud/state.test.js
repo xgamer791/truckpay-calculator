@@ -1,4 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
+const orientMock=vi.hoisted(()=>vi.fn(async source=>({dataUrl:source,quarterTurns:0,confident:true})));
+vi.mock('../scanner/orientation.js',()=>({orientDataUrl:orientMock}));
 import {
   buildSnapshot,
   dataUrlToBlob,
@@ -66,6 +68,8 @@ describe("cloud snapshot", () => {
     const result = await uploadPendingTicketImages(local, generateUploadUrl);
     expect(result.changed).toBe(true);
     expect(result.history[0].loads[0].documents[0].storageId).toBe("new-storage-id");
+    expect(result.history[0].loads[0].documents[0].orientationVersion).toBe(1);
+    expect(orientMock).toHaveBeenCalled();
     expect(fetchMock).toHaveBeenCalledOnce();
     vi.unstubAllGlobals();
   });

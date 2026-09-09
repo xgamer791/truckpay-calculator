@@ -287,39 +287,6 @@ export class OutlineFilter {
   }
 }
 
-export class CaptureGate {
-  constructor(){this.reset();}
-  reset(){this.anchor=null;this.last=null;this.start=0;this.time=0;this.samples=0;this.missingSince=null;this.latched=false;}
-  update(result,time){
-    if(this.latched)return {capture:false,progress:1,message:'Captured'};
-    // A brief missed detection pauses readiness; it must never take a photo
-    // without a current valid ticket, or count the missing time as steady.
-    if(!result&&this.anchor&&time-this.time<=400){
-      this.missingSince??=time;
-      return {capture:false,progress:Math.min(.9,clamp((this.missingSince-this.start)/1100,0,1)),message:'Hold steady · finding ticket edges'};
-    }
-    const good=result&&result.confidence>=.68&&!result.clipped&&result.areaRatio>=.13&&result.brightness>=85&&result.sharpness>=65&&result.inkRatio>.008&&result.inkRatio<.5;
-    if(!good){this.reset();this.time=time;return {capture:false,progress:0,message:!result?'Show all four ticket edges':result.clipped?'Keep the entire ticket in view':result.areaRatio<.13?'Move closer to the ticket':result.brightness<85?'Add more light':result.sharpness<65?'Waiting for a clear image':'Center the ticket in view'};}
-    if(this.missingSince!==null){
-      if(time-this.time>400){this.anchor=null;this.samples=0;}
-      else this.start+=time-this.missingSince;
-      this.missingSince=null;
-    }
-    const q=alignCorners(result.corners,this.last);
-    // Detection runs serially. Mobile processing can take hundreds of ms;
-    // require repeated observations rather than desktop-speed frame intervals.
-    // Use raw corners with a small tremor allowance, preserving the anchor to
-    // reject cumulative drift even when individual steps are small.
-    if(!this.anchor||time-this.time>1500||time<=this.time||cornerMotion(this.anchor,q)>.025||(this.last&&cornerMotion(this.last,q)>.018)){
-      this.anchor=q;this.start=time;this.samples=0;
-    }
-    this.last=q;this.time=time;this.samples++;
-    const progress=Math.min(clamp((time-this.start)/1100,0,1),this.samples>=3?1:.9);
-    if(progress===1)this.latched=true;
-    return {capture:this.latched,progress,message:progress>.1?'Hold steady · capturing automatically':'Ticket found · hold steady'};
-  }
-}
-
 // Analytic unit-square to quadrilateral mapping. Bilinear pixel sampling preserves
 // the photograph; no image generation, OCR replacement or invented strokes.
 export function rectify(rgba,w,h,corners,maxEdge=1800) {

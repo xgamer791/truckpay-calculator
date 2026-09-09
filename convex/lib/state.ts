@@ -63,6 +63,7 @@ export async function loadDriverState(ctx: QueryCtx, userId: Id<"users">) {
             type: ticket.type,
             storageId: ticket.storageId,
             originalStorageId: ticket.originalStorageId,
+            orientationVersion: ticket.orientationVersion,
             processed: ticket.url,
             original: ticket.originalUrl,
             filter: ticket.filter,

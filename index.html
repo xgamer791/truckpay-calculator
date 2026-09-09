@@ -2439,7 +2439,7 @@
                 })]);
                 lockBodyScroll();
                 await window.DriverTicketScanner.open({
-                    onSave: (dataUrl, filter) => ingestTicketJpegDataUrl(dataUrl, filter),
+                    onSave: (dataUrl, filter, metadata) => ingestTicketJpegDataUrl(dataUrl, filter, metadata),
                     onClose: () => {
                         if (document.querySelector('.edit-overlay.active, .doc-viewer.active')) lockBodyScroll();
                         else unlockBodyScroll();
@@ -2449,7 +2449,7 @@
             finally { clearTimeout(timeout); }
         }
 
-        async function ingestTicketJpegDataUrl(dataUrl, filterName) {
+        async function ingestTicketJpegDataUrl(dataUrl, filterName, metadata = {}) {
             if (ticketCapture.busy) return;
             ticketCapture.busy = true;
             const key = loadKey(ticketCapture.sId, ticketCapture.lId);
@@ -2465,6 +2465,7 @@
                     original: null,
                     processed: dataUrl,
                     filter: filterName || 'scan',
+                    orientationVersion: metadata.orientationVersion,
                     createdAt: now,
                     modifiedAt: now,
                     syncStatus: 'local',
@@ -3301,8 +3302,8 @@
         } catch (err) { appAlert('Startup error: ' + (err && err.message ? err.message : err)); }
     </script>
     <!-- DRIVERPAY_CLOUD_FALLBACK_START -->
-    <link rel="stylesheet" href="/truckpay-calculator/assets/driverpay-cloud-v3.css?v=dbb4cff4a4f5">
-    <script type="module" src="/truckpay-calculator/assets/driverpay-cloud-v3.js?v=fa59d6a2e230"></script>
+    <link rel="stylesheet" href="/truckpay-calculator/assets/driverpay-cloud-v3.css?v=8f8dd283e88d">
+    <script type="module" src="/truckpay-calculator/assets/driverpay-cloud-v3.js?v=9481d55617ae"></script>
     <!-- DRIVERPAY_CLOUD_FALLBACK_END -->
 </body>
 </html>

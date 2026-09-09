@@ -34,6 +34,7 @@ const ticketValue = v.object({
   type: v.string(),
   storageId: v.id("_storage"),
   originalStorageId: v.optional(v.id("_storage")),
+  orientationVersion: v.optional(v.number()),
   filter: v.optional(v.string()),
   ocr: v.optional(v.any()),
   capturedAt: v.optional(v.string()),
@@ -239,11 +240,18 @@ export const saveSnapshot = mutation({
       const loadId = loadDatabaseIds.get(ticket.loadClientId);
       if (!loadId) throw new ConvexError("A ticket references an unknown load.");
       const existing = ticketsByClient.get(ticket.clientId);
+      // An already-open app may submit the pre-migration storage ID. Preserve
+      // the corrected image and its original instead of undoing the migration.
+      const staleOrientation = existing?.orientationVersion === 1 && ticket.storageId === existing.orientationSourceId;
+      const sameImage = staleOrientation || existing?.storageId === ticket.storageId;
       const fields = {
         loadId,
         type: ticket.type,
-        storageId: ticket.storageId,
-        originalStorageId: ticket.originalStorageId,
+        storageId: staleOrientation ? existing!.storageId : ticket.storageId,
+        originalStorageId: sameImage ? existing?.originalStorageId ?? ticket.originalStorageId : ticket.originalStorageId,
+        orientationVersion: sameImage ? existing?.orientationVersion ?? ticket.orientationVersion : ticket.orientationVersion,
+        orientationSourceId: sameImage ? existing?.orientationSourceId : undefined,
+        orientationConfidence: sameImage ? existing?.orientationConfidence : undefined,
         filter: ticket.filter,
         ocr: ticket.ocr,
         capturedAt: ticket.capturedAt,
@@ -252,10 +260,10 @@ export const saveSnapshot = mutation({
       };
       if (existing) {
         await ctx.db.patch(existing._id, fields);
-        if (existing.storageId !== ticket.storageId) {
+        if (existing.storageId !== fields.storageId) {
           await ctx.storage.delete(existing.storageId);
         }
-        if (existing.originalStorageId && existing.originalStorageId !== existing.storageId && existing.originalStorageId !== ticket.originalStorageId) {
+        if (existing.originalStorageId && existing.originalStorageId !== existing.storageId && existing.originalStorageId !== fields.originalStorageId) {
           await ctx.storage.delete(existing.originalStorageId);
         }
       } else {
