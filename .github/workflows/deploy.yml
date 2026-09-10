@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      pages: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -36,7 +37,28 @@ jobs:
         run: node scripts/orient-existing-tickets.mjs
         env:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+      - name: Read existing Martin Marietta tickets
+        run: node scripts/read-existing-tickets.mjs
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+      # The currently configured Pages source serves main's root. Keep the
+      # existing root fallback and the dist publication equally deployable.
+      - name: Publish root reader assets
+        run: |
+          mkdir -p reader
+          cp dist/reader/* reader/
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html assets reader
+          if ! git diff --cached --quiet; then
+            git commit -m "Publish verified ticket reader assets"
+            git push origin HEAD:main
+          fi
       - uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
+      - name: Rebuild the configured GitHub Pages source
+        run: gh api --method POST "repos/$GITHUB_REPOSITORY/pages/builds"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

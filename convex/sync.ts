@@ -4,6 +4,7 @@ import type { Id } from "./_generated/dataModel";
 import { requireUserId } from "./lib/security";
 import { loadDriverState } from "./lib/state";
 import { TRUCKING_COMPANY } from "./lib/fleet";
+import { ocrWithRead, ticketReadValue, validateRead } from './lib/ticketRead';
 
 const pricingMode = v.union(
   v.literal("auto"),
@@ -35,6 +36,7 @@ const ticketValue = v.object({
   storageId: v.id("_storage"),
   originalStorageId: v.optional(v.id("_storage")),
   orientationVersion: v.optional(v.number()),
+  ticketRead: v.optional(ticketReadValue),
   filter: v.optional(v.string()),
   ocr: v.optional(v.any()),
   capturedAt: v.optional(v.string()),
@@ -244,6 +246,10 @@ export const saveSnapshot = mutation({
       // the corrected image and its original instead of undoing the migration.
       const staleOrientation = existing?.orientationVersion === 1 && ticket.storageId === existing.orientationSourceId;
       const sameImage = staleOrientation || existing?.storageId === ticket.storageId;
+      if (ticket.ticketRead) validateRead(ticket.ticketRead);
+      // A stale open app must not erase a completed server backfill. Replacing
+      // the image deliberately resets the read to the replacement's metadata.
+      const ticketRead = sameImage && existing?.ticketRead?.version === 1 ? existing.ticketRead : ticket.ticketRead;
       const fields = {
         loadId,
         type: ticket.type,
@@ -253,7 +259,8 @@ export const saveSnapshot = mutation({
         orientationSourceId: sameImage ? existing?.orientationSourceId : undefined,
         orientationConfidence: sameImage ? existing?.orientationConfidence : undefined,
         filter: ticket.filter,
-        ocr: ticket.ocr,
+        ticketRead,
+        ocr: ocrWithRead(ticket.ocr, ticketRead),
         capturedAt: ticket.capturedAt,
         modifiedAt: ticket.modifiedAt,
         updatedAt: now,

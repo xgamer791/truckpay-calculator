@@ -1,5 +1,28 @@
 # CLAUDE.md
 
+## Current architecture (September 2026; supersedes older notes below)
+
+The live app combines `index.html` with the built entry from `src/cloud/main.jsx`,
+Convex auth/storage/sync, and the scanner under `src/scanner`. Source changes in
+these active directories require `npm run build`; `sync-pages-assets.mjs` updates
+the root fallback bundle. GitHub Pages currently serves the root of main, and
+the deploy workflow also publishes dist to gh-pages. Do not use the abandoned
+`src/App.jsx` or `src/PayCalculator.jsx`.
+
+Ticket data extraction is a fresh, dedicated reader under `src/ticket-reader`.
+It uses PaddleOCR v4 model weights through ONNX Runtime, with new preprocessing,
+region detection, decoding, plant validation, and two-pass number verification.
+Do not reuse the older Grok/Tesseract ticket extraction. The existing scanner's
+orientation-only code is separate. `templates.js` is the active plant/layout
+memory: Martin Marietta / Hunter is the only supported supplier for now. Add
+another supplier only after the user supplies its ticket example.
+
+`ticketRead` is stored per document. Display only a confirmed Marietta number,
+beside the blue camera before pay. Preserve its metadata in cloud snapshots and
+never carry a number onto a replacement image. `scripts/read-existing-tickets.mjs`
+backfills cloud tickets using deployment-only Convex functions. Never commit
+private ticket photos, signed image URLs, keys, or QA fixtures to this public repo.
+
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## The repo has two apps — only one is live

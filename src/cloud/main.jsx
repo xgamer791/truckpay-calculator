@@ -19,6 +19,9 @@ import {
 import "./styles.css";
 import "../scanner/scanner.css";
 import "../scanner/ui.js";
+import { readTicket, applyTicketRead, READER_VERSION } from '../ticket-reader/browser.js';
+
+window.DriverTicketReader = { readTicket, applyTicketRead };
 
 const convexUrl = import.meta.env.VITE_CONVEX_URL;
 
@@ -525,6 +528,17 @@ function CloudSession({ profileState }) {
   const cloudState = useQuery(cloudApi.sync.getMyState, {});
   const saveSnapshot = useMutation(cloudApi.sync.saveSnapshot);
   const generateUploadUrl = useMutation(cloudApi.sync.generateTicketUploadUrl);
+  const saveTicketRead = useMutation(cloudApi.sync.applyTicketRead);
+  const readingTicket = useRef(false);
+  const attemptedReads = useRef(new Map());
+  const readerMounted = useRef(false);
+  const [readTick, setReadTick] = useState(0);
+  useEffect(() => { readerMounted.current = true; return () => { readerMounted.current = false; }; }, []);
+  useEffect(() => {
+    const retry = () => { attemptedReads.current.clear(); setReadTick(value => value + 1); };
+    window.addEventListener('online', retry);
+    return () => window.removeEventListener('online', retry);
+  }, []);
   const [syncStatus, setSyncStatus] = useState("Connecting…");
   const [accountOpen, setAccountOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
@@ -548,6 +562,29 @@ function CloudSession({ profileState }) {
     }
     if (!saving.current && !dirty.current) applyRemote(cloudState);
   }, [cloudState, applyRemote]);
+
+  // Includes tickets captured on an older app or while the reader was offline.
+  // Never rewrite a whole account snapshot when just a ticket read completes.
+  useEffect(() => {
+    if (!cloudState?.profile || readingTicket.current || !navigator.onLine) return;
+    const documents = cloudState.history.flatMap(s => s.loads.flatMap(l => l.documents || []));
+    const waiting = documents.filter(d => d.storageId && d.ticketRead?.version !== READER_VERSION);
+    const next = waiting.find(d =>
+      Date.now() - (attemptedReads.current.get(d.storageId) || 0) > 60000);
+    if (!next) {
+      if (!waiting.length) return;
+      const retry = setTimeout(() => setReadTick(value => value + 1), 61000);
+      return () => clearTimeout(retry);
+    }
+    readingTicket.current = true;
+    attemptedReads.current.set(next.storageId, Date.now());
+    readTicket(next.processed || next.original).then(async result => {
+      if (readerMounted.current) await saveTicketRead({ clientId: String(next.id), storageId: next.storageId, result });
+    }).catch(() => {}).finally(() => {
+      readingTicket.current = false;
+      if (readerMounted.current) setReadTick(value => value + 1);
+    });
+  }, [cloudState, saveTicketRead, readTick]);
 
   const syncNow = useCallback(async () => {
     if (!hydrated.current || saving.current || typeof window.driverPayReadLocalSnapshot !== "function") return;

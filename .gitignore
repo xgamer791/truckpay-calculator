@@ -5,3 +5,7 @@ verify-scanner.mjs
 .env
 .env.local
 .env.*.local
+public/reader/*.onnx
+public/reader/*.wasm
+public/reader/ppocr_keys_v1.txt
+.qa/

@@ -1,6 +1,7 @@
 import { authTables } from "@convex-dev/auth/server";
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import { ticketReadValue } from './lib/ticketRead';
 
 const role = v.union(v.literal("driver"), v.literal("admin"));
 const pricingMode = v.union(
@@ -70,6 +71,7 @@ export default defineSchema({
     orientationSourceId: v.optional(v.id("_storage")),
     orientationVersion: v.optional(v.number()),
     orientationConfidence: v.optional(v.number()),
+    ticketRead: v.optional(ticketReadValue),
     filter: v.optional(v.string()),
     ocr: v.optional(v.any()),
     capturedAt: v.optional(v.string()),

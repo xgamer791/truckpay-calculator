@@ -60,6 +60,12 @@ export async function uploadPendingTicketImages(history, generateUploadUrl) {
             }catch{ /* Keep cloud saving available; the original remains eligible for migration. */ }
           }
           const processed = await sourceToBlob(document.processed || document.original || load.ticket);
+          if (document.ticketRead?.version !== 1) {
+            try {
+              const { readTicket, applyTicketRead } = await import('../ticket-reader/browser.js');
+              applyTicketRead(document, await readTicket(document.processed || document.original || load.ticket));
+            } catch { /* Saving a photo remains available; retry after cloud sync. */ }
+          }
           document.storageId = await uploadBlob(processed, generateUploadUrl);
           changed = true;
         }
@@ -104,6 +110,7 @@ export function buildSnapshot(history, settings) {
         };
         optional(ticket, "originalStorageId", document.originalStorageId);
         optional(ticket, "orientationVersion", document.orientationVersion);
+        optional(ticket, "ticketRead", document.ticketRead);
         optional(ticket, "filter", document.filter);
         if (document.ocr !== undefined) ticket.ocr = document.ocr;
         optional(ticket, "capturedAt", document.createdAt);

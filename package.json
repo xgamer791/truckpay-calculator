@@ -1,7 +1,7 @@
 {
   "name": "truckpay-calculator",
   "private": true,
-  "version": "3.1.0",
+  "version": "3.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,7 +10,9 @@
     "deploy": "gh-pages -d dist",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "check": "npm run typecheck && npm test && npm run build"
+    "check": "npm run typecheck && npm test && npm run build",
+    "prebuild": "node scripts/prepare-ticket-reader.mjs",
+    "predev": "node scripts/prepare-ticket-reader.mjs"
   },
   "dependencies": {
     "@auth/core": "^0.41.1",
@@ -18,12 +20,14 @@
     "convex": "^1.45.0",
     "jose": "^6.2.12",
     "lucide-react": "^0.263.1",
+    "onnxruntime-web": "1.17.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "resend": "^6.26.0",
     "tesseract.js": "^4.1.1"
   },
   "devDependencies": {
+    "@gutenye/ocr-models": "1.2.2",
     "@types/node": "^24.13.3",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
@@ -31,6 +35,7 @@
     "convex-test": "^0.0.56",
     "gh-pages": "^6.1.0",
     "jsdom": "^24.1.3",
+    "onnxruntime-node": "1.17.3",
     "sharp": "^0.35.4",
     "typescript": "^5.9.3",
     "vite": "^5.0.0",

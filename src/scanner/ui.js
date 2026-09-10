@@ -324,7 +324,7 @@ class TicketScanner {
   }
   async save(){
     if(this.mode!=='review'||!this.dataUrl)return;
-    this.setMode('saving');this.status('Saving ticket…');for(const button of this.root.querySelectorAll('button'))button.disabled=true;
+    this.setMode('saving');this.status('Reading and saving ticket…');for(const button of this.root.querySelectorAll('button'))button.disabled=true;
     try{await this.options.onSave(this.dataUrl,'black-white',{orientationVersion:1});this.close();}
     catch(error){if(this.root){this.setMode('review');this.status(error.message||'Could not save. Please try again.');for(const button of this.root.querySelectorAll('button'))button.disabled=false;}}
   }
