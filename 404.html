@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta name="robots" content="noindex">
+    <title>Opening DriverPay Pro</title>
+    <script id="driverpay-legacy-redirect">
+    (function () {
+        var next = new URL('/truckpay-calculator/', location.href);
+        next.search = location.search;
+        next.hash = location.hash;
+        // Fetch fresh HTML even when the saved link predates the current app.
+        next.searchParams.delete('v');
+        next.searchParams.delete('t');
+        next.searchParams.set('_', Date.now());
+        location.replace(next.href);
+    })();
+    </script>
+</head>
+<body>
+    <p>Opening DriverPay Pro… <a href="/truckpay-calculator/">Open the app</a></p>
+</body>
+</html>
