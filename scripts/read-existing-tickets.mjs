@@ -11,7 +11,7 @@ function convex(name, args = {}) {
   return JSON.parse(result.stdout);
 }
 const reader = await createTicketReader();
-let scanned = 0, marietta = 0, colorado = 0, ignored = 0, unreadable = 0, conflicts = 0, errors = 0;
+let scanned = 0, marietta = 0, colorado = 0, laGrange = 0, ignored = 0, unreadable = 0, conflicts = 0, errors = 0;
 try {
   for (let pass = 0; pass < 3; pass++) {
     let cursor = null, needsRetry = false;
@@ -28,6 +28,7 @@ try {
           scanned++;
           if (result.status === 'matched' && result.plant === 'martin-marietta') marietta++;
           else if (result.status === 'matched' && result.plant === 'colorado-materials') colorado++;
+          else if (result.status === 'matched' && result.plant === 'la-grange') laGrange++;
           else if (result.status === 'ignored') ignored++;
           else unreadable++;
         } catch { errors++; needsRetry = true; }
@@ -37,7 +38,7 @@ try {
     } while (true);
     if (!needsRetry) break;
   }
-  console.log(`Ticket reader backfill: checked ${scanned}; Marietta numbers saved ${marietta}; Colorado Materials numbers saved ${colorado}; other/unrecognized ${ignored}; recognized plant unreadable ${unreadable}; concurrent retries ${conflicts}; processing errors ${errors}.`);
+  console.log(`Ticket reader backfill: checked ${scanned}; Marietta numbers saved ${marietta}; Colorado Materials numbers saved ${colorado}; La Grange numbers saved ${laGrange}; other/unrecognized ${ignored}; recognized plant unreadable ${unreadable}; concurrent retries ${conflicts}; processing errors ${errors}.`);
   let remaining = 0, cursor = null;
   do {
     const page = convex('list', { cursor }); remaining += page.tickets.length;

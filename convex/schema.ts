@@ -79,6 +79,8 @@ export default defineSchema({
     orientationSourceId: v.optional(v.id("_storage")),
     orientationVersion: v.optional(v.number()),
     orientationConfidence: v.optional(v.number()),
+    enhancementVersion: v.optional(v.number()),
+    enhancementSourceId: v.optional(v.id('_storage')),
     ticketRead: v.optional(ticketReadValue),
     filter: v.optional(v.string()),
     ocr: v.optional(v.any()),

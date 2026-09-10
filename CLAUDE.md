@@ -14,8 +14,9 @@ It uses PaddleOCR v4 model weights through ONNX Runtime, with new preprocessing,
 region detection, decoding, plant validation, and two-pass number verification.
 Do not reuse the older Grok/Tesseract ticket extraction. The existing scanner's
 orientation-only code is separate. `templates.js` is the active plant/layout
-memory: Martin Marietta / Hunter and Colorado Materials are supported. Add
-another supplier only after the user supplies its ticket example.
+memory: Martin Marietta / Hunter, Colorado Materials, and La Grange / Fayette
+(WM CCP Solutions) are supported. La Grange Ticket No is on the upper left;
+Hunter Plant on that form is a customer destination, not its source.
 
 `ticketRead` is stored per document. Display only a confirmed supported-plant number,
 beside the blue camera before pay. Preserve its metadata in cloud snapshots and
@@ -33,7 +34,12 @@ verified image for retry. Never persist a new capture without a confirmed read.
 Ticket numbers are unique within a driver's account; replacing the exact photo
 is allowed. Local duplicate checks and atomic Convex reservations cover concurrent
 captures; snapshot validation also protects stored tickets. A connection is needed
-to complete the duplicate check. Historical unreadable images stay untouched.
+to complete the duplicate check. Enhance every existing and new image once (`enhancementVersion: 1`), including
+La Grange, while retaining the original. `enhancementSourceId` protects against
+stale snapshots restoring old images. Existing failed La Grange number reads
+remain for the driver to retake; do not rescan v2 failures for template v3.
+New captures show enhancement during loading; prewarm the reader and feed its
+processed canvas directly into OCR. Identity-region reads avoid unrelated tables.
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 

@@ -38,6 +38,7 @@ const ticketValue = v.object({
   storageId: v.id("_storage"),
   originalStorageId: v.optional(v.id("_storage")),
   orientationVersion: v.optional(v.number()),
+  enhancementVersion: v.optional(v.number()),
   ticketRead: v.optional(ticketReadValue),
   filter: v.optional(v.string()),
   ocr: v.optional(v.any()),
@@ -241,7 +242,7 @@ export const saveSnapshot = mutation({
     const claims = await ctx.db.query('ticketNumberClaims').withIndex('by_user', q => q.eq('userId', userId)).collect();
     const numbered = args.tickets.map(ticket => {
       const existing = ticketsByClient.get(ticket.clientId);
-      const sameImage = existing?.storageId === ticket.storageId || existing?.orientationSourceId === ticket.storageId;
+      const sameImage = existing?.storageId === ticket.storageId || existing?.orientationSourceId === ticket.storageId || existing?.enhancementSourceId === ticket.storageId;
       const number = confirmedNumber({ ticketRead: sameImage ? preferredTicketRead(existing?.ticketRead, ticket.ticketRead) : ticket.ticketRead });
       return { ticket, existing, number };
     });
@@ -264,7 +265,8 @@ export const saveSnapshot = mutation({
       // An already-open app may submit the pre-migration storage ID. Preserve
       // the corrected image and its original instead of undoing the migration.
       const staleOrientation = existing?.orientationVersion === 1 && ticket.storageId === existing.orientationSourceId;
-      const sameImage = staleOrientation || existing?.storageId === ticket.storageId;
+      const staleEnhancement = existing?.enhancementVersion === 1 && ticket.storageId === existing.enhancementSourceId;
+      const sameImage = staleOrientation || staleEnhancement || existing?.storageId === ticket.storageId;
       if (ticket.ticketRead) validateRead(ticket.ticketRead);
       // A stale open app must not erase a completed server backfill. Replacing
       // the image deliberately resets the read to the replacement's metadata.
@@ -272,11 +274,13 @@ export const saveSnapshot = mutation({
       const fields = {
         loadId,
         type: ticket.type,
-        storageId: staleOrientation ? existing!.storageId : ticket.storageId,
+        storageId: staleOrientation || staleEnhancement ? existing!.storageId : ticket.storageId,
         originalStorageId: sameImage ? existing?.originalStorageId ?? ticket.originalStorageId : ticket.originalStorageId,
         orientationVersion: sameImage ? existing?.orientationVersion ?? ticket.orientationVersion : ticket.orientationVersion,
         orientationSourceId: sameImage ? existing?.orientationSourceId : undefined,
         orientationConfidence: sameImage ? existing?.orientationConfidence : undefined,
+        enhancementVersion: sameImage ? existing?.enhancementVersion ?? ticket.enhancementVersion : ticket.enhancementVersion,
+        enhancementSourceId: sameImage ? existing?.enhancementSourceId : undefined,
         filter: ticket.filter,
         ticketRead,
         ocr: ocrWithRead(ticket.ocr, ticketRead),

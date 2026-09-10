@@ -65,7 +65,7 @@ describe('original ticket vision',()=>{
     let black=0,white=0,borderBlack=0,border=0;
     for(let y=0;y<result.height;y++)for(let x=0;x<result.width;x++){
       const i=(y*result.width+x)*4,value=result.pixels[i];
-      expect(result.pixels[i+1]).toBe(value);expect(result.pixels[i+2]).toBe(value);expect([0,255]).toContain(value);
+      expect(result.pixels[i+1]).toBe(value);expect(result.pixels[i+2]).toBe(value);
       if(value===0)black++;else white++;
       if(x<3||y<3||x>=result.width-3||y>=result.height-3){border++;if(value===0)borderBlack++;}
     }

@@ -14,6 +14,6 @@ self.onmessage = async ({ data: { id, image, base } }) => {
         recognition: base + 'ch_PP-OCRv4_rec_infer.onnx',
       }, await dictionary.text(), { executionProviders: ['wasm'] });
     }
-    self.postMessage({ id, result: await readPlantTicket(image, engine) });
+    self.postMessage({ id, result: image ? await readPlantTicket(image, engine) : { ready: true } });
   } catch { self.postMessage({ id, error: true }); }
 };

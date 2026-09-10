@@ -26,3 +26,18 @@ export const COLORADO_TEMPLATE = Object.freeze({
   numberPlacement: 'same row, right of TICKET #; above date/time and weight table',
   excludedFields: ['ORDER', 'PO', 'VEHICLE', 'CUSTOMER', 'PRODUCT', 'SCALE #'],
 });
+
+// La Grange / Fayette: WM CCP Solutions form. The number is on the left,
+// below the company/address heading and immediately right of "Ticket No:".
+// Hunter Plant is the CUSTOMER DESTINATION, not the originating plant.
+export const LA_GRANGE_TEMPLATE = Object.freeze({
+  id: 'la-grange-v1',
+  supplier: 'la-grange',
+  companyHeading: 'wmccpsolutions',
+  source: { name: 'fayette', street: '6549powerplantrd', city: 'lagrange' },
+  identityRegion: { x: 0, y: 0, width: .65, height: .65 },
+  ticketRegion: { x: 0, y: .12, width: .61, height: .43 },
+  numberLabel: 'Ticket No:',
+  numberPlacement: 'same row, right of Ticket No; above Source and Source Address',
+  excludedFields: ['PO #', 'Truck No', 'Trailer No', 'Source Address', 'Customer Destination', 'Gross', 'Tare', 'Net'],
+});

@@ -8,7 +8,7 @@ function run(image) {
     worker ||= new Worker(new URL('./worker.js', import.meta.url), { type: 'module' });
     const id = ++sequence;
     const timer = setTimeout(() => { dispose(); reject(new Error('Ticket reading timed out')); }, 90000);
-    const finish = () => { clearTimeout(timer); idle = setTimeout(dispose, 30000); };
+    const finish = () => { clearTimeout(timer); idle = setTimeout(dispose, 120000); };
     worker.onmessage = ({ data }) => {
       if (data.id !== id) return;
       finish();
@@ -16,13 +16,23 @@ function run(image) {
       else resolve(data.result);
     };
     worker.onerror = () => { finish(); dispose(); reject(new Error('Ticket reader could not load')); };
-    worker.postMessage({ id, image, base: new URL(import.meta.env.BASE_URL + 'reader/', window.location.origin).href }, [image.data.buffer]);
+    worker.postMessage({ id, image, base: new URL(import.meta.env.BASE_URL + 'reader/', window.location.origin).href }, image?[image.data.buffer]:[]);
   });
+}
+
+export function preloadTicketReader() {
+  const job=queue.then(()=>run());queue=job.catch(()=>{});return queue;
 }
 
 export async function readTicket(source) {
   const job = queue.then(async () => {
     if (typeof Worker === 'undefined') throw new Error('Ticket reader requires Web Workers');
+    // New captures already have a processed canvas. Avoid JPEG encoding,
+    // fetching a data URL, and decoding that same image before inference.
+    if (source?.getContext) {
+      const data=source.getContext('2d',{willReadFrequently:true}).getImageData(0,0,source.width,source.height);
+      return await run({data:data.data,width:data.width,height:data.height});
+    }
     const abort = new AbortController();
     const timeout = setTimeout(() => abort.abort(), 20000);
     let response;

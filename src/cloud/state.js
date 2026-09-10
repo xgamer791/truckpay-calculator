@@ -48,6 +48,10 @@ export async function uploadPendingTicketImages(history, generateUploadUrl) {
 
   for (const settlement of copy) {
     for (const load of settlement.loads ?? []) {
+      if (!load.documents?.length && load.ticket) {
+        load.documents=[{id:`legacy_${load.id}`,type:'ticket',processed:load.ticket}];
+        changed=true;
+      }
       const documents = Array.isArray(load.documents) ? load.documents : [];
       for (const document of documents) {
         if (!document.storageId) {
@@ -59,6 +63,14 @@ export async function uploadPendingTicketImages(history, generateUploadUrl) {
               if(oriented.dataUrl!==source){document.original ||= source;document.processed=oriented.dataUrl;if(load.ticket===source)load.ticket=oriented.dataUrl;}
               document.orientationVersion=1;
             }catch{ /* Keep cloud saving available; the original remains eligible for migration. */ }
+          }
+          if (document.enhancementVersion !== 1) {
+            const { enhanceDataUrl } = await import('../scanner/enhancement-browser.js');
+            const source=document.processed || document.original || load.ticket;
+            document.original ||= source;
+            document.processed=await enhanceDataUrl(source);
+            document.enhancementVersion=1;
+            if(load.ticket===source)load.ticket=document.processed;
           }
           const processed = await sourceToBlob(document.processed || document.original || load.ticket);
           if (needsTicketRead(document.ticketRead)) {
@@ -111,6 +123,7 @@ export function buildSnapshot(history, settings) {
         };
         optional(ticket, "originalStorageId", document.originalStorageId);
         optional(ticket, "orientationVersion", document.orientationVersion);
+        optional(ticket, "enhancementVersion", document.enhancementVersion);
         optional(ticket, "ticketRead", document.ticketRead);
         optional(ticket, "filter", document.filter);
         if (document.ocr !== undefined) ticket.ocr = document.ocr;

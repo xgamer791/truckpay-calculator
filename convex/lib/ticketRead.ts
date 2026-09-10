@@ -5,7 +5,7 @@ export const ticketReadValue = v.object({
   version: v.number(),
   status: v.union(v.literal('matched'), v.literal('ignored'), v.literal('unreadable')),
   template: v.optional(v.string()),
-  plant: v.optional(v.union(v.literal('martin-marietta'), v.literal('colorado-materials'))),
+  plant: v.optional(v.union(v.literal('martin-marietta'), v.literal('colorado-materials'), v.literal('la-grange'))),
   ticketNumber: v.optional(v.string()),
   confidence: v.optional(v.number()),
   quarterTurns: v.optional(v.number()),

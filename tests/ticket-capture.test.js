@@ -49,3 +49,10 @@ it('saves a verified edit capture immediately without committing unrelated pay e
   expect(history()[0].loads[1]).toMatchObject({tons:25,documents:[{id:'new',processed:image,ticketRead:{ticketNumber:'3556032'}}]});
   w.closeEditModal();expect(history()[0].loads[1].documents[0].id).toBe('new');
 });
+
+it('displays a La Grange ticket number beside the camera and rejects a second attachment',async()=>{
+  const lagrange={...matched,version:3,plant:'la-grange',ticketNumber:'172744'};
+  await capture('two','direct',lagrange);
+  expect(w.document.querySelector('[title*="172744"]')?.textContent||w.document.body.textContent).toContain('172744');
+  await expect(capture('one','add',lagrange)).rejects.toMatchObject({code:'DUPLICATE_TICKET'});
+});

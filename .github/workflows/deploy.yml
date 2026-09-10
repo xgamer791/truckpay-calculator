@@ -43,7 +43,11 @@ jobs:
         run: node scripts/orient-existing-tickets.mjs
         env:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
-      - name: Read existing Marietta and Colorado Materials tickets
+      - name: Enhance existing ticket images
+        run: node scripts/enhance-existing-tickets.mjs
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+      - name: Read eligible tickets from all three plants
         if: github.event_name == 'workflow_dispatch' && inputs.backfill_existing_tickets
         run: node scripts/read-existing-tickets.mjs
         env:

@@ -316,10 +316,19 @@ export function rectify(rgba,w,h,corners,maxEdge=1800) {
 export function cleanMonochrome(gray,w,h) {
   // Edge-preserving smoothing: average only neighbours with a similar tone.
   const smooth=new Float32Array(gray.length);
+  const weights=new Float32Array(256);
+  for(let d=0;d<24;d++)weights[d]=1-d/24;
+  const stride=w+2,padded=new Uint8Array(stride*(h+2));
+  for(let y=0;y<h;y++){
+    padded.set(gray.subarray(y*w,(y+1)*w),(y+1)*stride+1);
+    padded[(y+1)*stride]=gray[y*w];padded[(y+1)*stride+w+1]=gray[y*w+w-1];
+  }
+  padded.set(padded.subarray(stride,2*stride),0);padded.set(padded.subarray(h*stride,(h+1)*stride),(h+1)*stride);
+  const offsets=[-stride-1,-stride,-stride+1,-1,1,stride-1,stride,stride+1];
   for(let y=0;y<h;y++)for(let x=0;x<w;x++){
-    const p=y*w+x,value=gray[p];let sum=value*4,weight=4;
-    for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
-      const near=gray[clamp(y+dy,0,h-1)*w+clamp(x+dx,0,w-1)],wt=Math.max(0,1-Math.abs(near-value)/24);
+    const p=y*w+x,value=gray[p],at=(y+1)*stride+x+1;let sum=value*5,weight=5;
+    for(const offset of offsets){
+      const near=padded[at+offset],wt=weights[Math.abs(near-value)];
       sum+=near*wt;weight+=wt;
     }
     smooth[p]=sum/weight;
@@ -327,12 +336,17 @@ export function cleanMonochrome(gray,w,h) {
   const local=localMean(smooth,w,h,Math.max(10,Math.round(Math.min(w,h)*.025))),blur=localMean(smooth,w,h,1),out=new Uint8ClampedArray(w*h*4);
   for(let p=0;p<gray.length;p++){
     const sharpen=clamp(smooth[p]+.55*(smooth[p]-blur[p]),0,255);
-    // Adaptive local threshold lifts paper shadows; a two-level image gives
-    // actual black ink on white paper with identical RGB channels.
-    const value=sharpen<local[p]-Math.max(6,local[p]*.055)?0:255;
+    // Lift paper shadows and deepen ink with a continuous tone curve. Keep
+    // antialiased edges so tiny characters retain their original strokes.
+    // Keep solid dark ink black, including thick characters/logos whose centers
+    // are darker than their entire local neighborhood.
+    const normalized=clamp((sharpen-20)/(Math.max(local[p],100)-20),0,1);
+    const value=sharpen<40?0:clamp(255*Math.pow(normalized/.96,1.6),0,255);
     out[p*4]=out[p*4+1]=out[p*4+2]=value;out[p*4+3]=255;
   }
   return out;
 }
 
 export function processTicket(rgba,w,h,corners){const warped=rectify(rgba,w,h,corners);return {width:warped.width,height:warped.height,pixels:cleanMonochrome(warped.gray,warped.width,warped.height)};}
+
+export function enhanceTicket(rgba,w,h){return {width:w,height:h,pixels:cleanMonochrome(luminance(rgba,w,h),w,h)};}

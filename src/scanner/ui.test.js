@@ -2,7 +2,7 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 
 const readerMock=vi.hoisted(()=>vi.fn());
-vi.mock('../ticket-reader/browser.js',()=>({readTicket:readerMock}));
+vi.mock('../ticket-reader/browser.js',()=>({readTicket:readerMock,preloadTicketReader:vi.fn()}));
 const matched={version:2,status:'matched',plant:'colorado-materials',ticketNumber:'3556031',confidence:.99,quarterTurns:0};
 let scanner,stop,requests,frames,clock;
 const good={corners:[{x:64,y:34},{x:256,y:34},{x:256,y:246},{x:64,y:246}],confidence:.94,areaRatio:.45,brightness:210,sharpness:200,inkRatio:.08,clipped:false};
@@ -66,7 +66,7 @@ describe('quality-gated manual capture and automatic verified saving',()=>{
     expect(document.querySelector('.ticket-camera-loading').hidden).toBe(false);
     expect(document.querySelector('[data-action=save]')).toBeNull();
     resolve(matched);await vi.advanceTimersByTimeAsync(10);
-    expect(onSave).toHaveBeenCalledWith('data:image/jpeg;base64,TEST','black-white',{orientationVersion:1,ticketRead:matched,documentId:expect.stringMatching(/^doc_/)});
+    expect(onSave).toHaveBeenCalledWith('data:image/jpeg;base64,TEST','black-white',{orientationVersion:1,enhancementVersion:1,original:expect.stringContaining("data:image/jpeg"),ticketRead:matched,documentId:expect.stringMatching(/^doc_/)});
     expect(scanner.root).toBeNull();
   });
   it('uses the fresh reader to orient the saved photo',async()=>{

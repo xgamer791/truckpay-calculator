@@ -1,6 +1,6 @@
 // Fresh ticket reader: PaddleOCR v4 neural models, our own pixel preparation,
 // text-region detection, CTC decoding, and plant/field validation. No legacy OCR.
-import { MARIETTA_TEMPLATE, COLORADO_TEMPLATE } from './templates.js';
+import { MARIETTA_TEMPLATE, COLORADO_TEMPLATE, LA_GRANGE_TEMPLATE } from './templates.js';
 import { READER_VERSION, PLANT_LABELS } from './metadata.js';
 export { READER_VERSION } from './metadata.js';
 export const TICKET_REGION = MARIETTA_TEMPLATE.ticketRegion;
@@ -98,8 +98,9 @@ function decode(output, dictionary) {
 }
 
 export async function createEngine(ort, models, dictionaryText, options = {}) {
-  const detection = await ort.InferenceSession.create(models.detection, options);
-  const recognition = await ort.InferenceSession.create(models.recognition, options);
+  const [detection, recognition] = await Promise.all([
+    ort.InferenceSession.create(models.detection, options), ort.InferenceSession.create(models.recognition, options),
+  ]);
   const dictionary = [...dictionaryText.split('\n'), ' '];
   async function recognize(image, box) {
     const width = Math.max(16, Math.min(1600, Math.round(48 * box.width / box.height)));
@@ -143,17 +144,29 @@ export function isColorado(lines, image) {
   return identityText(lines, image, COLORADO_TEMPLATE.identityRegion).includes(COLORADO_TEMPLATE.companyHeading);
 }
 
+export function isLaGrange(lines, image) {
+  const text = identityText(lines, image, LA_GRANGE_TEMPLATE.identityRegion);
+  const source = LA_GRANGE_TEMPLATE.source;
+  const address = text.includes(source.street) && text.includes(source.city);
+  // Small "Solutions" lettering can be worn. WM CCP plus the exact source
+  // street/city is still independent, specific evidence of this plant.
+  const company = text.includes(LA_GRANGE_TEMPLATE.companyHeading) || (text.includes('wmccp') && address);
+  return company && (text.includes('source' + source.name) || address);
+}
+
 export function classifyPlant(lines, image) {
-  const marietta = isMarietta(lines, image), colorado = isColorado(lines, image);
+  const matches = [[isMarietta, MARIETTA_TEMPLATE], [isColorado, COLORADO_TEMPLATE], [isLaGrange, LA_GRANGE_TEMPLATE]]
+    .filter(([matches]) => matches(lines, image)).map(([, template]) => template);
   // A composite image or conflicting supplier headings must not be guessed.
-  if (marietta === colorado) return null;
-  return marietta ? MARIETTA_TEMPLATE : COLORADO_TEMPLATE;
+  return matches.length === 1 ? matches[0] : null;
 }
 
 export function ticketCandidate(lines) {
   const candidates = [];
   for (const line of lines) {
-    if (line.confidence < .88 || !/^ticket\s*(?:no\.?|number|#|:)?\s*\d*$/i.test(line.text.trim())) continue;
+    // Printed i/l are commonly confused in the FIELD LABEL. Never substitute
+    // characters in the number: its digits still require two high-confidence reads.
+    if (line.confidence < .80 || !/^t[il1]cket\s*(?:(?:no\.?|number)\s*)?[#:]?\s*\d*$/i.test(line.text.trim())) continue;
     const inline = line.text.match(/\b(\d{6,12})\b/);
     if (inline && line.confidence >= .93 && line.minimum >= .75) candidates.push({ number: inline[1], line });
     if (inline) continue;
@@ -174,8 +187,15 @@ export async function readPlantTicket(image, engine) {
   let recognizedPlant = null;
   // Read upright first; independently handle older sideways/upside-down files.
   for (const turns of [0, 2, 1, 3]) {
-    const page = preparePixels(image, { turns });
-    const lines = await engine.lines(page);
+    // Supplier identity lives at upper left on all three learned forms. Avoid
+    // recognizing the weight tables and La Grange's full column of legal text.
+    const page = { width: turns % 2 ? image.height : image.width, height: turns % 2 ? image.width : image.height };
+    const region = { x: 0, y: 0, width: .65, height: .65 };
+    const identity = preparePixels(image, { turns, region, maxWidth: 1200 });
+    const sx = page.width * region.width / identity.width, sy = page.height * region.height / identity.height;
+    const lines = (await engine.lines(identity)).map(line => ({ ...line, box: {
+      x: line.box.x * sx, y: line.box.y * sy, width: line.box.width * sx, height: line.box.height * sy,
+    } }));
     const template = classifyPlant(lines, page);
     if (!template) continue;
     recognizedPlant = template;

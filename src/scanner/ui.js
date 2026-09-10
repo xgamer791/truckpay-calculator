@@ -2,7 +2,7 @@ import { alignCorners, validQuad } from './core.js';
 import { moveCropHandle, loupePosition } from './crop-controls.js';
 import { LiveOutline, drawTicketOutline } from './outline.js';
 import { CaptureQualityGate, QUALITY_MAX_AGE } from './quality.js';
-import { readTicket } from '../ticket-reader/browser.js';
+import { readTicket, preloadTicketReader } from '../ticket-reader/browser.js';
 import { isConfirmedRead } from '../ticket-reader/metadata.js';
 
 const icons={
@@ -28,6 +28,7 @@ class TicketScanner {
   async open(options={}){
     if(this.root)return;
     this.options=options;this.session++;this.mode='loading';this.priorFocus=document.activeElement;
+    preloadTicketReader();
     this.root=document.createElement('section');this.root.className='ticket-camera';this.root.setAttribute('role','dialog');this.root.setAttribute('aria-modal','true');this.root.setAttribute('aria-label','Scan load ticket');
     this.root.innerHTML=`
       <header class="ticket-camera-header"><button type="button" class="ticket-camera-icon" data-action="close" aria-label="Close scanner">${icon('close')}</button><div><span class="ticket-camera-eyebrow">DRIVERPAY PRO</span><h1>Scan ticket</h1></div><button type="button" class="ticket-camera-icon" data-action="flash" aria-label="Turn on flashlight" aria-pressed="false" hidden>${icon('flash')}</button></header>
@@ -80,7 +81,7 @@ class TicketScanner {
     this.video.hidden=!['live','loading','error'].includes(mode);this.preview.hidden=['live','loading','error'].includes(mode);
     const working=['processing','reading','saving'].includes(mode);
     this.root.querySelector('.ticket-camera-loading').hidden=!working;
-    this.root.querySelector('.ticket-camera-loading strong').textContent=mode==='processing'?'Preparing ticket…':mode==='saving'?'Checking and saving ticket…':'Reading ticket…';
+    this.root.querySelector('.ticket-camera-loading strong').textContent=mode==='processing'?'Enhancing ticket…':mode==='saving'?'Checking and saving ticket…':'Reading ticket…';
     this.root.querySelector('.ticket-camera-result').setAttribute('role','alert');
     this.root.querySelector('.ticket-camera-result').hidden=!['recapture','save-error'].includes(mode);
     this.root.querySelector('.ticket-camera-footer').hidden=working||['recapture','save-error'].includes(mode);
@@ -335,11 +336,11 @@ class TicketScanner {
       const data=this.source.getContext('2d',{willReadFrequently:true}).getImageData(0,0,this.source.width,this.source.height),result=await this.request('process',data,corners);
       if(!this.root||session!==this.session)return;
       this.processed=makeCanvas();this.processed.width=result.width;this.processed.height=result.height;this.processed.getContext('2d').putImageData(new ImageData(result.pixels,result.width,result.height),0,0);
-      this.setMode('reading');this.renderCapture();
-      const ticketRead=await readTicket(this.dataUrl);
+      this.setMode('reading');
+      const ticketRead=await readTicket(this.processed);
       if(!this.root||session!==this.session)return;
       if(!isConfirmedRead(ticketRead)){
-        this.requireRetake(ticketRead?.status==='ignored'?'Plant not recognized. Capture the whole Martin Marietta or Colorado Materials ticket, including the plant name and ticket number.':'The ticket number is blurry, missing, or could not be verified. Retake the whole ticket with the guide green.');return;
+        this.requireRetake(ticketRead?.status==='ignored'?'Plant not recognized. Capture the whole Martin Marietta, Colorado Materials, or La Grange ticket, including the plant name and ticket number.':'The ticket number is blurry, missing, or could not be verified. Retake the whole ticket with the guide green.');return;
       }
       this.ticketRead=ticketRead;this.quarterTurns=ticketRead.quarterTurns||0;
       this.renderCapture();await this.save();
@@ -355,7 +356,7 @@ class TicketScanner {
   async save(){
     if(!['reading','save-error'].includes(this.mode)||!this.dataUrl||!isConfirmedRead(this.ticketRead))return;
     this.setMode('saving');this.root.querySelector('.ticket-camera-loading strong').textContent='Checking and saving ticket…';
-    try{await this.options.onSave(this.dataUrl,'black-white',{orientationVersion:1,ticketRead:this.ticketRead,documentId:this.captureId});navigator.vibrate?.(30);this.close();}
+    try{await this.options.onSave(this.dataUrl,'black-white',{orientationVersion:1,enhancementVersion:1,original:this.source.toDataURL('image/jpeg',.94),ticketRead:this.ticketRead,documentId:this.captureId});navigator.vibrate?.(30);this.close();}
     catch(error){if(this.root){
       if(error.code==='DUPLICATE_TICKET'){this.requireRetake(error.message);this.root.querySelector('.ticket-camera-result strong').textContent='Duplicate ticket rejected';return;}
       this.setMode('save-error');const panel=this.root.querySelector('.ticket-camera-result');

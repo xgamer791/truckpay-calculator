@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { applyTicketRead, classifyPlant, isColorado, isMarietta, ticketCandidate } from './core.js';
+import { applyTicketRead, classifyPlant, isColorado, isMarietta, isLaGrange, ticketCandidate } from './core.js';
 import { needsTicketRead, preferredTicketRead } from './metadata.js';
 const line = (text, x, y, confidence = .99, minimum = .98) => ({ text, confidence, minimum, box: { x, y, width: text.length * 9, height: 20 } });
 
@@ -43,11 +43,26 @@ it('revisits previously ignored Colorado tickets while retaining confirmed Marie
   expect(needsTicketRead(marietta)).toBe(false);
   expect(needsTicketRead(colorado)).toBe(false);
   expect(needsTicketRead({ version: 2, status: 'ignored' })).toBe(false);
+  expect(needsTicketRead({ version: 3, status: 'ignored' })).toBe(false);
   expect(preferredTicketRead(colorado, oldIgnored)).toEqual(colorado);
   expect(preferredTicketRead(oldIgnored, colorado)).toEqual(colorado);
   expect(preferredTicketRead({ version: 2, status: 'ignored' }, oldIgnored)).toEqual({ version: 2, status: 'ignored' });
   const doc = applyTicketRead({}, colorado);
   expect(doc.ocr).toEqual({ plant: 'Colorado Materials', ticketNumber: '3556031' });
+});
+
+it('identifies La Grange by supplier and source, never by the Hunter customer destination',()=>{
+  const lines=[line('WM CCP Solutions, LLC.',10,50),line('Ticket No:',10,130),line('172744',150,130),line('Source: Fayette',10,170),line('Source Address:6549 Power Plant Rd, LaGrange, TX 78945',10,200),line('Customer Destination: Hunter Plant',10,250)];
+  expect(isLaGrange(lines)).toBe(true);
+  expect(classifyPlant(lines)?.supplier).toBe('la-grange');
+  expect(isMarietta(lines)).toBe(false);
+  expect(ticketCandidate(lines)?.number).toBe('172744');
+  expect(ticketCandidate([line('Ticket No: 172744',10,130)])?.number).toBe('172744');
+  expect(ticketCandidate([line('Tlcket No:',10,130,.84),line('172744',150,130)])?.number).toBe('172744');
+  expect(isLaGrange([line('WM CCP Solutions LLC',0,0),line('Source: Another site',0,20)])).toBe(false);
+  expect(isLaGrange(lines.filter(l=>l.text.includes('Hunter Plant')))).toBe(false);
+  expect(classifyPlant([...lines,line('Colorado Materials',10,10)])).toBeNull();
+  expect(isLaGrange(lines.filter(l=>!l.text.includes('WM CCP')))).toBe(false);
 });
 
 it('ignores other plants without replacing stored OCR and merges just confirmed ticket fields', () => {
