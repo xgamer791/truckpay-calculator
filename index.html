@@ -7,7 +7,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="driverpay-build" content="3.1.0">
+    <meta name="driverpay-build" content="3.2.0">
     <title>DriverPay Pro v3.1.0</title>
     <script>
     (function () {
@@ -75,6 +75,10 @@
         .day-header-text { font-size: 16px; font-weight: 900; color: #60a5fa; text-transform: uppercase; letter-spacing: 0.05em; max-width: 65%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .day-total-text { font-size: 19px; font-weight: 900; color: #4ade80; flex-shrink: 0; }
         .mileage-pay-text { font-size: 1.125rem; font-weight: 700; color: white; }
+        .load-ticket-line { display: flex; align-items: center; min-width: 0; flex-wrap: wrap; row-gap: 4px; }
+        .load-ticket-number { color: #334155; font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; margin-left: 8px; white-space: nowrap; }
+        .load-ticket-summary { min-width: 0; flex: 1; padding-right: 8px; }
+        .mileage-pay-text { flex-shrink: 0; }
         .custom-badge { color: #60a5fa; margin-left: 6px; font-weight: 800; }
         .day-section { margin-bottom: 24px; transition: margin-bottom 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
         .day-section.collapsed { margin-bottom: 12px; }
@@ -425,7 +429,7 @@
         .export-row.disabled:active { background: #fff; }
         .find-ticket-thumb { background: #e2e8f0; }
     </style>
-  <script type="module" crossorigin src="/truckpay-calculator/assets/index-rlwK55DH.js"></script>
+  <script type="module" crossorigin src="/truckpay-calculator/assets/index-NxlVG1po.js"></script>
   <link rel="stylesheet" crossorigin href="/truckpay-calculator/assets/index-C0_DXGXW.css">
 </head>
 <body>
@@ -1095,7 +1099,7 @@
 
         function applySettingsToHeader() {
             const sub = document.getElementById('headerSubtitle');
-            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v3.1.0`;
+            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v3.2.0`;
         }
 
         let savedScrollY = 0;
@@ -2473,6 +2477,11 @@
                     syncStatus: 'local',
                     ocr: emptyOcr('')
                 };
+                if (window.DriverTicketReader) {
+                    try {
+                        window.DriverTicketReader.applyTicketRead(doc, await window.DriverTicketReader.readTicket(dataUrl));
+                    } catch (_) { /* Save the photo and retry automatically after cloud sync. */ }
+                }
                 if (ticketCapture.mode === 'edit') {
                     if (!editingLoad) throw new Error('The load editor was closed. Reopen the load and try again.');
                     editingLoad.stagedTicket = dataUrl;
@@ -2901,11 +2910,14 @@
                         const pKey = loadKey(entry.id, l.id);
                         const isProcessing = processingLoads.has(pKey);
                         const iconClass = isProcessing ? 'processing' : (hasInfo ? 'has-info' : (hasTicket ? 'saved' : 'no-ticket'));
-                        const iconSvg = hasInfo ? ticketSvg : cameraSvg;
+                        const iconSvg = cameraSvg;
+                        const primaryRead = docs[docs.length - 1] && docs[docs.length - 1].ticketRead;
+                        const ticketNumber = primaryRead && primaryRead.status === 'matched' && primaryRead.plant === 'martin-marietta' && /^\d{6,12}$/.test(primaryRead.ticketNumber || '') ? primaryRead.ticketNumber : '';
+                        const numberHtml = ticketNumber ? `<span class="load-ticket-number" aria-label="Ticket number ${ticketNumber}">#${ticketNumber}</span>` : '';
                         const countBadge = (!isProcessing && docs.length > 1) ? `<span class="ticket-count" aria-label="${docs.length} documents">${docs.length}</span>` : '';
                         const tapAction = hasTicket ? `viewTicket('${entry.id}','${l.id}')` : `uploadTicket('${entry.id}','${l.id}')`;
                         const aria = hasInfo ? 'View ticket and info' : (hasTicket ? 'View saved photo' : 'Add ticket photo');
-                        return `<div class="swipe-container" id="container-${l.id}" ontouchstart="ts(event, '${l.id}')" ontouchmove="tm(event, '${l.id}')" ontouchend="te(event, '${l.id}')"><div class="edit-box-flat" onclick="openEditModal('${entry.id}','${l.id}')">EDIT</div><div class="delete-box-flat" onclick="removeLoad('${entry.id}', '${l.id}')">DELETE</div><div class="swipe-content"><div class="flex flex-col"><div class="flex items-center"><span class="text-lg font-bold text-gray-100">${l.miles} miles</span><span class="ticket-icon ${iconClass}" role="button" aria-label="${aria}" onclick="event.stopPropagation();${tapAction}">${iconSvg}${countBadge}</span>${l.note ? `<span class="note-icon" onclick="event.stopPropagation();viewNote('${entry.id}','${l.id}')">${noteSvg}</span>` : ''}</div><div class="flex items-center text-[10px] text-gray-500 font-bold uppercase"><span>${l.tons} TONS</span>${isCustom ? '<span class="custom-badge">· CUSTOM</span>' : ''}</div></div><span class="mileage-pay-text">$${l.pay.toFixed(2)}</span></div></div>`;
+                        return `<div class="swipe-container" id="container-${l.id}" ontouchstart="ts(event, '${l.id}')" ontouchmove="tm(event, '${l.id}')" ontouchend="te(event, '${l.id}')"><div class="edit-box-flat" onclick="openEditModal('${entry.id}','${l.id}')">EDIT</div><div class="delete-box-flat" onclick="removeLoad('${entry.id}', '${l.id}')">DELETE</div><div class="swipe-content"><div class="load-ticket-summary flex flex-col"><div class="load-ticket-line"><span class="text-lg font-bold text-gray-100">${l.miles} miles</span><span class="ticket-icon ${iconClass}" role="button" aria-label="${aria}" onclick="event.stopPropagation();${tapAction}">${iconSvg}${countBadge}</span>${numberHtml}${l.note ? `<span class="note-icon" onclick="event.stopPropagation();viewNote('${entry.id}','${l.id}')">${noteSvg}</span>` : ''}</div><div class="flex items-center text-[10px] text-gray-500 font-bold uppercase"><span>${l.tons} TONS</span>${isCustom ? '<span class="custom-badge">· CUSTOM</span>' : ''}</div></div><span class="mileage-pay-text">$${l.pay.toFixed(2)}</span></div></div>`;
                     }).join('')}</div></div>`;
                 }
                 const card = document.createElement('div');

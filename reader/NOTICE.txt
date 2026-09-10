@@ -1,0 +1,16 @@
+DriverPay ticket reader
+
+Image preparation, ticket-layout matching, text-region processing, CTC decoding,
+confidence checks, and app integration are implemented in src/ticket-reader.
+The new reader does not use the app's legacy Tesseract/Grok ticket extraction.
+
+Neural model weights and character dictionary: PaddleOCR PP-OCRv4, distributed
+by @gutenye/ocr-models 1.2.2. PaddleOCR models are licensed under Apache-2.0.
+https://github.com/PaddlePaddle/PaddleOCR
+https://github.com/PaddlePaddle/PaddleOCR/blob/main/LICENSE
+
+ONNX Runtime Web 1.17.3, Microsoft, MIT License.
+https://github.com/microsoft/onnxruntime
+
+Models and WebAssembly files are copied from pinned npm packages at build time.
+Ticket images are processed locally in a dedicated worker. No vision API is used.
