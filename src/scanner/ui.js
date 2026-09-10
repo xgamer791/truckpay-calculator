@@ -350,7 +350,10 @@ class TicketScanner {
     const turns=this.quarterTurns||0,w=this.processed.width,h=this.processed.height;
     this.preview.width=turns%2?h:w;this.preview.height=turns%2?w:h;
     const ctx=this.preview.getContext('2d');ctx.translate(this.preview.width/2,this.preview.height/2);ctx.rotate(turns*Math.PI/2);ctx.drawImage(this.processed,-w/2,-h/2);
-    this.dataUrl=this.preview.toDataURL('image/jpeg',.94);this.paint();
+    // The processed ticket is two-tone, so PNG stores it losslessly in roughly a
+    // fifteenth of the bytes a high quality JPEG needs. The capture waits in
+    // browser storage until the upload finishes, and that budget is small.
+    this.dataUrl=this.preview.toDataURL('image/png');this.paint();
   }
   async save(){
     if(!['reading','save-error'].includes(this.mode)||!this.dataUrl||!isConfirmedRead(this.ticketRead))return;

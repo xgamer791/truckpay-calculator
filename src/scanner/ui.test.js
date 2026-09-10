@@ -32,7 +32,7 @@ beforeEach(async()=>{
   HTMLVideoElement.prototype.requestVideoFrameCallback=function(callback){return setTimeout(()=>{frames++;clock+=.1;callback(performance.now(),{mediaTime:clock});},100);};
   HTMLVideoElement.prototype.cancelVideoFrameCallback=id=>clearTimeout(id);
   vi.spyOn(HTMLCanvasElement.prototype,'getContext').mockImplementation(function(){const canvas=this;return {drawImage:vi.fn(),clearRect:vi.fn(),fillRect:vi.fn(),translate:vi.fn(),rotate:vi.fn(),setTransform:vi.fn(),setLineDash:vi.fn(),beginPath:vi.fn(),rect:vi.fn(),moveTo:vi.fn(),lineTo:vi.fn(),fill:vi.fn(),stroke:vi.fn(),closePath:vi.fn(),arc:vi.fn(),putImageData:vi.fn(),getImageData:()=>({width:canvas.width,height:canvas.height,data:new Uint8ClampedArray(canvas.width*canvas.height*4)})};});
-  vi.spyOn(HTMLCanvasElement.prototype,'toDataURL').mockReturnValue('data:image/jpeg;base64,TEST');
+  vi.spyOn(HTMLCanvasElement.prototype,'toDataURL').mockReturnValue('data:image/png;base64,TEST');
   vi.spyOn(Element.prototype,'getBoundingClientRect').mockReturnValue({width:390,height:600,left:0,top:0,right:390,bottom:600});
   await import('./ui.js');scanner=window.DriverTicketScanner;
 });
@@ -66,8 +66,13 @@ describe('quality-gated manual capture and automatic verified saving',()=>{
     expect(document.querySelector('.ticket-camera-loading').hidden).toBe(false);
     expect(document.querySelector('[data-action=save]')).toBeNull();
     resolve(matched);await vi.advanceTimersByTimeAsync(10);
-    expect(onSave).toHaveBeenCalledWith('data:image/jpeg;base64,TEST','black-white',{orientationVersion:1,ticketRead:matched,documentId:expect.stringMatching(/^doc_/)});
+    expect(onSave).toHaveBeenCalledWith('data:image/png;base64,TEST','black-white',{orientationVersion:1,ticketRead:matched,documentId:expect.stringMatching(/^doc_/)});
     expect(scanner.root).toBeNull();
+  });
+  it('stores the two-tone capture losslessly instead of as a large JPEG',async()=>{
+    await scanner.open({onSave:vi.fn()});await capture();
+    expect(HTMLCanvasElement.prototype.toDataURL).toHaveBeenCalledWith('image/png');
+    expect(HTMLCanvasElement.prototype.toDataURL).not.toHaveBeenCalledWith('image/jpeg',expect.anything());
   });
   it('uses the fresh reader to orient the saved photo',async()=>{
     readerMock.mockResolvedValue({...matched,quarterTurns:1});
