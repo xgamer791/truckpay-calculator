@@ -7,7 +7,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="driverpay-build" content="3.2.0">
+    <meta name="driverpay-build" content="3.2.1">
     <title>DriverPay Pro v3.1.0</title>
     <script>
     (function () {
@@ -429,7 +429,7 @@
         .export-row.disabled:active { background: #fff; }
         .find-ticket-thumb { background: #e2e8f0; }
     </style>
-  <script type="module" crossorigin src="/truckpay-calculator/assets/index-NxlVG1po.js"></script>
+  <script type="module" crossorigin src="/truckpay-calculator/assets/index-1UmiCxq4.js"></script>
   <link rel="stylesheet" crossorigin href="/truckpay-calculator/assets/index-C0_DXGXW.css">
 </head>
 <body>
@@ -541,7 +541,7 @@
             </div>
             <div class="footer-tagline">Built for the long haul</div>
             <div class="footer-meta">
-                <span class="footer-version">v3.1.0</span>
+                <span class="footer-version">v3.2.1</span>
                 <span class="footer-meta-dot"></span>
                 <span>© 2026</span>
                 <span class="footer-meta-dot"></span>
@@ -1099,7 +1099,7 @@
 
         function applySettingsToHeader() {
             const sub = document.getElementById('headerSubtitle');
-            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v3.2.0`;
+            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v3.2.1`;
         }
 
         let savedScrollY = 0;
@@ -2912,7 +2912,7 @@
                         const iconClass = isProcessing ? 'processing' : (hasInfo ? 'has-info' : (hasTicket ? 'saved' : 'no-ticket'));
                         const iconSvg = cameraSvg;
                         const primaryRead = docs[docs.length - 1] && docs[docs.length - 1].ticketRead;
-                        const ticketNumber = primaryRead && primaryRead.status === 'matched' && primaryRead.plant === 'martin-marietta' && /^\d{6,12}$/.test(primaryRead.ticketNumber || '') ? primaryRead.ticketNumber : '';
+                        const ticketNumber = primaryRead && primaryRead.status === 'matched' && ['martin-marietta', 'colorado-materials'].includes(primaryRead.plant) && /^\d{6,12}$/.test(primaryRead.ticketNumber || '') ? primaryRead.ticketNumber : '';
                         const numberHtml = ticketNumber ? `<span class="load-ticket-number" aria-label="Ticket number ${ticketNumber}">#${ticketNumber}</span>` : '';
                         const countBadge = (!isProcessing && docs.length > 1) ? `<span class="ticket-count" aria-label="${docs.length} documents">${docs.length}</span>` : '';
                         const tapAction = hasTicket ? `viewTicket('${entry.id}','${l.id}')` : `uploadTicket('${entry.id}','${l.id}')`;
