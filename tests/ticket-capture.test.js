@@ -27,6 +27,17 @@ async function capture(load='two',mode='direct',read=matched){
   await w.pickTicketPhoto({sId:'s',lId:load,mode});
   return scannerOptions.onSave(image,'black-white',{orientationVersion:1,ticketRead:read,documentId:'new'});
 }
+// Storage limits are what the browser enforces; jsdom has no quota of its own.
+function refuseHistoryWrites(times=Infinity){
+  let refused=0;
+  w.Storage.prototype.setItem=function(key,value){
+    if(key==='driver_history'&&refused<times){
+      refused++;
+      throw Object.assign(new Error('The quota has been exceeded.'),{name:'QuotaExceededError'});
+    }
+    w.__driverPayNativeSetItem(key,value);
+  };
+}
 it('rejects duplicate numbers with a reason and preserves the old unreadable photo',async()=>{
   const before=history();
   await expect(capture()).rejects.toMatchObject({code:'DUPLICATE_TICKET',message:expect.stringContaining('3556031')});
@@ -42,6 +53,29 @@ it('does not persist failed OCR or a duplicate reserved on another device',async
   w.driverPayReserveTicketNumber.mockResolvedValue({duplicate:true,reason:'Duplicate ticket #23696214 is already being saved.'});
   await expect(capture('two','direct',{...matched,ticketNumber:'23696214'})).rejects.toMatchObject({code:'DUPLICATE_TICKET'});
   expect(history()).toEqual(before);
+});
+it('says the load is gone instead of blaming storage, and frees the reserved number',async()=>{
+  const before=history();
+  await expect(capture('deleted','direct',{...matched,ticketNumber:'3556032'})).rejects.toThrow(/no longer in your history/);
+  expect(history()).toEqual(before);
+  expect(w.driverPayReleaseTicketNumber).toHaveBeenCalledWith({number:'3556032',documentClientId:'new'});
+});
+it('saves a verified capture by dropping photos the cloud already has',async()=>{
+  const cloudBacked=history();
+  cloudBacked[0].loads[0].documents[0].storageId='kg2abc';
+  cloudBacked[0].loads[0].ticket=cloudBacked[0].loads[0].documents[0].processed;
+  w.driverPayApplyCloudSnapshot(cloudBacked,{avgTons:25,truckNumber:'1205',userId:'driver'});
+  refuseHistoryWrites(1);
+  await capture('two','direct',{...matched,ticketNumber:'3556032'});
+  const saved=history();
+  expect(saved[0].loads[1].documents[0]).toMatchObject({id:'new',processed:image});
+  expect(saved[0].loads[0].documents[0]).toMatchObject({id:'old',storageId:'kg2abc',processed:null});
+  expect(saved[0].loads[0].ticket).toBeNull();
+});
+it('keeps the verified capture and explains a full store when nothing can be freed',async()=>{
+  refuseHistoryWrites();
+  await expect(capture('two','direct',{...matched,ticketNumber:'3556032'})).rejects.toThrow(/out of room for ticket photos/);
+  expect(history()[0].loads[1].documents[0].id).toBe('unread');
 });
 it('saves a verified edit capture immediately without committing unrelated pay edits',async()=>{
   w.openEditModal('s','two');w.document.getElementById('editTons').value='29';

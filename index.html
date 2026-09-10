@@ -7,8 +7,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="driverpay-build" content="3.3.0">
-    <title>DriverPay Pro v3.3.0</title>
+    <meta name="driverpay-build" content="3.3.1">
+    <title>DriverPay Pro v3.3.1</title>
     <script>
     (function () {
         var meta = document.querySelector('meta[name="driverpay-build"]');
@@ -539,7 +539,7 @@
             </div>
             <div class="footer-tagline">Built for the long haul</div>
             <div class="footer-meta">
-                <span class="footer-version">v3.3.0</span>
+                <span class="footer-version">v3.3.1</span>
                 <span class="footer-meta-dot"></span>
                 <span>© 2026</span>
                 <span class="footer-meta-dot"></span>
@@ -1097,7 +1097,7 @@
 
         function applySettingsToHeader() {
             const sub = document.getElementById('headerSubtitle');
-            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v3.3.0`;
+            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v3.3.1`;
         }
 
         let savedScrollY = 0;
@@ -1361,10 +1361,11 @@
                         }
                         if (!l.id) { l.id = Math.random().toString(36).substr(2, 9); changed = true; }
                         if (Array.isArray(l.documents)) {
-                            const docs = l.documents.filter(d => d && typeof d === 'object' && (d.processed || d.original));
+                            const docs = l.documents.filter(d => d && typeof d === 'object' && (d.processed || d.original || d.storageId));
                             if (docs.length !== l.documents.length) changed = true;
                             l.documents = docs;
-                            if (docs.length && !l.ticket) { l.ticket = docs[docs.length - 1].processed || docs[docs.length - 1].original; changed = true; }
+                            const primary = docs.length ? (docs[docs.length - 1].processed || docs[docs.length - 1].original) : null;
+                            if (primary && !l.ticket) { l.ticket = primary; changed = true; }
                             if (!docs.length) { delete l.documents; if (!l.ticket) { /* keep */ } }
                         }
                         goodLoads.push({ ...l, miles, tons, day });
@@ -1818,6 +1819,7 @@
                 sId, lId, miles: l.miles,
                 savedTicket: primaryDocImage(l) || l.ticket || null,
                 savedDocuments: getLoadDocs(l),
+                hasSavedTicket: getLoadDocs(l).length > 0 || !!l.ticket,
                 stagedTicket: null,
                 stagedDocument: null,
                 removeTicket: false
@@ -1933,7 +1935,9 @@
                 }
                 if (merged.customTotal === null) delete merged.customTotal;
                 if (merged.customRate === null) delete merged.customRate;
-                if (!merged.ticket) { delete merged.ticket; delete merged.documents; }
+                // A ticket whose image only exists in the cloud still counts, so
+                // editing pay fields must never discard its record.
+                if (!merged.ticket && !getLoadDocs(merged).length) { delete merged.ticket; delete merged.documents; }
                 if (!merged.note) delete merged.note;
                 return merged;
             });
@@ -1957,7 +1961,7 @@
             const viewBtn = document.getElementById('editTicketView');
             if (!cam || !pending || !status || !viewBtn) return;
             const staged = !!editingLoad.stagedTicket;
-            const saved = !!editingLoad.savedTicket && !editingLoad.removeTicket;
+            const saved = (!!editingLoad.savedTicket || !!editingLoad.hasSavedTicket) && !editingLoad.removeTicket;
             const hasPhoto = staged || saved;
             const hasInfo = !!(editingLoad.stagedDocument && docHasOcrInfo(editingLoad.stagedDocument)) ||
                 (!!editingLoad.savedDocuments && editingLoad.savedDocuments.some(docHasOcrInfo) && !editingLoad.removeTicket && !staged);
@@ -1975,7 +1979,10 @@
         function viewEditTicket() {
             if (!editingLoad) return;
             const img = editingLoad.stagedTicket || (editingLoad.removeTicket ? null : editingLoad.savedTicket);
-            if (!img) return;
+            if (!img) {
+                if (editingLoad.hasSavedTicket && !editingLoad.removeTicket) appAlert('This ticket photo is stored in the cloud. Reconnect to view it here.', { title: 'Ticket' });
+                return;
+            }
             const isStaged = !!editingLoad.stagedTicket;
             const overlay = document.createElement('div');
             overlay.className = 'ticket-overlay';
@@ -2214,7 +2221,8 @@
             stage.addEventListener('click', (e) => {
                 if (e.target && e.target.closest && e.target.closest('.doc-viewer-thumbs')) return;
                 const img = document.getElementById('docViewerImg');
-                const url = (img && img.src) || (docViewer.docs[docViewer.index] && (docViewer.docs[docViewer.index].processed || docViewer.docs[docViewer.index].original));
+                const doc = docViewer.docs[docViewer.index];
+                const url = (doc && (doc.processed || doc.original)) || (img && img.getAttribute('src'));
                 if (url) openTicketLightbox(url);
             });
         }
@@ -2361,7 +2369,9 @@
         function getLoadDocs(load) {
             if (!load) return [];
             if (Array.isArray(load.documents) && load.documents.length) {
-                return load.documents.filter(d => d && (d.processed || d.original || d.ticket));
+                // A storage ID alone still means the ticket exists: its image is
+                // in the cloud even when no copy is held on this device.
+                return load.documents.filter(d => d && (d.processed || d.original || d.ticket || d.storageId));
             }
             if (load.ticket) {
                 return [{
@@ -2495,9 +2505,12 @@
                 if (ticketCapture.mode === 'edit') {
                     if (!editingLoad) throw new Error('The load editor was closed. Reopen the load and try again.');
                 }
-                const ok = persistLoadDocument(ticketCapture.sId, ticketCapture.lId, doc, ticketCapture.mode === 'edit' ? 'replace' : ticketCapture.mode, ticketCapture.docId);
-                if (!ok) {
-                    throw new Error('Could not save the ticket. Free up storage and try again.');
+                const failure = persistLoadDocument(ticketCapture.sId, ticketCapture.lId, doc, ticketCapture.mode === 'edit' ? 'replace' : ticketCapture.mode, ticketCapture.docId);
+                if (failure === 'missing-load') {
+                    throw new Error('This load is no longer in your history. Close the scanner, add the load again, then photograph the ticket.');
+                }
+                if (failure) {
+                    throw new Error('This app is out of room for ticket photos. Get a signal so saved tickets finish uploading, or delete an older settlement, then tap Retry saving.');
                 }
                 savedLocally = true;
                 if (ticketCapture.mode === 'edit') {
@@ -2505,6 +2518,7 @@
                     // stay in the editor until the driver saves those changes.
                     editingLoad.savedTicket = dataUrl;
                     editingLoad.savedDocuments = [doc];
+                    editingLoad.hasSavedTicket = true;
                     editingLoad.stagedTicket = null;
                     editingLoad.stagedDocument = null;
                     editingLoad.removeTicket = false;
@@ -2523,13 +2537,15 @@
             }
         }
 
+        // Returns null when the document is stored, otherwise 'missing-load' or
+        // 'storage-full'. The two failures need different wording and recovery.
         function persistLoadDocument(sId, lId, doc, mode, replaceId) {
             let h = JSON.parse(localStorage.getItem('driver_history') || '[]');
             const sIdx = h.findIndex(s => s && s.id == sId);
-            if (sIdx === -1) return false;
-            if (!Array.isArray(h[sIdx].loads)) return false;
+            if (sIdx === -1) return 'missing-load';
+            if (!Array.isArray(h[sIdx].loads)) return 'missing-load';
             const lIdx = h[sIdx].loads.findIndex(l => l && l.id == lId);
-            if (lIdx === -1) return false;
+            if (lIdx === -1) return 'missing-load';
             const load = h[sIdx].loads[lIdx];
             let docs = Array.isArray(load.documents) ? load.documents.slice() : [];
             // migrate legacy ticket
@@ -2565,6 +2581,15 @@
             load.documents = docs;
             load.ticket = doc.processed; // primary preview / ticket-present source of truth
             h[sIdx].loads[lIdx] = load;
+            if (writeHistory(h)) return null;
+            // Photos already in the cloud are the only bytes safe to drop here.
+            // Their record keeps its storage ID, and the next cloud snapshot
+            // brings the web address of the image back.
+            if (releaseUploadedImages(h) && writeHistory(h)) return null;
+            return 'storage-full';
+        }
+
+        function writeHistory(h) {
             try {
                 localStorage.setItem('driver_history', JSON.stringify(h));
                 return true;
@@ -2572,6 +2597,29 @@
                 console.error('[scan] local save failed:', err);
                 return false;
             }
+        }
+
+        function releaseUploadedImages(h) {
+            let freed = false;
+            (Array.isArray(h) ? h : []).forEach(s => {
+                if (!s || !Array.isArray(s.loads)) return;
+                s.loads.forEach(l => {
+                    if (!l || !Array.isArray(l.documents)) return;
+                    l.documents.forEach(d => {
+                        if (!d || !d.storageId) return;
+                        ['processed', 'original'].forEach(field => {
+                            if (typeof d[field] === 'string' && d[field].slice(0, 5) === 'data:') {
+                                d[field] = null;
+                                freed = true;
+                            }
+                        });
+                    });
+                    if (typeof l.ticket === 'string' && l.ticket.slice(0, 5) === 'data:') {
+                        l.ticket = primaryDocImage(l) || null;
+                    }
+                });
+            });
+            return freed;
         }
 
         function enqueueDocSync(sId, lId, docId) {
@@ -2599,7 +2647,7 @@
 
         function captureEditTicket() {
             if (!editingLoad) return;
-            const hasSaved = !!editingLoad.savedTicket && !editingLoad.removeTicket;
+            const hasSaved = (!!editingLoad.savedTicket || !!editingLoad.hasSavedTicket) && !editingLoad.removeTicket;
             const run = () => pickTicketPhoto({ mode: 'edit', sId: editingLoad.sId, lId: editingLoad.lId });
             if (hasSaved && !editingLoad.stagedTicket) {
                 appConfirm('This load already has a saved ticket. Replace it with a new photo?', { title: 'Replace Ticket', variant: 'warn', confirmText: 'Replace' })
@@ -2631,7 +2679,7 @@
                 delete load.documents;
             } else {
                 load.documents = docs;
-                load.ticket = docs[docs.length - 1].processed || docs[docs.length - 1].original;
+                load.ticket = docs[docs.length - 1].processed || docs[docs.length - 1].original || null;
             }
             h[sIdx].loads[lIdx] = load;
             localStorage.setItem('driver_history', JSON.stringify(h));
@@ -2725,14 +2773,16 @@
             const doc = docViewer.docs[docViewer.index];
             if (!doc) return;
             const img = document.getElementById('docViewerImg');
-            img.src = doc.processed || doc.original || '';
+            const image = doc.processed || doc.original || '';
+            img.src = image;
+            img.style.display = image ? '' : 'none';
             const title = document.getElementById('docViewerTitle');
             const sub = document.getElementById('docViewerSub');
             const miles = load && load.miles != null ? load.miles + ' miles' : 'Load document';
             title.textContent = miles + (load && load.day ? ' · ' + load.day : '');
             const when = doc.createdAt ? new Date(doc.createdAt).toLocaleString() : 'Saved on device';
             const sync = doc.syncStatus === 'failed' ? ' · Upload failed' : (doc.syncStatus === 'pending' ? ' · Pending sync' : ' · Saved locally');
-            sub.textContent = when + sync;
+            sub.textContent = image ? when + sync : when + ' · Stored in cloud — reconnect to view';
 
             const infoWrap = document.getElementById('docViewerInfo');
             const infoGrid = document.getElementById('docViewerInfoGrid');
@@ -2769,7 +2819,7 @@
             if (docViewer.docs.length > 1) {
                 thumbs.classList.add('show');
                 thumbs.innerHTML = docViewer.docs.map((d, i) =>
-                    `<img class="doc-viewer-thumb ${i === docViewer.index ? 'active' : ''}" src="${d.processed || d.original}" alt="Document ${i + 1}" data-idx="${i}">`
+                    `<img class="doc-viewer-thumb ${i === docViewer.index ? 'active' : ''}" src="${d.processed || d.original || ''}" alt="Document ${i + 1}" data-idx="${i}">`
                 ).join('');
                 thumbs.querySelectorAll('.doc-viewer-thumb').forEach(el => {
                     el.onclick = () => {
@@ -2787,10 +2837,14 @@
             const doc = docViewer.docs[docViewer.index];
             if (!doc) return;
             const url = doc.processed || doc.original;
+            if (!url) { appAlert('This ticket photo is stored in the cloud. Reconnect to share it.', { title: 'Ticket' }); return; }
+            let name = 'load-document.jpg';
             try {
                 const res = await fetch(url);
                 const blob = await res.blob();
-                const file = new File([blob], 'load-document.jpg', { type: 'image/jpeg' });
+                const type = blob.type || 'image/jpeg';
+                name = 'load-document.' + (type === 'image/jpeg' ? 'jpg' : (type.split('/')[1] || 'jpg'));
+                const file = new File([blob], name, { type });
                 if (navigator.canShare && navigator.canShare({ files: [file] })) {
                     await navigator.share({ files: [file], title: 'Load document' });
                     return;
@@ -2800,7 +2854,7 @@
             }
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'load-document.jpg';
+            a.download = name;
             document.body.appendChild(a);
             a.click();
             a.remove();
@@ -3311,7 +3365,7 @@
     </script>
     <!-- DRIVERPAY_CLOUD_FALLBACK_START -->
     <link rel="stylesheet" href="/truckpay-calculator/assets/driverpay-cloud-v3.css?v=1887cdcb1223">
-    <script type="module" src="/truckpay-calculator/assets/driverpay-cloud-v3.js?v=1b2a26d6b78d"></script>
+    <script type="module" src="/truckpay-calculator/assets/driverpay-cloud-v3.js?v=f4f61ff967a4"></script>
     <!-- DRIVERPAY_CLOUD_FALLBACK_END -->
 </body>
 </html>

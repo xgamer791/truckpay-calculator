@@ -35,6 +35,14 @@ is allowed. Local duplicate checks and atomic Convex reservations cover concurre
 captures; snapshot validation also protects stored tickets. A connection is needed
 to complete the duplicate check. Historical unreadable images stay untouched.
 
+The processed capture is two-tone, so store it as lossless PNG, never as a large
+JPEG: it waits in `localStorage` (a few megabytes for the whole account) until the
+Convex upload replaces it with a web address. A failed local write is reported as
+either a vanished load or a full store, and a full store first drops data URLs of
+documents that already carry a `storageId`. Because of that, a document with only
+a `storageId` still counts as an existing ticket everywhere — never filter it out
+or delete it for having no local image.
+
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## The repo has two apps — only one is live
