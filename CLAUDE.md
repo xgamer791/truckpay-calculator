@@ -2,6 +2,11 @@
 
 ## Current architecture (September 2026; supersedes older notes below)
 
+Legacy `app.html` and missing old paths redirect to `/truckpay-calculator/` with
+sign-in query parameters and URL fragments preserved. `sync-pages-assets.mjs`
+copies these redirects to dist too. The inline update check always fetches from
+the app root, even on `index.html` bookmarks, and only reloads for a newer version.
+
 The live app combines `index.html` with the built entry from `src/cloud/main.jsx`,
 Convex auth/storage/sync, and the scanner under `src/scanner`. Source changes in
 these active directories require `npm run build`; `sync-pages-assets.mjs` updates

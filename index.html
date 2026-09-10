@@ -7,22 +7,37 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="driverpay-build" content="3.4.0">
-    <title>DriverPay Pro v3.4.0</title>
-    <script>
+    <meta name="driverpay-build" content="3.4.1">
+    <title>DriverPay Pro v3.4.1</title>
+    <script id="driverpay-update-check">
     (function () {
+        if (!/^https?:$/.test(location.protocol)) return;
         var meta = document.querySelector('meta[name="driverpay-build"]');
         var localBuild = meta && meta.getAttribute('content');
         if (!localBuild) return;
-        var key = 'driverpay_build_seen';
-        try { sessionStorage.setItem(key, localBuild); } catch (_) {}
-        fetch(location.pathname.replace(/\/?$/, '/') + 'index.html?_=' + Date.now(), { cache: 'no-store', headers: { 'Cache-Control': 'no-cache' } })
-            .then(function (r) { return r.text(); })
+        // Resolve from the app root, including when opened via index.html or an old query link.
+        var root = new URL('/truckpay-calculator/', location.href);
+        var check = new URL('index.html', root);
+        check.searchParams.set('_', Date.now());
+        fetch(check.href, { cache: 'no-store', headers: { 'Cache-Control': 'no-cache' } })
+            .then(function (r) { return r.ok ? r.text() : ''; })
             .then(function (html) {
                 var m = html.match(/name=["']driverpay-build["']\s+content=["']([^"']+)["']/i);
-                if (!m || !m[1] || m[1] === localBuild) return;
-                var next = location.pathname.replace(/\/?$/, '/') + '?v=' + String(m[1]).replace(/\./g, '') + '&t=' + Date.now();
-                location.replace(next);
+                if (!m || !/^\d+\.\d+\.\d+$/.test(m[1])) return;
+                var remote = m[1].split('.').map(Number);
+                var local = localBuild.split('.').map(Number);
+                var newer = false;
+                for (var i = 0; i < 3; i++) {
+                    if (remote[i] !== local[i]) { newer = remote[i] > local[i]; break; }
+                }
+                // A stale edge response must never downgrade a newer page or create a reload loop.
+                if (!newer) return;
+                var next = new URL(root);
+                next.search = location.search;
+                next.hash = location.hash;
+                next.searchParams.set('v', m[1]);
+                next.searchParams.set('t', Date.now());
+                location.replace(next.href);
             })
             .catch(function () {});
     })();
@@ -539,7 +554,7 @@
             </div>
             <div class="footer-tagline">Built for the long haul</div>
             <div class="footer-meta">
-                <span class="footer-version">v3.4.0</span>
+                <span class="footer-version">v3.4.1</span>
                 <span class="footer-meta-dot"></span>
                 <span>© 2026</span>
                 <span class="footer-meta-dot"></span>
@@ -1097,7 +1112,7 @@
 
         function applySettingsToHeader() {
             const sub = document.getElementById('headerSubtitle');
-            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v3.4.0`;
+            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v3.4.1`;
         }
 
         let savedScrollY = 0;

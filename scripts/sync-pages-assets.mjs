@@ -25,4 +25,6 @@ for(const name of await readdir('dist/assets')){
   if(name!==script[1]&&name!==style[1])await copyFile(`dist/assets/${name}`,`assets/${name}`);
 }
 await writeFile('index.html',updatedHtml);
+// Keep legacy bookmarks working with either configured Pages source.
+for (const name of ['app.html','404.html']) await copyFile(name,`dist/${name}`);
 console.log('Synced production entry assets, cache versions, and scanner worker.');
