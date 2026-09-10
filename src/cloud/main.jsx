@@ -19,7 +19,8 @@ import {
 import "./styles.css";
 import "../scanner/scanner.css";
 import "../scanner/ui.js";
-import { readTicket, applyTicketRead, READER_VERSION } from '../ticket-reader/browser.js';
+import { readTicket, applyTicketRead } from '../ticket-reader/browser.js';
+import { needsTicketRead } from '../ticket-reader/metadata.js';
 
 window.DriverTicketReader = { readTicket, applyTicketRead };
 
@@ -568,7 +569,7 @@ function CloudSession({ profileState }) {
   useEffect(() => {
     if (!cloudState?.profile || readingTicket.current || !navigator.onLine) return;
     const documents = cloudState.history.flatMap(s => s.loads.flatMap(l => l.documents || []));
-    const waiting = documents.filter(d => d.storageId && d.ticketRead?.version !== READER_VERSION);
+    const waiting = documents.filter(d => d.storageId && needsTicketRead(d.ticketRead));
     const next = waiting.find(d =>
       Date.now() - (attemptedReads.current.get(d.storageId) || 0) > 60000);
     if (!next) {

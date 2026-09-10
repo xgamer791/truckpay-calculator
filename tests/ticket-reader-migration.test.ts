@@ -6,6 +6,7 @@ const modules = import.meta.glob('../convex/**/*.ts');
 const apply = makeFunctionReference<'mutation'>('ticketReader:apply');
 const applyMine = makeFunctionReference<'mutation'>('ticketReader:applyMine');
 const save = makeFunctionReference<'mutation'>('sync:saveSnapshot');
+const list = makeFunctionReference<'query'>('ticketReader:list');
 const result = { version: 1, status: 'matched', template: 'martin-marietta-v1', plant: 'martin-marietta', ticketNumber: '23696214', confidence: .99 };
 async function fixture() {
   const t = convexTest(schema, modules);
@@ -42,4 +43,22 @@ it('does not apply an old result to a changed ticket or another driver', async (
   await t.run(ctx => ctx.db.patch(id, { updatedAt: 2 }));
   expect(await t.mutation(apply, { id, storageId, updatedAt: 1, result })).toEqual({ applied: false });
   expect((await t.run(ctx => ctx.db.get(id)))?.ticketRead).toBeUndefined();
+});
+
+it('backfills previously ignored Colorado tickets and protects them from older clients', async () => {
+  const { t, id, userId, storageId } = await fixture();
+  const oldIgnored = { version: 1, status: 'ignored' as const };
+  await t.run(ctx => ctx.db.patch(id, { ticketRead: oldIgnored }));
+  expect((await t.query(list, { cursor: null })).tickets).toHaveLength(1);
+  const colorado = { version: 2, status: 'matched', plant: 'colorado-materials', template: 'colorado-materials-v1', ticketNumber: '3556031', confidence: .99 };
+  expect(await t.mutation(apply, { id, storageId, updatedAt: 1, result: colorado })).toEqual({ applied: true });
+  expect((await t.query(list, { cursor: null })).tickets).toHaveLength(0);
+  const client = t.withIdentity({ subject: `${userId}|test`, issuer: 'https://convex.test' });
+  await client.mutation(save, {
+    settings: { avgTons: 25, truckNumber: 'None' },
+    settlements: [{ clientId: 's', payoutDate: '2026-09-12', loads: [{ clientId: 'l', day: 'Monday', miles: 20, tons: 25, pricingMode: 'auto' }] }],
+    tickets: [{ clientId: 't', loadClientId: 'l', type: 'ticket', storageId, ticketRead: oldIgnored }],
+  });
+  expect(await t.run(ctx => ctx.db.get(id))).toMatchObject({ ticketRead: colorado, ocr: { plant: 'Colorado Materials', ticketNumber: '3556031' } });
+  expect(await client.mutation(applyMine, { clientId: 't', storageId, result: oldIgnored })).toEqual({ applied: false });
 });

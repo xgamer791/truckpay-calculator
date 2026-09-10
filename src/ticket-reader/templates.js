@@ -12,3 +12,17 @@ export const MARIETTA_TEMPLATE = Object.freeze({
   numberPlacement: 'same row, immediately right of Ticket; above Vehicle/Carrier',
   excludedFields: ['Dispatch', 'Order No', 'Customer No', 'PO No', 'Vehicle'],
 });
+
+// Colorado Materials: bold company heading at upper left; TICKET # at upper
+// right above the date/time and POUNDS / TONS / LOADS table. Learned from the
+// full user-supplied form, not the number-only close-up.
+export const COLORADO_TEMPLATE = Object.freeze({
+  id: 'colorado-materials-v1',
+  supplier: 'colorado-materials',
+  companyHeading: 'coloradomaterials',
+  identityRegion: { x: 0, y: 0, width: .60, height: .60 },
+  ticketRegion: { x: .55, y: 0, width: .44, height: .53 },
+  numberLabel: 'TICKET #',
+  numberPlacement: 'same row, right of TICKET #; above date/time and weight table',
+  excludedFields: ['ORDER', 'PO', 'VEHICLE', 'CUSTOMER', 'PRODUCT', 'SCALE #'],
+});

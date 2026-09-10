@@ -5,6 +5,7 @@ import { requireUserId } from "./lib/security";
 import { loadDriverState } from "./lib/state";
 import { TRUCKING_COMPANY } from "./lib/fleet";
 import { ocrWithRead, ticketReadValue, validateRead } from './lib/ticketRead';
+import { preferredTicketRead } from '../src/ticket-reader/metadata.js';
 
 const pricingMode = v.union(
   v.literal("auto"),
@@ -249,7 +250,7 @@ export const saveSnapshot = mutation({
       if (ticket.ticketRead) validateRead(ticket.ticketRead);
       // A stale open app must not erase a completed server backfill. Replacing
       // the image deliberately resets the read to the replacement's metadata.
-      const ticketRead = sameImage && existing?.ticketRead?.version === 1 ? existing.ticketRead : ticket.ticketRead;
+      const ticketRead = sameImage ? preferredTicketRead(existing?.ticketRead, ticket.ticketRead) : ticket.ticketRead;
       const fields = {
         loadId,
         type: ticket.type,

@@ -1,4 +1,5 @@
 const VALID_MODES = new Set(["auto", "fixed", "perton"]);
+import { needsTicketRead } from '../ticket-reader/metadata.js';
 
 function optional(target, key, value) {
   if (value !== undefined && value !== null && value !== "") target[key] = value;
@@ -60,7 +61,7 @@ export async function uploadPendingTicketImages(history, generateUploadUrl) {
             }catch{ /* Keep cloud saving available; the original remains eligible for migration. */ }
           }
           const processed = await sourceToBlob(document.processed || document.original || load.ticket);
-          if (document.ticketRead?.version !== 1) {
+          if (needsTicketRead(document.ticketRead)) {
             try {
               const { readTicket, applyTicketRead } = await import('../ticket-reader/browser.js');
               applyTicketRead(document, await readTicket(document.processed || document.original || load.ticket));

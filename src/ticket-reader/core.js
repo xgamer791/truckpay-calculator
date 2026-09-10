@@ -1,7 +1,8 @@
 // Fresh ticket reader: PaddleOCR v4 neural models, our own pixel preparation,
 // text-region detection, CTC decoding, and plant/field validation. No legacy OCR.
-import { MARIETTA_TEMPLATE } from './templates.js';
-export const READER_VERSION = 1;
+import { MARIETTA_TEMPLATE, COLORADO_TEMPLATE } from './templates.js';
+import { READER_VERSION, PLANT_LABELS } from './metadata.js';
+export { READER_VERSION } from './metadata.js';
 export const TICKET_REGION = MARIETTA_TEMPLATE.ticketRegion;
 
 export function preparePixels(image, { turns = 0, region, maxWidth = 1600 } = {}) {
@@ -126,14 +127,27 @@ export async function createEngine(ort, models, dictionaryText, options = {}) {
 }
 
 const compact = value => String(value || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-export function isMarietta(lines, image) {
-  const region = MARIETTA_TEMPLATE.identityRegion;
-  const text = compact(lines.filter(line => line.confidence >= .80 && (!image ||
+function identityText(lines, image, region) {
+  return compact(lines.filter(line => line.confidence >= .80 && (!image ||
     (line.box.x < image.width * region.width && line.box.y < image.height * region.height))).map(line => line.text).join(' '));
+}
+export function isMarietta(lines, image) {
+  const text = identityText(lines, image, MARIETTA_TEMPLATE.identityRegion);
   if (text.includes(MARIETTA_TEMPLATE.companyHeading)) return true;
   // The small Marietta logo can be worn away; use independent Hunter anchors.
   const hunter = MARIETTA_TEMPLATE.hunter;
   return text.includes(hunter.logoWord) && text.includes(hunter.name) && (text.includes(hunter.street) || text.includes(hunter.plantCode));
+}
+
+export function isColorado(lines, image) {
+  return identityText(lines, image, COLORADO_TEMPLATE.identityRegion).includes(COLORADO_TEMPLATE.companyHeading);
+}
+
+export function classifyPlant(lines, image) {
+  const marietta = isMarietta(lines, image), colorado = isColorado(lines, image);
+  // A composite image or conflicting supplier headings must not be guessed.
+  if (marietta === colorado) return null;
+  return marietta ? MARIETTA_TEMPLATE : COLORADO_TEMPLATE;
 }
 
 export function ticketCandidate(lines) {
@@ -156,15 +170,16 @@ export function ticketCandidate(lines) {
   return numbers.size === 1 ? candidates.sort((a, b) => b.line.confidence - a.line.confidence)[0] : null;
 }
 
-export async function readMarietta(image, engine) {
-  let recognizedPlant = false;
+export async function readPlantTicket(image, engine) {
+  let recognizedPlant = null;
   // Read upright first; independently handle older sideways/upside-down files.
   for (const turns of [0, 2, 1, 3]) {
     const page = preparePixels(image, { turns });
     const lines = await engine.lines(page);
-    if (!isMarietta(lines, page)) continue;
-    recognizedPlant = true;
-    const header = preparePixels(image, { turns, region: TICKET_REGION, maxWidth: 1400 });
+    const template = classifyPlant(lines, page);
+    if (!template) continue;
+    recognizedPlant = template;
+    const header = preparePixels(image, { turns, region: template.ticketRegion, maxWidth: 1400 });
     const headerLines = await engine.lines(header);
     const candidate = ticketCandidate(headerLines);
     if (!candidate) continue;
@@ -179,14 +194,16 @@ export async function readMarietta(image, engine) {
     if (number !== candidate.number || confirmed.confidence < .93 || confirmed.minimum < .75) continue;
     const full = ticketCandidate(lines);
     if (full && full.number !== number) continue;
-    return { version: READER_VERSION, template: MARIETTA_TEMPLATE.id, status: 'matched', plant: 'martin-marietta', ticketNumber: number,
+    return { version: READER_VERSION, template: template.id, status: 'matched', plant: template.supplier, ticketNumber: number,
       confidence: Math.min(candidate.line.confidence, confirmed.confidence) };
   }
-  return { version: READER_VERSION, status: recognizedPlant ? 'unreadable' : 'ignored' };
+  return recognizedPlant
+    ? { version: READER_VERSION, status: 'unreadable', plant: recognizedPlant.supplier, template: recognizedPlant.id }
+    : { version: READER_VERSION, status: 'ignored' };
 }
 
 export function applyTicketRead(document, result) {
   document.ticketRead = result;
-  if (result.status === 'matched') document.ocr = { ...document.ocr, plant: 'Martin Marietta / Hunter', ticketNumber: result.ticketNumber };
+  if (result.status === 'matched') document.ocr = { ...document.ocr, plant: PLANT_LABELS[result.plant], ticketNumber: result.ticketNumber };
   return document;
 }

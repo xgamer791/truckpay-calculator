@@ -1,5 +1,6 @@
 import { expect, it } from 'vitest';
-import { applyTicketRead, isMarietta, ticketCandidate } from './core.js';
+import { applyTicketRead, classifyPlant, isColorado, isMarietta, ticketCandidate } from './core.js';
+import { needsTicketRead, preferredTicketRead } from './metadata.js';
 const line = (text, x, y, confidence = .99, minimum = .98) => ({ text, confidence, minimum, box: { x, y, width: text.length * 9, height: 20 } });
 
 it('uses independent plant identity anchors and rejects a generic Hunter reference', () => {
@@ -21,6 +22,32 @@ it('leaves conflicting and uncertain digits blank', () => {
   expect(ticketCandidate([line('Ticket', 0, 0), line('23696214', 90, 0, .90)])).toBeNull();
   expect(ticketCandidate([line('Ticket', 0, 0), line('23696214', 90, 0, .98, .50)])).toBeNull();
   expect(ticketCandidate([line('Ticket 23696214', 0, 0), line('Ticket 48271635', 0, 50)])).toBeNull();
+});
+
+it('distinguishes Colorado Materials from Marietta and rejects ambiguous headings', () => {
+  const colorado = [line('Colorado Materials, Ltd.', 10, 10), line('TICKET #', 600, 10), line('3556031', 710, 10)];
+  expect(isColorado(colorado)).toBe(true);
+  expect(isMarietta(colorado)).toBe(false);
+  expect(classifyPlant(colorado)?.supplier).toBe('colorado-materials');
+  expect(ticketCandidate(colorado)?.number).toBe('3556031');
+  expect(classifyPlant([...colorado, line('Martin Marietta', 10, 40)])).toBeNull();
+  expect(isColorado([line('Colorado Quarry', 10, 10)])).toBe(false);
+  expect(classifyPlant(colorado.slice(1))).toBeNull();
+});
+
+it('revisits previously ignored Colorado tickets while retaining confirmed Marietta reads', () => {
+  const marietta = { version: 1, status: 'matched', plant: 'martin-marietta', ticketNumber: '23696214', confidence: .99 };
+  const colorado = { version: 2, status: 'matched', plant: 'colorado-materials', ticketNumber: '3556031', confidence: .99 };
+  const oldIgnored = { version: 1, status: 'ignored' };
+  expect(needsTicketRead(oldIgnored)).toBe(true);
+  expect(needsTicketRead(marietta)).toBe(false);
+  expect(needsTicketRead(colorado)).toBe(false);
+  expect(needsTicketRead({ version: 2, status: 'ignored' })).toBe(false);
+  expect(preferredTicketRead(colorado, oldIgnored)).toEqual(colorado);
+  expect(preferredTicketRead(oldIgnored, colorado)).toEqual(colorado);
+  expect(preferredTicketRead({ version: 2, status: 'ignored' }, oldIgnored)).toEqual({ version: 2, status: 'ignored' });
+  const doc = applyTicketRead({}, colorado);
+  expect(doc.ocr).toEqual({ plant: 'Colorado Materials', ticketNumber: '3556031' });
 });
 
 it('ignores other plants without replacing stored OCR and merges just confirmed ticket fields', () => {

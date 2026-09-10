@@ -1,7 +1,7 @@
 import * as ort from 'onnxruntime-node';
 import sharp from 'sharp';
 import { readFile } from 'node:fs/promises';
-import { createEngine, readMarietta } from '../src/ticket-reader/core.js';
+import { createEngine, readPlantTicket } from '../src/ticket-reader/core.js';
 import models from '@gutenye/ocr-models/node';
 
 export async function createTicketReader() {
@@ -11,7 +11,7 @@ export async function createTicketReader() {
     engine,
     async read(input) {
       const { data, info } = await sharp(input).rotate().resize({ width: 2400, height: 2400, fit: 'inside', withoutEnlargement: true }).flatten({ background: '#fff' }).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
-      return await readMarietta({ data, width: info.width, height: info.height }, engine);
+      return await readPlantTicket({ data, width: info.width, height: info.height }, engine);
     },
     close: () => engine.close(),
   };

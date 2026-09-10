@@ -14,10 +14,10 @@ It uses PaddleOCR v4 model weights through ONNX Runtime, with new preprocessing,
 region detection, decoding, plant validation, and two-pass number verification.
 Do not reuse the older Grok/Tesseract ticket extraction. The existing scanner's
 orientation-only code is separate. `templates.js` is the active plant/layout
-memory: Martin Marietta / Hunter is the only supported supplier for now. Add
+memory: Martin Marietta / Hunter and Colorado Materials are supported. Add
 another supplier only after the user supplies its ticket example.
 
-`ticketRead` is stored per document. Display only a confirmed Marietta number,
+`ticketRead` is stored per document. Display only a confirmed supported-plant number,
 beside the blue camera before pay. Preserve its metadata in cloud snapshots and
 never carry a number onto a replacement image. `scripts/read-existing-tickets.mjs`
 backfills cloud tickets using deployment-only Convex functions. Never commit

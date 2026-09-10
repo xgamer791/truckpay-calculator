@@ -1,5 +1,5 @@
 import * as ort from 'onnxruntime-web/wasm';
-import { createEngine, readMarietta } from './core.js';
+import { createEngine, readPlantTicket } from './core.js';
 
 let engine;
 self.onmessage = async ({ data: { id, image, base } }) => {
@@ -14,6 +14,6 @@ self.onmessage = async ({ data: { id, image, base } }) => {
         recognition: base + 'ch_PP-OCRv4_rec_infer.onnx',
       }, await dictionary.text(), { executionProviders: ['wasm'] });
     }
-    self.postMessage({ id, result: await readMarietta(image, engine) });
+    self.postMessage({ id, result: await readPlantTicket(image, engine) });
   } catch { self.postMessage({ id, error: true }); }
 };
