@@ -2,12 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { detectTicket, area, cornerMotion, validQuad, orderCorners, OutlineFilter, processTicket } from './core.js';
 
 function inside(x,y,q){return q.every((p,i)=>{const b=q[(i+1)%4];return (b.x-p.x)*(y-p.y)-(b.y-p.y)*(x-p.x)>=0;});}
-function scene({width=320,height=280,quad=[{x:56,y:27},{x:264,y:40},{x:249,y:249},{x:66,y:238}],shadow=false,blank=false,noise=0}={}){
+function scene({width=320,height=280,quad=[{x:56,y:27},{x:264,y:40},{x:249,y:249},{x:66,y:238}],shadow=false,blank=false,noise=0,ink=28}={}){
   const data=new Uint8ClampedArray(width*height*4);
   for(let y=0;y<height;y++)for(let x=0;x<width;x++){
     const p=(y*width+x)*4,paper=inside(x,y,quad);let value=paper?235:48;
     if(paper&&shadow)value-=75*x/width;
-    if(paper&&!blank&&y>70&&y<205&&x>90&&x<218&&(y%19<3)&&(x%23<18))value=28;
+    if(paper&&!blank&&y>70&&y<205&&x>90&&x<218&&(y%19<3)&&(x%23<18))value=ink;
     value+=noise*Math.sin(x*63.7+y*91.3);
     data[p]=paper?value:value*.8;data[p+1]=value;data[p+2]=paper?value:value*1.2;data[p+3]=255;
   }
@@ -35,6 +35,18 @@ describe('original ticket vision',()=>{
     expect(cornerMotion(found.corners,image.quad)).toBeLessThan(5);
     expect(found.confidence).toBeGreaterThan(.68);
     expect(found.sharpness).toBeGreaterThan(65);
+  });
+  it('finishes faint camera ink before marking a new capture enhanced',()=>{
+    const image=scene({shadow:true,noise:3,ink:125});
+    const result=processTicket(image.data,image.width,image.height,image.quad);
+    let darkInk=0,cleanPaper=0;
+    for(let p=0;p<result.pixels.length;p+=4){
+      if(result.pixels[p]<35)darkInk++;
+      if(result.pixels[p]>245)cleanPaper++;
+    }
+    expect(darkInk/(result.width*result.height)).toBeGreaterThan(.01);
+    expect(cleanPaper/(result.width*result.height)).toBeGreaterThan(.9);
+    expect(result.enhancementVersion).toBe(2);
   });
   it('does not find a document in a uniform frame',()=>{
     const pixels=new Uint8ClampedArray(320*240*4).fill(180);

@@ -27,7 +27,7 @@ it('enhances once, preserves original and number, and survives an older open app
   expect((await t.query(list,{cursor:null})).tickets).toHaveLength(0);
   const client=t.withIdentity({subject:`${userId}|test`,issuer:'https://convex.test'});
   await client.mutation(save,{settings:{avgTons:25,truckNumber:'None'},settlements:[{clientId:'s',payoutDate:'2026-09-12',loads:[{clientId:'l',day:'Monday',miles:90,tons:25,pricingMode:'auto'}]}],tickets:[{clientId:'t',loadClientId:'l',type:'ticket',storageId}]});
-  expect(await t.run(ctx=>ctx.db.get(id))).toMatchObject({storageId:replacementId,originalStorageId:storageId,enhancementVersion:1,ticketRead});
+  expect(await t.run(ctx=>ctx.db.get(id))).toMatchObject({storageId:replacementId,originalStorageId:storageId,enhancementVersion:2,ticketRead});
   expect(await t.run(async ctx=>(await ctx.storage.get(storageId))?.text())).toBe('original');
 });
 it('does not overwrite a retaken photo and deletes only the unused enhancement output',async()=>{
@@ -36,4 +36,16 @@ it('does not overwrite a retaken photo and deletes only the unused enhancement o
   expect(await t.mutation(apply,{id,storageId,replacementId,updatedAt:1})).toEqual({applied:false});
   expect(await t.run(ctx=>ctx.storage.get(replacementId))).toBeNull();
   expect(await t.run(async ctx=>(await ctx.storage.get(storageId))?.text())).toBe('original');
+});
+
+it('repairs v1 new captures once and skips finished older images and v2 captures',async()=>{
+  const {t,id,storageId,replacementId}=await fixture();
+  await t.run(ctx=>ctx.db.patch(id,{enhancementVersion:1}));
+  expect((await t.query(list,{cursor:null})).tickets).toHaveLength(1);
+  expect(await t.mutation(apply,{id,storageId,replacementId,updatedAt:1})).toEqual({applied:true});
+  expect((await t.query(list,{cursor:null})).tickets).toHaveLength(0);
+  await t.run(ctx=>ctx.db.patch(id,{enhancementVersion:1}));
+  expect((await t.query(list,{cursor:null})).tickets).toHaveLength(0);
+  await t.run(ctx=>ctx.db.patch(id,{enhancementVersion:2,enhancementSourceId:undefined}));
+  expect((await t.query(list,{cursor:null})).tickets).toHaveLength(0);
 });

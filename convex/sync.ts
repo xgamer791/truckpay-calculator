@@ -265,7 +265,7 @@ export const saveSnapshot = mutation({
       // An already-open app may submit the pre-migration storage ID. Preserve
       // the corrected image and its original instead of undoing the migration.
       const staleOrientation = existing?.orientationVersion === 1 && ticket.storageId === existing.orientationSourceId;
-      const staleEnhancement = existing?.enhancementVersion === 1 && ticket.storageId === existing.enhancementSourceId;
+      const staleEnhancement = (existing?.enhancementVersion ?? 0) >= 1 && ticket.storageId === existing?.enhancementSourceId;
       const sameImage = staleOrientation || staleEnhancement || existing?.storageId === ticket.storageId;
       if (ticket.ticketRead) validateRead(ticket.ticketRead);
       // A stale open app must not erase a completed server backfill. Replacing

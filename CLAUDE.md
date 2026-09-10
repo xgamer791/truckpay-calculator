@@ -39,8 +39,11 @@ verified image for retry. Never persist a new capture without a confirmed read.
 Ticket numbers are unique within a driver's account; replacing the exact photo
 is allowed. Local duplicate checks and atomic Convex reservations cover concurrent
 captures; snapshot validation also protects stored tickets. A connection is needed
-to complete the duplicate check. Enhance every existing and new image once (`enhancementVersion: 1`), including
-La Grange, while retaining the original. `enhancementSourceId` protects against
+to complete the duplicate check. Finish every existing and new image with the shared enhancement pass, including
+La Grange, while retaining the original. New captures use `enhancementVersion: 2`
+after both scan cleanup and final enhancement, before OCR and saving. Repair v1
+captures without `enhancementSourceId` once; v1 migrated images already received
+the final pass. Never trust a completed enhancement flag without worker completion. `enhancementSourceId` protects against
 stale snapshots restoring old images. Existing failed La Grange number reads
 remain for the driver to retake; do not rescan v2 failures for template v3.
 New captures show enhancement during loading; prewarm the reader and feed its

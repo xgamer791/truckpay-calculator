@@ -122,7 +122,7 @@ class TicketScanner {
   async startCamera(){
     if(!this.root)return;
     this.stopCamera();this.session++;const session=this.session,attempt=this.cameraAttempt;
-    this.source=null;this.processed=null;this.quarterTurns=0;this.ticketRead=null;this.dataUrl=null;this.corners=null;this.busy=false;this.lastVideoTime=-1;this.lastAnalysis=0;this.lastFrameFingerprint=null;this.analysisMaxEdge=480;
+    this.source=null;this.processed=null;this.enhancementVersion=null;this.quarterTurns=0;this.ticketRead=null;this.dataUrl=null;this.corners=null;this.busy=false;this.lastVideoTime=-1;this.lastAnalysis=0;this.lastFrameFingerprint=null;this.analysisMaxEdge=480;
     this.root.querySelector('.ticket-camera-error').hidden=true;this.setMode('loading');this.status('Opening camera…');this.button('capture').disabled=true;
     this.preview.getContext('2d').clearRect(0,0,this.preview.width,this.preview.height);this.paint();
     try {
@@ -287,7 +287,7 @@ class TicketScanner {
   }
   async importPhoto(file){
     const session=++this.session;this.stopCamera();this.setMode('processing');this.status('Opening photo…');this.root.querySelector('.ticket-camera-error').hidden=true;
-    this.quarterTurns=0;this.ticketRead=null;this.processed=null;this.dataUrl=null;
+    this.quarterTurns=0;this.ticketRead=null;this.processed=null;this.enhancementVersion=null;this.dataUrl=null;
     const url=URL.createObjectURL(file);
     try{
       const image=new Image();image.src=url;await image.decode();if(!this.root||session!==this.session)return;
@@ -331,10 +331,13 @@ class TicketScanner {
     const session=this.session,corners=this.corners.map(p=>({x:p.x*this.source.width,y:p.y*this.source.height}));
     if(!validQuad(corners,this.source.width,this.source.height,.015)){this.status('Keep the crop corners in order around the ticket.');return;}
     this.captureId='doc_'+(crypto.randomUUID?.()||Date.now().toString(36)+Math.random().toString(36).slice(2));
+    this.enhancementVersion=null;
     this.setMode('processing');this.status('Straightening · cleaning · sharpening');this.paint();
     try{
       const data=this.source.getContext('2d',{willReadFrequently:true}).getImageData(0,0,this.source.width,this.source.height),result=await this.request('process',data,corners);
       if(!this.root||session!==this.session)return;
+      if(result.enhancementVersion!==2)throw new Error('Ticket enhancement did not finish');
+      this.enhancementVersion=result.enhancementVersion;
       this.processed=makeCanvas();this.processed.width=result.width;this.processed.height=result.height;this.processed.getContext('2d').putImageData(new ImageData(result.pixels,result.width,result.height),0,0);
       this.setMode('reading');
       const ticketRead=await readTicket(this.processed);
@@ -354,9 +357,9 @@ class TicketScanner {
     this.dataUrl=this.preview.toDataURL('image/jpeg',.94);this.paint();
   }
   async save(){
-    if(!['reading','save-error'].includes(this.mode)||!this.dataUrl||!isConfirmedRead(this.ticketRead))return;
+    if(!['reading','save-error'].includes(this.mode)||!this.dataUrl||this.enhancementVersion!==2||!isConfirmedRead(this.ticketRead))return;
     this.setMode('saving');this.root.querySelector('.ticket-camera-loading strong').textContent='Checking and saving ticket…';
-    try{await this.options.onSave(this.dataUrl,'black-white',{orientationVersion:1,enhancementVersion:1,original:this.source.toDataURL('image/jpeg',.94),ticketRead:this.ticketRead,documentId:this.captureId});navigator.vibrate?.(30);this.close();}
+    try{await this.options.onSave(this.dataUrl,'black-white',{orientationVersion:1,enhancementVersion:this.enhancementVersion,original:this.source.toDataURL('image/jpeg',.94),ticketRead:this.ticketRead,documentId:this.captureId});navigator.vibrate?.(30);this.close();}
     catch(error){if(this.root){
       if(error.code==='DUPLICATE_TICKET'){this.requireRetake(error.message);this.root.querySelector('.ticket-camera-result strong').textContent='Duplicate ticket rejected';return;}
       this.setMode('save-error');const panel=this.root.querySelector('.ticket-camera-result');

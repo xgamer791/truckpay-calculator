@@ -64,12 +64,12 @@ export async function uploadPendingTicketImages(history, generateUploadUrl) {
               document.orientationVersion=1;
             }catch{ /* Keep cloud saving available; the original remains eligible for migration. */ }
           }
-          if (document.enhancementVersion !== 1) {
+          if (document.enhancementVersion !== 2) {
             const { enhanceDataUrl } = await import('../scanner/enhancement-browser.js');
             const source=document.processed || document.original || load.ticket;
             document.original ||= source;
             document.processed=await enhanceDataUrl(source);
-            document.enhancementVersion=1;
+            document.enhancementVersion=2;
             if(load.ticket===source)load.ticket=document.processed;
           }
           const processed = await sourceToBlob(document.processed || document.original || load.ticket);

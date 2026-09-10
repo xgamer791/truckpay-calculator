@@ -6,12 +6,12 @@ vi.mock('../ticket-reader/browser.js',()=>({readTicket:readerMock,preloadTicketR
 const matched={version:2,status:'matched',plant:'colorado-materials',ticketNumber:'3556031',confidence:.99,quarterTurns:0};
 let scanner,stop,requests,frames,clock;
 const good={corners:[{x:64,y:34},{x:256,y:34},{x:256,y:246},{x:64,y:246}],confidence:.94,areaRatio:.45,brightness:210,sharpness:200,inkRatio:.08,clipped:false};
-let detection, detectionDelay, quality;
+let detection, detectionDelay, quality, enhancementVersion;
 class TestWorker {
   postMessage(message){
     requests.push(message);
     if(message.type==='reset')return;
-    const result=message.type==='detect'?(detection?{...detection,corners:detection.corners.map(p=>({x:p.x*message.width/320,y:p.y*message.height/280}))}:null):message.type==='quality'?quality:{width:190,height:210,pixels:new Uint8ClampedArray(190*210*4).fill(255)};
+    const result=message.type==='detect'?(detection?{...detection,corners:detection.corners.map(p=>({x:p.x*message.width/320,y:p.y*message.height/280}))}:null):message.type==='quality'?quality:{width:190,height:210,enhancementVersion,pixels:new Uint8ClampedArray(190*210*4).fill(255)};
     setTimeout(()=>this.onmessage?.({data:{id:message.id,result}}),message.type==='detect'?detectionDelay:1);
   }
   terminate(){this.onmessage=null;}
@@ -20,7 +20,7 @@ class TestWorker {
 beforeEach(async()=>{
   vi.resetModules();vi.useFakeTimers({toFake:['setTimeout','clearTimeout','performance']});
   document.body.innerHTML='<button id="launch">Open camera</button>';
-  requests=[];frames=0;clock=0;detection=good;detectionDelay=1;quality={ready:true,close:true,focused:true};
+  requests=[];enhancementVersion=2;frames=0;clock=0;detection=good;detectionDelay=1;quality={ready:true,close:true,focused:true};
   stop=vi.fn();readerMock.mockReset().mockResolvedValue(matched);
   vi.stubGlobal('Worker',TestWorker);vi.stubGlobal('ResizeObserver',class{observe(){} disconnect(){}});
   vi.stubGlobal('requestAnimationFrame',cb=>setTimeout(()=>cb(performance.now()),16));vi.stubGlobal('cancelAnimationFrame',id=>clearTimeout(id));
@@ -66,8 +66,15 @@ describe('quality-gated manual capture and automatic verified saving',()=>{
     expect(document.querySelector('.ticket-camera-loading').hidden).toBe(false);
     expect(document.querySelector('[data-action=save]')).toBeNull();
     resolve(matched);await vi.advanceTimersByTimeAsync(10);
-    expect(onSave).toHaveBeenCalledWith('data:image/jpeg;base64,TEST','black-white',{orientationVersion:1,enhancementVersion:1,original:expect.stringContaining("data:image/jpeg"),ticketRead:matched,documentId:expect.stringMatching(/^doc_/)});
+    expect(onSave).toHaveBeenCalledWith('data:image/jpeg;base64,TEST','black-white',{orientationVersion:1,enhancementVersion:2,original:expect.stringContaining("data:image/jpeg"),ticketRead:matched,documentId:expect.stringMatching(/^doc_/)});
     expect(scanner.root).toBeNull();
+  });
+  it('rejects a capture whose worker did not finish enhancement',async()=>{
+    enhancementVersion=undefined;
+    const onSave=vi.fn();await scanner.open({onSave});await capture();
+    expect(scanner.mode).toBe('recapture');expect(onSave).not.toHaveBeenCalled();
+    expect(readerMock).not.toHaveBeenCalled();
+    expect(document.querySelector('.ticket-camera-result p').textContent).toContain('enhancement did not finish');
   });
   it('uses the fresh reader to orient the saved photo',async()=>{
     readerMock.mockResolvedValue({...matched,quarterTurns:1});

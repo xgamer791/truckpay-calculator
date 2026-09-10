@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
+const enhanceMock=vi.hoisted(()=>vi.fn(async source=>source));
 const orientMock=vi.hoisted(()=>vi.fn(async source=>({dataUrl:source,quarterTurns:0,confident:true})));
 vi.mock('../scanner/orientation.js',()=>({orientDataUrl:orientMock}));
-vi.mock('../scanner/enhancement-browser.js',()=>({enhanceDataUrl:async source=>source}));
+vi.mock('../scanner/enhancement-browser.js',()=>({enhanceDataUrl:enhanceMock}));
 import {
   buildSnapshot,
   dataUrlToBlob,
@@ -70,7 +71,7 @@ describe("cloud snapshot", () => {
     expect(result.changed).toBe(true);
     expect(result.history[0].loads[0].documents[0].storageId).toBe("new-storage-id");
     expect(result.history[0].loads[0].documents[0].orientationVersion).toBe(1);
-    expect(result.history[0].loads[0].documents[0].enhancementVersion).toBe(1);
+    expect(result.history[0].loads[0].documents[0].enhancementVersion).toBe(2);
     expect(result.history[0].loads[0].documents[0].original).toBe(local[0].loads[0].documents[0].processed);
     expect(orientMock).toHaveBeenCalled();
     expect(fetchMock).toHaveBeenCalledOnce();
@@ -80,4 +81,20 @@ describe("cloud snapshot", () => {
   it("summarizes driver history for the admin view", () => {
     expect(driverTotals(history)).toEqual({ settlements: 1, loads: 1, tickets: 1, pay: 92.5 });
   });
+});
+
+it.each([1,2])('uploads finished pixels and preserves the original for capture version %s',async version=>{
+  const first='data:image/jpeg;base64,RklSU1Q=',finished='data:image/jpeg;base64,RklOQUw=',original='data:image/jpeg;base64,T1JJR0lOQUw=';
+  const local=structuredClone(history),load=local[0].loads[0],doc=load.documents[0];
+  delete doc.storageId;Object.assign(doc,{processed:version===2?finished:first,original,orientationVersion:1,enhancementVersion:version,ticketRead:{version:3,status:'ignored'}});load.ticket=doc.processed;
+  enhanceMock.mockClear();enhanceMock.mockResolvedValueOnce(finished);
+  const fetchMock=vi.fn(async()=>new Response(JSON.stringify({storageId:'uploaded-'+fetchMock.mock.calls.length}),{headers:{'Content-Type':'application/json'}}));
+  vi.stubGlobal('fetch',fetchMock);
+  try{
+    const result=await uploadPendingTicketImages(local,async()=>'https://upload.test/file');
+    expect(await fetchMock.mock.calls[0][1].body.text()).toBe('FINAL');
+    expect(await fetchMock.mock.calls[1][1].body.text()).toBe('ORIGINAL');
+    expect(result.history[0].loads[0]).toMatchObject({ticket:finished,documents:[{processed:finished,original,enhancementVersion:2}]});
+    expect(enhanceMock).toHaveBeenCalledTimes(version===2?0:1);
+  }finally{vi.unstubAllGlobals();enhanceMock.mockReset().mockImplementation(async source=>source);}
 });
