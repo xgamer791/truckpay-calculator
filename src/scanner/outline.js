@@ -1,7 +1,7 @@
 import { OutlineFilter } from './core.js';
 
 // Detection arrives at camera-processing speed; drawing runs at display speed.
-// The green guide is always visible, even before detection or after tracking loss.
+// The guide stays visible before detection and after tracking loss.
 const GUIDE=[{x:.12,y:.1},{x:.88,y:.1},{x:.88,y:.9},{x:.12,y:.9}];
 export class LiveOutline {
   constructor(){this.filter=new OutlineFilter();this.reset();}
@@ -37,12 +37,12 @@ export class LiveOutline {
   }
 }
 
-export function drawTicketOutline(ctx,points,{live=false,opacity=1,tracked=true}={}){
+export function drawTicketOutline(ctx,points,{live=false,opacity=1,tracked=true,ready=false}={}){
   const path=()=>{ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();};
   ctx.globalAlpha=opacity;
-  if(live){path();ctx.fillStyle=tracked?'rgba(0,199,159,.16)':'rgba(0,199,159,.06)';ctx.fill();}
+  if(live){path();ctx.fillStyle=ready?'rgba(0,199,159,.12)':'rgba(239,68,68,.06)';ctx.fill();}
   ctx.setLineDash(live&&!tracked?[8,6]:[]);
-  path();ctx.strokeStyle=live?'#00c79f':'#60a5fa';ctx.lineWidth=live?3:2.5;ctx.lineJoin='round';ctx.stroke();
+  path();ctx.strokeStyle=live?(ready?'#00c79f':'#ef4444'):'#60a5fa';ctx.lineWidth=live?3:2.5;ctx.lineJoin='round';ctx.stroke();
   if(!live)for(const p of points){ctx.beginPath();ctx.fillStyle='#fff';ctx.arc(p.x,p.y,4,0,Math.PI*2);ctx.fill();}
   ctx.setLineDash([]);ctx.globalAlpha=1;
 }

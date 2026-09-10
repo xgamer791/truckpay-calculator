@@ -1,7 +1,9 @@
 import { alignCorners, validQuad } from './core.js';
 import { moveCropHandle, loupePosition } from './crop-controls.js';
 import { LiveOutline, drawTicketOutline } from './outline.js';
-import { detectOrientation } from './orientation.js';
+import { CaptureQualityGate, QUALITY_MAX_AGE } from './quality.js';
+import { readTicket } from '../ticket-reader/browser.js';
+import { isConfirmedRead } from '../ticket-reader/metadata.js';
 
 const icons={
   close:'<path d="m7 7 14 14M21 7 7 21"/>',
@@ -17,7 +19,7 @@ const bounded=(v,a,b)=>Math.max(a,Math.min(b,v));
 
 class TicketScanner {
   constructor(){
-    this.session=0;this.requests=new Map();this.requestId=0;this.outline=new LiveOutline();this.filter=this.outline.filter;
+    this.session=0;this.requests=new Map();this.requestId=0;this.outline=new LiveOutline();this.filter=this.outline.filter;this.qualityGate=new CaptureQualityGate();
     this.onVisibility=()=>{if(document.hidden&&this.root){this.stopCamera();if(this.mode==='live'||this.mode==='loading')this.showError('Camera paused','Tap Resume Camera when you are ready.');}};
     document.addEventListener('visibilitychange',this.onVisibility);
     window.addEventListener('pagehide',()=>this.close());
@@ -30,21 +32,20 @@ class TicketScanner {
     this.root.innerHTML=`
       <header class="ticket-camera-header"><button type="button" class="ticket-camera-icon" data-action="close" aria-label="Close scanner">${icon('close')}</button><div><span class="ticket-camera-eyebrow">DRIVERPAY PRO</span><h1>Scan ticket</h1></div><button type="button" class="ticket-camera-icon" data-action="flash" aria-label="Turn on flashlight" aria-pressed="false" hidden>${icon('flash')}</button></header>
       <div class="ticket-camera-stage"><video playsinline muted autoplay></video><canvas class="ticket-camera-preview" hidden></canvas><canvas class="ticket-camera-outline" aria-hidden="true"></canvas><div class="ticket-camera-corners" hidden>${['Top left','Top right','Bottom right','Bottom left'].map((label,i)=>`<button type="button" data-corner="${i}" aria-label="${label} crop corner. Use arrow keys to adjust."></button>`).join('')}</div><div class="ticket-camera-error" hidden><strong></strong><p></p><button type="button" data-action="retry">Resume Camera</button><button type="button" data-action="photos">Choose Photo</button></div></div>
-      <footer class="ticket-camera-footer"><div class="ticket-camera-status" role="status" aria-live="polite">Opening camera…</div><div class="ticket-camera-live-actions"><button type="button" data-action="photos" class="ticket-camera-secondary">${icon('photo')}<span>Photos</span></button><button type="button" data-action="capture" class="ticket-camera-shutter" aria-label="Capture ticket now" disabled><span></span></button></div><div class="ticket-camera-review-actions" hidden><button type="button" data-action="retake">Retake</button><button type="button" data-action="crop">${icon('crop')} Adjust edges</button><button type="button" data-action="save" class="ticket-camera-primary">Save ticket</button></div><div class="ticket-camera-crop-actions" hidden><button type="button" data-action="retake">Retake</button><button type="button" data-action="apply" class="ticket-camera-primary">Apply crop</button></div><p class="ticket-camera-hint">Show the whole ticket, then tap the capture button.</p></footer>
+      <footer class="ticket-camera-footer"><div class="ticket-camera-status" role="status" aria-live="polite">Opening camera…</div><div class="ticket-camera-live-actions"><button type="button" data-action="photos" class="ticket-camera-secondary">${icon('photo')}<span>Photos</span></button><button type="button" data-action="capture" class="ticket-camera-shutter" aria-label="Capture ticket now" disabled><span></span></button></div><div class="ticket-camera-crop-actions" hidden><button type="button" data-action="retake">Retake</button><button type="button" data-action="apply" class="ticket-camera-primary">Apply crop</button></div><p class="ticket-camera-hint">Show the whole ticket, then tap the capture button.</p></footer>
       <input class="ticket-camera-file" type="file" accept="image/*,.heic,.heif" aria-label="Select a ticket photo" tabindex="-1">`;
     document.body.append(this.root);
     this.video=this.root.querySelector('video');this.overlay=this.root.querySelector('.ticket-camera-outline');this.preview=this.root.querySelector('.ticket-camera-preview');this.stage=this.root.querySelector('.ticket-camera-stage');
+    this.stage.insertAdjacentHTML('beforeend',`<div class="ticket-camera-loading" hidden role="status" aria-live="polite"><div class="ticket-camera-spinner" aria-hidden="true"></div><strong>Reading ticket…</strong><p>Keep this screen open. Your ticket saves automatically once its number is verified.</p></div><div class="ticket-camera-result" hidden><strong></strong><p></p><button type="button" data-action="recapture" class="ticket-camera-primary">Retake photo</button><button type="button" data-action="retry-save" class="ticket-camera-primary" hidden>Retry saving</button></div>`);
     this.root.addEventListener('click',event=>{
       const action=event.target.closest('[data-action]')?.dataset.action;
       if(!action||this.mode==='saving')return;
       if(action==='close')this.close();
-      if(action==='retry'||action==='retake')this.startCamera();
+      if(action==='retry'||action==='retake'||action==='recapture')this.startCamera();
       if(action==='photos')this.root.querySelector('input').click();
       if(action==='capture')this.manualCapture();
-      if(action==='crop')this.editCrop();
-      if(action==='rotate'&&this.mode==='review'){this.quarterTurns=(this.quarterTurns+1)%4;this.orientationConfirmed=true;this.renderReview();}
       if(action==='apply')this.process();
-      if(action==='save')this.save();
+      if(action==='retry-save')this.save();
     });
     this.root.addEventListener('keydown',event=>{
       if(event.key==='Escape'){event.preventDefault();if(this.mode!=='saving')this.close();}
@@ -59,9 +60,6 @@ class TicketScanner {
     const handles=this.root.querySelector('.ticket-camera-corners');
     handles.insertAdjacentHTML('beforeend',['Top','Right','Bottom','Left'].map((label,i)=>`<button type="button" data-side="${i}" aria-label="${label} crop side. Drag to move the whole side."></button>`).join(''));
     this.loupe=makeCanvas();this.loupe.className='ticket-camera-loupe';this.loupe.hidden=true;this.loupe.setAttribute('aria-hidden','true');this.stage.append(this.loupe);
-    const rotate=document.createElement('button');rotate.type='button';rotate.dataset.action='rotate';rotate.setAttribute('aria-label','Rotate ticket 90 degrees clockwise');rotate.innerHTML=`${icon('rotate')} Rotate`;
-    this.button('crop').before(rotate);
-    this.button('crop').innerHTML=`${icon('crop')} Adjust crop`;
     this.bindCorners();this.button('close').focus();
     this.resize=new ResizeObserver(()=>this.paint());this.resize.observe(this.stage);
     await this.startCamera();
@@ -77,11 +75,19 @@ class TicketScanner {
     if(mode!=='crop'){this.adjustment=null;if(this.loupe)this.loupe.hidden=true;}
     this.root.dataset.mode=mode;
     this.root.querySelector('.ticket-camera-live-actions').hidden=!['live','loading','error'].includes(mode);
-    this.root.querySelector('.ticket-camera-review-actions').hidden=!['review','saving'].includes(mode);
     this.root.querySelector('.ticket-camera-crop-actions').hidden=mode!=='crop';
     this.root.querySelector('.ticket-camera-corners').hidden=mode!=='crop';
     this.video.hidden=!['live','loading','error'].includes(mode);this.preview.hidden=['live','loading','error'].includes(mode);
-    this.root.querySelector('.ticket-camera-hint').textContent=mode==='crop'?'Drag a corner or side. The zoom preview shows the exact adjustment point.':mode==='review'?'Rotate or adjust the crop, then save your ticket.':'Show the whole ticket, then tap the capture button.';
+    const working=['processing','reading','saving'].includes(mode);
+    this.root.querySelector('.ticket-camera-loading').hidden=!working;
+    this.root.querySelector('.ticket-camera-loading strong').textContent=mode==='processing'?'Preparing ticket…':mode==='saving'?'Checking and saving ticket…':'Reading ticket…';
+    this.root.querySelector('.ticket-camera-result').setAttribute('role','alert');
+    this.root.querySelector('.ticket-camera-result').hidden=!['recapture','save-error'].includes(mode);
+    this.root.querySelector('.ticket-camera-footer').hidden=working||['recapture','save-error'].includes(mode);
+    this.root.setAttribute('aria-busy',String(working));
+    this.button('close').disabled=mode==='saving';
+    const hint=this.root.querySelector('.ticket-camera-hint');
+    hint.hidden=mode!=='crop';hint.textContent='Drag a corner or side. The zoom preview shows the exact adjustment point.';
   }
   workerReady(){
     if(this.worker)return;
@@ -109,13 +115,13 @@ class TicketScanner {
     else if(this.frameCallback!=null)cancelAnimationFrame(this.frameCallback);
     this.frameCallback=null;this.stream?.getTracks().forEach(track=>track.stop());this.stream=null;
     if(this.video){this.video.pause();this.video.srcObject=null;}
-    this.target=null;this.display=null;this.outline.reset();this.lastDetection=null;
+    this.target=null;this.display=null;this.outline.reset();this.lastDetection=null;this.lastQuality=null;this.qualityGate.reset();
     this.button('flash')?.setAttribute('hidden','');
   }
   async startCamera(){
     if(!this.root)return;
     this.stopCamera();this.session++;const session=this.session,attempt=this.cameraAttempt;
-    this.source=null;this.processed=null;this.quarterTurns=0;this.orientationChecked=false;this.orientationConfirmed=false;this.dataUrl=null;this.corners=null;this.busy=false;this.lastVideoTime=-1;this.lastAnalysis=0;this.lastFrameFingerprint=null;this.analysisMaxEdge=480;
+    this.source=null;this.processed=null;this.quarterTurns=0;this.ticketRead=null;this.dataUrl=null;this.corners=null;this.busy=false;this.lastVideoTime=-1;this.lastAnalysis=0;this.lastFrameFingerprint=null;this.analysisMaxEdge=480;
     this.root.querySelector('.ticket-camera-error').hidden=true;this.setMode('loading');this.status('Opening camera…');this.button('capture').disabled=true;
     this.preview.getContext('2d').clearRect(0,0,this.preview.width,this.preview.height);this.paint();
     try {
@@ -131,13 +137,29 @@ class TicketScanner {
       if(Object.keys(settings).length)track.applyConstraints({advanced:[settings]}).catch(()=>{});
       this.torch=false;this.button('flash').hidden=!caps.torch;this.button('flash').setAttribute('aria-pressed','false');
       this.button('flash').onclick=async()=>{try{this.torch=!this.torch;await track.applyConstraints({advanced:[{torch:this.torch}]});this.button('flash')?.setAttribute('aria-pressed',String(this.torch));}catch{this.torch=false;this.status('Flashlight is unavailable on this camera.');}};
-      this.setMode('live');this.status('Show all four ticket edges');this.button('capture').disabled=false;
+      this.setMode('live');this.updateCaptureGuide();
       this.startFrames(session);this.animate(session);
     }catch(error){if(this.root&&session===this.session)this.showError('Camera access needed',error.name==='NotAllowedError'?'Allow camera access in your browser, then tap Resume Camera.':error.message||'Could not open the camera. Try again or choose a photo.');}
   }
   showError(title,message){
     this.setMode('error');this.button('capture').disabled=true;
     const panel=this.root.querySelector('.ticket-camera-error');panel.hidden=false;panel.querySelector('strong').textContent=title;panel.querySelector('p').textContent=message;this.status('Camera paused');
+  }
+  updateCaptureGuide(){
+    if(this.mode!=='live')return false;
+    const ready=this.qualityGate.isReady(performance.now());
+    this.root.dataset.ready=String(ready);this.button('capture').disabled=!ready;
+    this.button('capture').setAttribute('aria-label',ready?'Capture ticket now':'Move closer and hold the ticket in focus');
+    const recent=this.lastQuality&&performance.now()-this.lastQuality.time<QUALITY_MAX_AGE;
+    const reason=recent&&this.lastQuality.close?'Focusing…':'Move closer';
+    this.status(ready?'':reason);
+    return ready;
+  }
+  requireRetake(message='The ticket number could not be read clearly. Retake the whole ticket with the guide green.'){
+    this.dataUrl=null;this.ticketRead=null;this.processed=null;this.source=null;
+    this.setMode('recapture');this.status('');this.paint();
+    const panel=this.root.querySelector('.ticket-camera-result');panel.querySelector('strong').textContent='Retake photo';panel.querySelector('p').textContent=message;
+    this.button('recapture').hidden=false;this.button('retry-save').hidden=true;this.button('recapture').focus();
   }
   startFrames(session){
     this.lastFrameCallback=performance.now();
@@ -180,20 +202,26 @@ class TicketScanner {
       let fingerprint=2166136261;
       for(let i=0;i<image.data.length;i+=Math.max(4,Math.floor(image.data.length/4096/4)*4))fingerprint=Math.imul(fingerprint^(image.data[i]|image.data[i+1]<<8|image.data[i+2]<<16),16777619);
       const changed=fingerprint!==this.lastFrameFingerprint;this.lastFrameFingerprint=fingerprint;
-      if(!clockAdvanced&&!changed){this.lastDetection=null;this.status('Waiting for the camera to resume');return;}
+      if(!clockAdvanced&&!changed){this.lastDetection=null;this.lastQuality=null;this.qualityGate.reset();this.updateCaptureGuide();return;}
       const result=await this.request('detect',image);
       if(!this.root||session!==this.session||this.mode!=='live'||document.hidden)return;
       // Keep the matching sensor frame for capture. A 300 ms deadline discarded
       // every result on slower phones, so the countdown could never start.
-      const elapsed=performance.now()-now,fresh=elapsed<1200;
+      const elapsed=performance.now()-now,fresh=elapsed<QUALITY_MAX_AGE;
       if(elapsed>500)this.analysisMaxEdge=Math.max(240,Math.round(this.analysisMaxEdge*.75));
       if(result){
         const normalized=alignCorners(result.corners.map(p=>({x:p.x/small.width,y:p.y/small.height})),this.filter.raw);
         if(fresh)this.outline.update(normalized,performance.now());
-        this.lastDetection={source,corners:normalized,time:now};
-        this.status(fresh?'Edges found · tap capture':'Hold still while edges update');
+        const pixels=source.getContext('2d',{willReadFrequently:true}).getImageData(0,0,source.width,source.height);
+        const quality=await this.request('quality',pixels,normalized.map(p=>({x:p.x*source.width,y:p.y*source.height})));
+        if(!this.root||session!==this.session||this.mode!=='live'||document.hidden)return;
+        const recent=performance.now()-now<QUALITY_MAX_AGE;
+        this.lastQuality={...quality,time:now};
+        this.qualityGate.update({...quality,ready:recent&&result.confidence>=.7&&!result.clipped&&quality.ready},normalized,now);
+        this.lastDetection=recent?{source,corners:normalized,time:now}:null;
+        this.updateCaptureGuide();
       }else{
-        this.lastDetection=null;this.status('Position the ticket inside the green guide');
+        this.lastDetection=null;this.lastQuality=null;this.qualityGate.reset();this.updateCaptureGuide();
       }
     }catch(error){if(this.root&&session===this.session&&this.mode==='live'){this.stopCamera();this.showError('Scanner paused',error.message);}}
     finally{if(session===this.session)this.busy=false;}
@@ -205,6 +233,7 @@ class TicketScanner {
   fit(w,h){const rect=this.stage.getBoundingClientRect(),scale=Math.min(rect.width/w,rect.height/h);return {x:(rect.width-w*scale)/2,y:(rect.height-h*scale)/2,w:w*scale,h:h*scale};}
   paint(){
     if(!this.root)return;
+    const ready=this.updateCaptureGuide();
     const rect=this.stage.getBoundingClientRect(),dpr=Math.min(2,window.devicePixelRatio||1),width=Math.round(rect.width*dpr),height=Math.round(rect.height*dpr);
     if(this.overlay.width!==width||this.overlay.height!==height){this.overlay.width=width;this.overlay.height=height;}
     const ctx=this.overlay.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,rect.width,rect.height);
@@ -217,7 +246,7 @@ class TicketScanner {
     if(!corners)return;
     const fit=this.mode==='crop'?this.fit(this.source.width,this.source.height):this.fit(this.video.videoWidth||1,this.video.videoHeight||1),pts=corners.map(p=>({x:fit.x+p.x*fit.w,y:fit.y+p.y*fit.h}));
     ctx.globalAlpha=opacity;ctx.fillStyle=this.mode==='live'?'rgba(6,18,30,.12)':'rgba(6,18,30,.38)';ctx.beginPath();ctx.rect(0,0,rect.width,rect.height);ctx.moveTo(pts[0].x,pts[0].y);for(let i=3;i>=0;i--)ctx.lineTo(pts[i].x,pts[i].y);ctx.fill('evenodd');ctx.globalAlpha=1;
-    drawTicketOutline(ctx,pts,{live:this.mode==='live'||this.mode==='loading',opacity,tracked});
+    drawTicketOutline(ctx,pts,{live:this.mode==='live'||this.mode==='loading',opacity,tracked,ready});
     for(let i=0;i<4;i++){
       if(this.mode==='crop'){
         const button=this.root.querySelector(`[data-corner="${i}"]`);button.style.left=`${pts[i].x}px`;button.style.top=`${pts[i].y}px`;
@@ -249,15 +278,15 @@ class TicketScanner {
     }
   }
   async manualCapture(){
-    if(this.mode!=='live')return;
+    if(this.mode!=='live'||!this.updateCaptureGuide())return;
     const detection=this.lastDetection;
-    if(detection&&performance.now()-detection.time<350){this.source=detection.source;this.corners=detection.corners;}
-    else {this.source=this.snapshot(this.video);this.corners=null;}
-    this.stopCamera();if(this.corners)await this.process();else this.editCrop();
+    if(!detection||performance.now()-detection.time>=QUALITY_MAX_AGE){this.qualityGate.reset();this.updateCaptureGuide();return;}
+    this.source=detection.source;this.corners=detection.corners;
+    this.stopCamera();await this.process();
   }
   async importPhoto(file){
     const session=++this.session;this.stopCamera();this.setMode('processing');this.status('Opening photo…');this.root.querySelector('.ticket-camera-error').hidden=true;
-    this.quarterTurns=0;this.orientationChecked=false;this.orientationConfirmed=false;this.processed=null;
+    this.quarterTurns=0;this.ticketRead=null;this.processed=null;this.dataUrl=null;
     const url=URL.createObjectURL(file);
     try{
       const image=new Image();image.src=url;await image.decode();if(!this.root||session!==this.session)return;
@@ -300,33 +329,39 @@ class TicketScanner {
     if(!this.source||!this.corners)return;
     const session=this.session,corners=this.corners.map(p=>({x:p.x*this.source.width,y:p.y*this.source.height}));
     if(!validQuad(corners,this.source.width,this.source.height,.015)){this.status('Keep the crop corners in order around the ticket.');return;}
+    this.captureId='doc_'+(crypto.randomUUID?.()||Date.now().toString(36)+Math.random().toString(36).slice(2));
     this.setMode('processing');this.status('Straightening · cleaning · sharpening');this.paint();
     try{
       const data=this.source.getContext('2d',{willReadFrequently:true}).getImageData(0,0,this.source.width,this.source.height),result=await this.request('process',data,corners);
       if(!this.root||session!==this.session)return;
       this.processed=makeCanvas();this.processed.width=result.width;this.processed.height=result.height;this.processed.getContext('2d').putImageData(new ImageData(result.pixels,result.width,result.height),0,0);
-      if(!this.orientationChecked){
-        this.status('Turning text upright…');
-        try{const result=await detectOrientation(this.processed);if(!this.root||session!==this.session)return;this.quarterTurns=result.quarterTurns;this.orientationConfirmed=result.confident;}
-        catch{if(!this.root||session!==this.session)return;this.orientationConfirmed=false;}
-        this.orientationChecked=true;
-      }
+      this.setMode('reading');this.renderCapture();
+      const ticketRead=await readTicket(this.dataUrl);
       if(!this.root||session!==this.session)return;
-      this.renderReview();navigator.vibrate?.(30);this.button('save').focus();
-    }catch(error){if(this.root&&session===this.session){this.editCrop();this.status(error.message);}}
+      if(!isConfirmedRead(ticketRead)){
+        this.requireRetake(ticketRead?.status==='ignored'?'Plant not recognized. Capture the whole Martin Marietta or Colorado Materials ticket, including the plant name and ticket number.':'The ticket number is blurry, missing, or could not be verified. Retake the whole ticket with the guide green.');return;
+      }
+      this.ticketRead=ticketRead;this.quarterTurns=ticketRead.quarterTurns||0;
+      this.renderCapture();await this.save();
+    }catch(error){if(this.root&&session===this.session)this.requireRetake(`${error.message||'Image processing could not finish'}. Retake the photo and try again.`);}
   }
-  renderReview(){
+  renderCapture(){
     if(!this.processed)return;
     const turns=this.quarterTurns||0,w=this.processed.width,h=this.processed.height;
     this.preview.width=turns%2?h:w;this.preview.height=turns%2?w:h;
     const ctx=this.preview.getContext('2d');ctx.translate(this.preview.width/2,this.preview.height/2);ctx.rotate(turns*Math.PI/2);ctx.drawImage(this.processed,-w/2,-h/2);
-    this.dataUrl=this.preview.toDataURL('image/jpeg',.94);this.setMode('review');this.status(this.orientationConfirmed?'Ticket captured':'Check orientation · use Rotate if needed');this.paint();
+    this.dataUrl=this.preview.toDataURL('image/jpeg',.94);this.paint();
   }
   async save(){
-    if(this.mode!=='review'||!this.dataUrl)return;
-    this.setMode('saving');this.status('Reading and saving ticket…');for(const button of this.root.querySelectorAll('button'))button.disabled=true;
-    try{await this.options.onSave(this.dataUrl,'black-white',{orientationVersion:1});this.close();}
-    catch(error){if(this.root){this.setMode('review');this.status(error.message||'Could not save. Please try again.');for(const button of this.root.querySelectorAll('button'))button.disabled=false;}}
+    if(!['reading','save-error'].includes(this.mode)||!this.dataUrl||!isConfirmedRead(this.ticketRead))return;
+    this.setMode('saving');this.root.querySelector('.ticket-camera-loading strong').textContent='Checking and saving ticket…';
+    try{await this.options.onSave(this.dataUrl,'black-white',{orientationVersion:1,ticketRead:this.ticketRead,documentId:this.captureId});navigator.vibrate?.(30);this.close();}
+    catch(error){if(this.root){
+      if(error.code==='DUPLICATE_TICKET'){this.requireRetake(error.message);this.root.querySelector('.ticket-camera-result strong').textContent='Duplicate ticket rejected';return;}
+      this.setMode('save-error');const panel=this.root.querySelector('.ticket-camera-result');
+      panel.querySelector('strong').textContent='Ticket read — saving failed';panel.querySelector('p').textContent=error.message||'Could not save. Please try again.';
+      this.button('recapture').hidden=true;this.button('retry-save').hidden=false;this.button('retry-save').focus();
+    }}
   }
   close(){
     if(!this.root)return;

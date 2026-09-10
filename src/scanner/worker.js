@@ -1,4 +1,5 @@
 import { detectTicket, processTicket } from './core.js';
+import { measureCaptureQuality } from './quality.js';
 
 let previous=null,frame=0,dimensions='';
 self.onmessage=({data:message})=>{
@@ -10,6 +11,8 @@ self.onmessage=({data:message})=>{
       const result=detectTicket(new Uint8ClampedArray(buffer),width,height,previous,frame++);
       previous=result?.corners||null;
       self.postMessage({id,result});
+    } else if(type==='quality'){
+      self.postMessage({id,result:measureCaptureQuality(new Uint8ClampedArray(buffer),width,height,corners)});
     } else if(type==='process'){
       const result=processTicket(new Uint8ClampedArray(buffer),width,height,corners);
       self.postMessage({id,result},{transfer:[result.pixels.buffer]});

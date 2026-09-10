@@ -7,8 +7,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="driverpay-build" content="3.2.1">
-    <title>DriverPay Pro v3.1.0</title>
+    <meta name="driverpay-build" content="3.3.0">
+    <title>DriverPay Pro v3.3.0</title>
     <script>
     (function () {
         var meta = document.querySelector('meta[name="driverpay-build"]');
@@ -539,7 +539,7 @@
             </div>
             <div class="footer-tagline">Built for the long haul</div>
             <div class="footer-meta">
-                <span class="footer-version">v3.2.1</span>
+                <span class="footer-version">v3.3.0</span>
                 <span class="footer-meta-dot"></span>
                 <span>© 2026</span>
                 <span class="footer-meta-dot"></span>
@@ -1097,7 +1097,7 @@
 
         function applySettingsToHeader() {
             const sub = document.getElementById('headerSubtitle');
-            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v3.2.1`;
+            if (sub) sub.textContent = `${settings.avgTons} Ton Avg @ 30% Commission · v3.3.0`;
         }
 
         let savedScrollY = 0;
@@ -2454,15 +2454,31 @@
         }
 
         async function ingestTicketJpegDataUrl(dataUrl, filterName, metadata = {}) {
-            if (ticketCapture.busy) return;
+            if (ticketCapture.busy) throw new Error('A ticket is already being saved.');
+            if (!window.DriverTicketReader?.isConfirmedRead(metadata.ticketRead)) {
+                throw new Error('The ticket number could not be read. Retake the photo.');
+            }
             ticketCapture.busy = true;
             const key = loadKey(ticketCapture.sId, ticketCapture.lId);
+            let savedLocally = false;
+            const documentId = metadata.documentId || ('doc_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7));
             try {
+                const history = JSON.parse(localStorage.getItem('driver_history') || '[]');
+                const replacedIds = window.DriverTicketReader.replacementIds(history, ticketCapture);
+                const number = metadata.ticketRead.ticketNumber;
+                const duplicate = window.DriverTicketReader.duplicateInHistory(history, number, ticketCapture, replacedIds);
+                if (duplicate) throw window.DriverTicketReader.duplicateError(number, `${duplicate.load.day} load (${duplicate.load.miles} miles), settlement ${duplicate.settlement.payoutDate}`);
+                if (!window.driverPayReserveTicketNumber) throw new Error('The duplicate ticket check is not ready. Refresh the app and try again.');
+                const reservation = await window.driverPayReserveTicketNumber({ number, documentClientId: documentId, loadClientId: String(ticketCapture.lId), replacedIds: replacedIds.map(String) });
+                if (reservation.duplicate) throw Object.assign(new Error(reservation.reason), { code: 'DUPLICATE_TICKET' });
+                // A second tab may have changed local history during the check.
+                const currentDuplicate = window.DriverTicketReader.duplicateInHistory(JSON.parse(localStorage.getItem('driver_history') || '[]'), number, ticketCapture, replacedIds);
+                if (currentDuplicate) throw window.DriverTicketReader.duplicateError(number);
                 processingLoads.add(key);
                 renderHistory();
                 const now = new Date().toISOString();
                 const doc = {
-                    id: 'doc_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+                    id: documentId,
                     userId: settings.localUserId || genLocalUserId(),
                     loadId: ticketCapture.lId,
                     type: 'ticket',
@@ -2475,27 +2491,29 @@
                     syncStatus: 'local',
                     ocr: emptyOcr('')
                 };
-                if (window.DriverTicketReader) {
-                    try {
-                        window.DriverTicketReader.applyTicketRead(doc, await window.DriverTicketReader.readTicket(dataUrl));
-                    } catch (_) { /* Save the photo and retry automatically after cloud sync. */ }
-                }
+                window.DriverTicketReader.applyTicketRead(doc, metadata.ticketRead);
                 if (ticketCapture.mode === 'edit') {
                     if (!editingLoad) throw new Error('The load editor was closed. Reopen the load and try again.');
-                    editingLoad.stagedTicket = dataUrl;
-                    editingLoad.stagedDocument = doc;
-                    editingLoad.removeTicket = false;
-                    updateEditTicketUI();
-                    haptic(18);
-                    return;
                 }
-                const ok = persistLoadDocument(ticketCapture.sId, ticketCapture.lId, doc, ticketCapture.mode, ticketCapture.docId);
+                const ok = persistLoadDocument(ticketCapture.sId, ticketCapture.lId, doc, ticketCapture.mode === 'edit' ? 'replace' : ticketCapture.mode, ticketCapture.docId);
                 if (!ok) {
                     throw new Error('Could not save the ticket. Free up storage and try again.');
+                }
+                savedLocally = true;
+                if (ticketCapture.mode === 'edit') {
+                    // Save the verified photo immediately; unrelated pay edits
+                    // stay in the editor until the driver saves those changes.
+                    editingLoad.savedTicket = dataUrl;
+                    editingLoad.savedDocuments = [doc];
+                    editingLoad.stagedTicket = null;
+                    editingLoad.stagedDocument = null;
+                    editingLoad.removeTicket = false;
+                    updateEditTicketUI();
                 }
                 enqueueDocSync(ticketCapture.sId, ticketCapture.lId, doc.id);
                 haptic([12, 40, 12]);
             } catch (err) {
+                if (!savedLocally) window.driverPayReleaseTicketNumber?.({ number: metadata.ticketRead.ticketNumber, documentClientId: documentId });
                 console.error('[scan] ticket ingest failed:', err);
                 throw err;
             } finally {
@@ -2594,28 +2612,6 @@
         function uploadTicket(sId, lId) {
             document.querySelectorAll('.swipe-container').forEach(c => c.classList.remove('swiped', 'swiped-right'));
             pickTicketPhoto({ mode: 'direct', sId, lId });
-        }
-
-        function saveTicket(sId, lId, dataUrl) {
-            const now = new Date().toISOString();
-            const doc = {
-                id: 'doc_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
-                userId: settings.localUserId || genLocalUserId(),
-                loadId: lId,
-                type: 'ticket',
-                original: null,
-                processed: dataUrl,
-                filter: 'photo',
-                createdAt: now,
-                modifiedAt: now,
-                syncStatus: 'local'
-            };
-            if (!persistLoadDocument(sId, lId, doc, 'replace', null)) {
-                appAlert('Storage full. Delete some older settlements or photos to free up space.');
-                return;
-            }
-            enqueueDocSync(sId, lId, doc.id);
-            renderHistory();
         }
 
         function removeTicket(sId, lId, docId) {
@@ -3314,8 +3310,8 @@
         } catch (err) { appAlert('Startup error: ' + (err && err.message ? err.message : err)); }
     </script>
     <!-- DRIVERPAY_CLOUD_FALLBACK_START -->
-    <link rel="stylesheet" href="/truckpay-calculator/assets/driverpay-cloud-v3.css?v=8f8dd283e88d">
-    <script type="module" src="/truckpay-calculator/assets/driverpay-cloud-v3.js?v=33f7d29af7ae"></script>
+    <link rel="stylesheet" href="/truckpay-calculator/assets/driverpay-cloud-v3.css?v=1887cdcb1223">
+    <script type="module" src="/truckpay-calculator/assets/driverpay-cloud-v3.js?v=1b2a26d6b78d"></script>
     <!-- DRIVERPAY_CLOUD_FALLBACK_END -->
 </body>
 </html>

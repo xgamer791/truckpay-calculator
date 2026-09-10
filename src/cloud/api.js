@@ -7,6 +7,8 @@ export const cloudApi = {
     availableTrucks: makeFunctionReference("profiles:availableTrucks"),
   },
   sync: {
+    reserveTicketNumber: makeFunctionReference('ticketNumbers:reserve'),
+    releaseTicketNumber: makeFunctionReference('ticketNumbers:release'),
     applyTicketRead: makeFunctionReference('ticketReader:applyMine'),
     getMyState: makeFunctionReference("sync:getMyState"),
     generateTicketUploadUrl: makeFunctionReference("sync:generateTicketUploadUrl"),

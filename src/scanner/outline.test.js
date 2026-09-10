@@ -3,7 +3,7 @@ import { LiveOutline } from './outline.js';
 import { cornerMotion } from './core.js';
 const quad=[{x:.2,y:.15},{x:.8,y:.15},{x:.8,y:.85},{x:.2,y:.85}];
 describe('live document outline',()=>{
-  it('always shows a green guide before detection, during tracking loss, and after recovery',()=>{
+  it('always shows a guide before detection, during tracking loss, and after recovery',()=>{
     const outline=new LiveOutline();
     expect(outline.sample(0)).toMatchObject({opacity:1,tracked:false});
     outline.update(quad,0);

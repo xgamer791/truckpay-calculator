@@ -23,6 +23,18 @@ never carry a number onto a replacement image. `scripts/read-existing-tickets.mj
 backfills cloud tickets using deployment-only Convex functions. Never commit
 private ticket photos, signed image URLs, keys, or QA fixtures to this public repo.
 
+New captures are manual and quality gated: red means “Move closer” or “Focusing…”;
+steady, close, sharp frames turn green with no guidance text. Measure focus on
+unprocessed sensor pixels (`src/scanner/quality.js`), including directional blur.
+After capture, show a blocking progress screen, read and orient with the fresh
+reader, then save automatically. Unknown plants, unreadable numbers, and duplicate
+numbers require a retake with the reason. Storage/network failures retain the
+verified image for retry. Never persist a new capture without a confirmed read.
+Ticket numbers are unique within a driver's account; replacing the exact photo
+is allowed. Local duplicate checks and atomic Convex reservations cover concurrent
+captures; snapshot validation also protects stored tickets. A connection is needed
+to complete the duplicate check. Historical unreadable images stay untouched.
+
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## The repo has two apps — only one is live

@@ -13,6 +13,14 @@ const pricingMode = v.union(
 export default defineSchema({
   ...authTables,
 
+  ticketNumberClaims: defineTable({
+    userId: v.id('users'),
+    number: v.string(),
+    documentClientId: v.string(),
+    loadClientId: v.string(),
+    expiresAt: v.number(),
+  }).index('by_user_number', ['userId', 'number']).index('by_user', ['userId']),
+
   driverProfiles: defineTable({
     userId: v.id("users"),
     email: v.string(),

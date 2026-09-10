@@ -4,6 +4,11 @@ on:
   push:
     branches: [ main ]
   workflow_dispatch:
+    inputs:
+      backfill_existing_tickets:
+        description: Reprocess eligible existing ticket images
+        type: boolean
+        default: false
 
 jobs:
   deploy:
@@ -34,10 +39,12 @@ jobs:
         env:
           VITE_CONVEX_URL: ${{ vars.VITE_CONVEX_URL }}
       - name: Orient existing ticket images
+        if: github.event_name == 'workflow_dispatch' && inputs.backfill_existing_tickets
         run: node scripts/orient-existing-tickets.mjs
         env:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
       - name: Read existing Marietta and Colorado Materials tickets
+        if: github.event_name == 'workflow_dispatch' && inputs.backfill_existing_tickets
         run: node scripts/read-existing-tickets.mjs
         env:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}

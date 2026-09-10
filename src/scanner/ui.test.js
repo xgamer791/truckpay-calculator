@@ -1,16 +1,17 @@
 // @vitest-environment jsdom
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 
-const orientationMock=vi.hoisted(()=>vi.fn());
-vi.mock('./orientation.js',()=>({detectOrientation:orientationMock}));
+const readerMock=vi.hoisted(()=>vi.fn());
+vi.mock('../ticket-reader/browser.js',()=>({readTicket:readerMock}));
+const matched={version:2,status:'matched',plant:'colorado-materials',ticketNumber:'3556031',confidence:.99,quarterTurns:0};
 let scanner,stop,requests,frames,clock;
 const good={corners:[{x:64,y:34},{x:256,y:34},{x:256,y:246},{x:64,y:246}],confidence:.94,areaRatio:.45,brightness:210,sharpness:200,inkRatio:.08,clipped:false};
-let detection, detectionDelay;
+let detection, detectionDelay, quality;
 class TestWorker {
   postMessage(message){
     requests.push(message);
     if(message.type==='reset')return;
-    const result=message.type==='detect'?(detection?{...detection,corners:detection.corners.map(p=>({x:p.x*message.width/320,y:p.y*message.height/280}))}:null):{width:190,height:210,pixels:new Uint8ClampedArray(190*210*4).fill(255)};
+    const result=message.type==='detect'?(detection?{...detection,corners:detection.corners.map(p=>({x:p.x*message.width/320,y:p.y*message.height/280}))}:null):message.type==='quality'?quality:{width:190,height:210,pixels:new Uint8ClampedArray(190*210*4).fill(255)};
     setTimeout(()=>this.onmessage?.({data:{id:message.id,result}}),message.type==='detect'?detectionDelay:1);
   }
   terminate(){this.onmessage=null;}
@@ -19,8 +20,8 @@ class TestWorker {
 beforeEach(async()=>{
   vi.resetModules();vi.useFakeTimers({toFake:['setTimeout','clearTimeout','performance']});
   document.body.innerHTML='<button id="launch">Open camera</button>';
-  requests=[];frames=0;clock=0;detection=good;detectionDelay=1;
-  stop=vi.fn();orientationMock.mockReset().mockResolvedValue({quarterTurns:0,confident:true});
+  requests=[];frames=0;clock=0;detection=good;detectionDelay=1;quality={ready:true,close:true,focused:true};
+  stop=vi.fn();readerMock.mockReset().mockResolvedValue(matched);
   vi.stubGlobal('Worker',TestWorker);vi.stubGlobal('ResizeObserver',class{observe(){} disconnect(){}});
   vi.stubGlobal('requestAnimationFrame',cb=>setTimeout(()=>cb(performance.now()),16));vi.stubGlobal('cancelAnimationFrame',id=>clearTimeout(id));
   vi.stubGlobal('ImageData',class{constructor(data,width,height){this.data=data;this.width=width;this.height=height;}});
@@ -37,35 +38,56 @@ beforeEach(async()=>{
 });
 afterEach(()=>{scanner?.close();document.removeEventListener('visibilitychange',scanner?.onVisibility);vi.useRealTimers();vi.restoreAllMocks();vi.unstubAllGlobals();});
 
-async function capture(){await vi.advanceTimersByTimeAsync(250);scanner.button('capture').click();await vi.advanceTimersByTimeAsync(30);}
-describe('manual scanner and orientation',()=>{
+async function capture(){await vi.advanceTimersByTimeAsync(650);scanner.button('capture').click();await vi.advanceTimersByTimeAsync(30);}
+describe('quality-gated manual capture and automatic verified saving',()=>{
   it('never takes a photo automatically and has no auto capture control or countdown',async()=>{
     await scanner.open({onSave:vi.fn()});await vi.advanceTimersByTimeAsync(8000);
     expect(scanner.mode).toBe('live');expect(scanner.outline.sample(performance.now()).tracked).toBe(true);
     expect(requests.filter(r=>r.type==='process')).toHaveLength(0);
     expect(document.querySelector('[data-action=auto]')).toBeNull();expect(document.querySelector('[role=progressbar]')).toBeNull();
   });
-  it('captures only after tapping, stops the camera and saves the reviewed oriented image',async()=>{
+  it('shows red and Move closer until steady focus, then green with no guidance text',async()=>{
+    await scanner.open({onSave:vi.fn()});
+    expect(scanner.root.dataset.ready).toBe('false');expect(scanner.button('capture').disabled).toBe(true);
+    expect(document.querySelector('.ticket-camera-status').textContent).toBe('Move closer');
+    await vi.advanceTimersByTimeAsync(650);
+    expect(scanner.root.dataset.ready).toBe('true');expect(scanner.button('capture').disabled).toBe(false);
+    expect(document.querySelector('.ticket-camera-status').textContent).toBe('');
+    expect(document.querySelector('.ticket-camera-hint').hidden).toBe(true);
+    quality={ready:false,close:true,focused:false};await vi.advanceTimersByTimeAsync(200);
+    expect(scanner.root.dataset.ready).toBe('false');expect(scanner.button('capture').disabled).toBe(true);
+    expect(document.querySelector('.ticket-camera-status').textContent).toBe('Focusing…');
+    scanner.button('capture').click();expect(requests.filter(r=>r.type==='process')).toHaveLength(0);
+  });
+  it('shows a loading screen during OCR and saves automatically after a confirmed read',async()=>{
+    let resolve;readerMock.mockReturnValue(new Promise(r=>resolve=r));
     const onSave=vi.fn();await scanner.open({onSave});await capture();
-    expect(scanner.mode).toBe('review');expect(stop).toHaveBeenCalled();expect(onSave).not.toHaveBeenCalled();
-    expect(orientationMock).toHaveBeenCalledTimes(1);
-    scanner.button('save').click();await vi.advanceTimersByTimeAsync(10);
-    expect(onSave).toHaveBeenCalledWith('data:image/jpeg;base64,TEST','black-white',{orientationVersion:1});
+    expect(scanner.mode).toBe('reading');expect(stop).toHaveBeenCalled();expect(onSave).not.toHaveBeenCalled();
+    expect(document.querySelector('.ticket-camera-loading').hidden).toBe(false);
+    expect(document.querySelector('[data-action=save]')).toBeNull();
+    resolve(matched);await vi.advanceTimersByTimeAsync(10);
+    expect(onSave).toHaveBeenCalledWith('data:image/jpeg;base64,TEST','black-white',{orientationVersion:1,ticketRead:matched,documentId:expect.stringMatching(/^doc_/)});
+    expect(scanner.root).toBeNull();
   });
-  it('turns text upright before review and preserves a manual correction through recropping',async()=>{
-    orientationMock.mockResolvedValue({quarterTurns:1,confident:true});
-    await scanner.open({onSave:vi.fn()});await capture();
-    expect(scanner.preview.width).toBe(210);expect(scanner.preview.height).toBe(190);
-    scanner.button('rotate').click();expect(scanner.quarterTurns).toBe(2);
-    scanner.button('crop').click();scanner.button('apply').click();await vi.advanceTimersByTimeAsync(30);
-    expect(scanner.quarterTurns).toBe(2);expect(orientationMock).toHaveBeenCalledTimes(1);
+  it('uses the fresh reader to orient the saved photo',async()=>{
+    readerMock.mockResolvedValue({...matched,quarterTurns:1});
+    let dimensions;await scanner.open({onSave:()=>{dimensions=[scanner.preview.width,scanner.preview.height];}});await capture();
+    expect(dimensions).toEqual([210,190]);expect(readerMock).toHaveBeenCalledTimes(1);
   });
-  it('keeps the image and manual Rotate available if orientation cannot be determined',async()=>{
-    orientationMock.mockRejectedValue(new Error('Offline'));
-    await scanner.open({onSave:vi.fn()});await capture();
-    expect(scanner.mode).toBe('review');expect(scanner.dataUrl).toBeTruthy();
-    expect(document.querySelector('.ticket-camera-status').textContent).toContain('Check orientation');
-    expect(scanner.button('rotate')).not.toBeNull();
+  it.each(['unreadable','ignored','low-confidence','reader-error'])('requires recapture without saving on %s',async status=>{
+    if(status==='reader-error')readerMock.mockRejectedValue(new Error('Ticket reader could not finish'));
+    else readerMock.mockResolvedValue(status==='low-confidence'?{...matched,confidence:.7}:{version:2,status});
+    const onSave=vi.fn();await scanner.open({onSave});await capture();
+    expect(scanner.mode).toBe('recapture');expect(onSave).not.toHaveBeenCalled();expect(scanner.dataUrl).toBeNull();
+    expect(scanner.button('retry-save').hidden).toBe(true);expect(scanner.button('recapture').hidden).toBe(false);
+    await scanner.save();expect(onSave).not.toHaveBeenCalled();
+    readerMock.mockResolvedValue(matched);scanner.button('recapture').click();await vi.advanceTimersByTimeAsync(10);
+    await capture();expect(onSave).toHaveBeenCalledTimes(1);expect(scanner.root).toBeNull();
+  });
+  it('discards an OCR result when the scanner is closed while reading',async()=>{
+    let resolve;readerMock.mockReturnValue(new Promise(r=>resolve=r));
+    const onSave=vi.fn();await scanner.open({onSave});await capture();scanner.close();
+    resolve(matched);await vi.advanceTimersByTimeAsync(10);expect(onSave).not.toHaveBeenCalled();
   });
   it('keeps the guide visible through detection loss and recovers tracking',async()=>{
     await scanner.open({onSave:vi.fn()});await vi.advanceTimersByTimeAsync(600);
@@ -82,7 +104,7 @@ describe('manual scanner and orientation',()=>{
     expect(scanner.mode).toBe('live');expect(scanner.outline.sample(performance.now()).tracked).toBe(true);
   });
   it('keeps side handles and the magnifier working',async()=>{
-    detection=null;await scanner.open({onSave:vi.fn()});await capture();
+    detection=null;await scanner.open({onSave:vi.fn()});scanner.stopCamera();scanner.source=scanner.snapshot(scanner.video);scanner.editCrop();
     const side=document.querySelector('[data-side="1"]'),before=scanner.corners.map(p=>({...p}));side.setPointerCapture=vi.fn();
     const pointer=(type,x,y)=>{const e=new MouseEvent(type,{bubbles:true,clientX:x,clientY:y});Object.defineProperty(e,'pointerId',{value:1});side.dispatchEvent(e);};
     pointer('pointerdown',343,300);pointer('pointermove',304,300);
@@ -92,8 +114,9 @@ describe('manual scanner and orientation',()=>{
   });
   it('keeps a captured ticket available if saving fails',async()=>{
     await scanner.open({onSave:vi.fn().mockRejectedValue(new Error('Storage is full'))});await capture();
-    scanner.button('save').click();await vi.advanceTimersByTimeAsync(10);
-    expect(scanner.mode).toBe('review');expect(scanner.dataUrl).toBeTruthy();expect(scanner.button('save').disabled).toBe(false);
+    expect(scanner.mode).toBe('save-error');expect(scanner.dataUrl).toBeTruthy();expect(scanner.button('retry-save').hidden).toBe(false);
+    scanner.options.onSave=vi.fn();scanner.button('retry-save').click();await vi.advanceTimersByTimeAsync(10);
+    expect(scanner.root).toBeNull();expect(readerMock).toHaveBeenCalledTimes(1);
   });
   it('stops the camera in the background and resumes edge tracking',async()=>{
     await scanner.open({onSave:vi.fn()});await vi.advanceTimersByTimeAsync(500);

@@ -6,6 +6,7 @@ import { loadDriverState } from "./lib/state";
 import { TRUCKING_COMPANY } from "./lib/fleet";
 import { ocrWithRead, ticketReadValue, validateRead } from './lib/ticketRead';
 import { preferredTicketRead } from '../src/ticket-reader/metadata.js';
+import { confirmedNumber } from '../src/ticket-reader/duplicates.js';
 
 const pricingMode = v.union(
   v.literal("auto"),
@@ -237,6 +238,23 @@ export const saveSnapshot = mutation({
       .collect();
     const ticketsByClient = new Map(existingTickets.map((item) => [item.clientId, item]));
     const desiredTicketIds = new Set<string>();
+    const claims = await ctx.db.query('ticketNumberClaims').withIndex('by_user', q => q.eq('userId', userId)).collect();
+    const numbered = args.tickets.map(ticket => {
+      const existing = ticketsByClient.get(ticket.clientId);
+      const sameImage = existing?.storageId === ticket.storageId || existing?.orientationSourceId === ticket.storageId;
+      const number = confirmedNumber({ ticketRead: sameImage ? preferredTicketRead(existing?.ticketRead, ticket.ticketRead) : ticket.ticketRead });
+      return { ticket, existing, number };
+    });
+    for (const { ticket, existing, number } of numbered) {
+      if (!number) continue;
+      // Leave historical images alone, including previously duplicated records.
+      // New numbers/attachments must be unique in the complete account.
+      if (existing && confirmedNumber(existing) === number && existing.loadId === loadDatabaseIds.get(ticket.loadClientId)) continue;
+      const conflict = numbered.some(other => other.ticket.clientId !== ticket.clientId && other.number === number) ||
+        existingTickets.some(other => other.clientId !== ticket.clientId && confirmedNumber(other) === number && other.loadId !== loadDatabaseIds.get(ticket.loadClientId)) ||
+        claims.some(claim => claim.number === number && claim.expiresAt > now && claim.documentClientId !== ticket.clientId);
+      if (conflict) throw new ConvexError(`Duplicate ticket #${number}. This number is already attached to another ticket. Replace the duplicate photo with the correct ticket.`);
+    }
 
     for (const ticket of args.tickets) {
       desiredTicketIds.add(ticket.clientId);
@@ -292,6 +310,9 @@ export const saveSnapshot = mutation({
         }
         await ctx.db.delete(ticket._id);
       }
+    }
+    for (const claim of claims) {
+      if (desiredTicketIds.has(claim.documentClientId) || claim.expiresAt <= now) await ctx.db.delete(claim._id);
     }
     for (const load of existingLoads) {
       if (!desiredLoadIds.has(load.clientId)) await ctx.db.delete(load._id);

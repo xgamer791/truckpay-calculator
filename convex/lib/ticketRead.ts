@@ -8,6 +8,7 @@ export const ticketReadValue = v.object({
   plant: v.optional(v.union(v.literal('martin-marietta'), v.literal('colorado-materials'))),
   ticketNumber: v.optional(v.string()),
   confidence: v.optional(v.number()),
+  quarterTurns: v.optional(v.number()),
 });
 
 export function validateRead(result: { version: number; status: string; ticketNumber?: string; plant?: string; confidence?: number }) {

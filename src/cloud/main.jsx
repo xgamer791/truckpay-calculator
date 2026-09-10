@@ -20,9 +20,10 @@ import "./styles.css";
 import "../scanner/scanner.css";
 import "../scanner/ui.js";
 import { readTicket, applyTicketRead } from '../ticket-reader/browser.js';
-import { needsTicketRead } from '../ticket-reader/metadata.js';
+import { needsTicketRead, isConfirmedRead } from '../ticket-reader/metadata.js';
+import { replacementIds, duplicateInHistory, duplicateError } from '../ticket-reader/duplicates.js';
 
-window.DriverTicketReader = { readTicket, applyTicketRead };
+window.DriverTicketReader = { readTicket, applyTicketRead, isConfirmedRead, replacementIds, duplicateInHistory, duplicateError };
 
 const convexUrl = import.meta.env.VITE_CONVEX_URL;
 
@@ -547,6 +548,7 @@ function CloudSession({ profileState }) {
   const saving = useRef(false);
   const dirty = useRef(false);
   const timer = useRef(null);
+  const rejectedSync = useRef('');
 
   const applyRemote = useCallback((state) => {
     if (!state?.profile || typeof window.driverPayApplyCloudSnapshot !== "function") return;
@@ -606,13 +608,19 @@ function CloudSession({ profileState }) {
       await saveSnapshot(buildSnapshot(uploaded.history, local.settings));
       window.__driverPayNativeSetItem?.("driverpay_doc_sync_queue", "[]");
       setSyncStatus("Cloud synced");
+      rejectedSync.current = '';
     } catch (error) {
       console.error("[DriverPay cloud]", error);
       dirty.current = true;
-      setSyncStatus(navigator.onLine ? "Sync needs attention" : "Saved offline");
+      setSyncStatus(navigator.onLine ? messageFrom(error) : "Saved offline");
+      if (messageFrom(error).includes('Duplicate ticket #')) {
+        const reason = messageFrom(error);
+        if (rejectedSync.current !== reason) window.appAlert?.(reason, { title: 'Duplicate ticket rejected' });
+        rejectedSync.current = reason;
+      }
     } finally {
       saving.current = false;
-      if (dirty.current && navigator.onLine) {
+      if (dirty.current && navigator.onLine && !rejectedSync.current) {
         clearTimeout(timer.current);
         timer.current = setTimeout(syncNow, 1200);
       }
@@ -623,6 +631,7 @@ function CloudSession({ profileState }) {
     const localChange = () => {
       if (!hydrated.current) return;
       dirty.current = true;
+      rejectedSync.current = '';
       setSyncStatus(navigator.onLine ? "Waiting to sync…" : "Saved offline");
       clearTimeout(timer.current);
       timer.current = setTimeout(syncNow, 700);
@@ -701,5 +710,15 @@ if (!convexUrl) {
   );
 } else {
   const client = new ConvexReactClient(convexUrl);
+  window.driverPayReserveTicketNumber = async args => {
+    if (!navigator.onLine) throw new Error('Connect to the internet so the app can check for duplicate ticket numbers before saving.');
+    let timer;
+    try {
+      return await Promise.race([client.mutation(cloudApi.sync.reserveTicketNumber, args), new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error('The duplicate ticket check could not finish. Check your connection and retry saving.')), 15000);
+      })]);
+    } finally { clearTimeout(timer); }
+  };
+  window.driverPayReleaseTicketNumber = args => client.mutation(cloudApi.sync.releaseTicketNumber, args).catch(() => {});
   root.render(<ConvexAuthProvider client={client}><Root /></ConvexAuthProvider>);
 }

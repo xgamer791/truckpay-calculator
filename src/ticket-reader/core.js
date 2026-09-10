@@ -194,7 +194,7 @@ export async function readPlantTicket(image, engine) {
     if (number !== candidate.number || confirmed.confidence < .93 || confirmed.minimum < .75) continue;
     const full = ticketCandidate(lines);
     if (full && full.number !== number) continue;
-    return { version: READER_VERSION, template: template.id, status: 'matched', plant: template.supplier, ticketNumber: number,
+    return { version: READER_VERSION, template: template.id, status: 'matched', plant: template.supplier, ticketNumber: number, quarterTurns: turns,
       confidence: Math.min(candidate.line.confidence, confirmed.confidence) };
   }
   return recognizedPlant

@@ -27,12 +27,8 @@
 .ticket-camera-shutter span { display:block; width:100%; height:100%; border-radius:50%; background:#2563eb; transition:transform .15s; }
 .ticket-camera-shutter:active span { transform:scale(.9); }
 .ticket-camera-hint { margin:14px auto 0; max-width:420px; text-align:center; font-size:11px; line-height:1.4; color:#64748b; }
-.ticket-camera-review-actions,.ticket-camera-crop-actions { display:flex; justify-content:center; gap:8px; max-width:520px; margin:auto; }
-.ticket-camera-review-actions button,.ticket-camera-crop-actions button,.ticket-camera-error button { min-height:46px; padding:11px 12px; border:1px solid #dbe4ef; border-radius:12px; background:#f8fafc; color:#334155; font-size:12px; font-weight:800; display:flex; align-items:center; justify-content:center; gap:5px; }
-.ticket-camera-review-actions button svg { width:19px; height:19px; }
-.ticket-camera-review-actions { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); }
-.ticket-camera-review-actions button { padding:10px 6px; }
-.ticket-camera-review-actions [data-action=save] { grid-column:1/-1; }
+.ticket-camera-crop-actions { display:flex; justify-content:center; gap:8px; max-width:520px; margin:auto; }
+.ticket-camera-crop-actions button,.ticket-camera-error button { min-height:46px; padding:11px 12px; border:1px solid #dbe4ef; border-radius:12px; background:#f8fafc; color:#334155; font-size:12px; font-weight:800; display:flex; align-items:center; justify-content:center; gap:5px; }
 .ticket-camera button.ticket-camera-primary { background:#2563eb; color:#fff; border-color:#2563eb; flex:1; }
 .ticket-camera-error { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; padding:28px; background:#f4f7fb; text-align:center; }
 .ticket-camera-error strong { font-size:21px; }
@@ -41,5 +37,14 @@
 .ticket-camera-error button:first-of-type { background:#2563eb; color:#fff; }
 .ticket-camera-file { position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; }
 .ticket-camera[data-mode=processing] .ticket-camera-status { color:#2563eb; }
-@media (orientation:landscape) and (max-height:600px) { .ticket-camera { display:grid; grid-template-columns:1fr 240px; grid-template-rows:auto 1fr; } .ticket-camera-header { grid-column:1/-1; padding:6px 14px; } .ticket-camera-footer { grid-column:2; grid-row:2; display:flex; flex-direction:column; justify-content:center; padding:12px; } .ticket-camera-stage { grid-column:1; grid-row:2; } .ticket-camera-live-actions { gap:0; grid-template-columns:1fr 76px 1fr; } .ticket-camera-review-actions { grid-template-columns:repeat(2,minmax(0,1fr)); margin:0; } .ticket-camera-review-actions [data-action=crop] { grid-column:1/-1; } }
+.ticket-camera[data-mode=live][data-ready=false] .ticket-camera-status { color:#dc2626; }
+.ticket-camera-loading,.ticket-camera-result { position:absolute; inset:0; z-index:4; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px; padding:28px; background:#f4f7fb; text-align:center; }
+.ticket-camera-loading strong,.ticket-camera-result strong { font-size:23px; letter-spacing:-.02em; }
+.ticket-camera-loading p,.ticket-camera-result p { max-width:340px; margin:0; color:#64748b; font-size:14px; line-height:1.6; }
+.ticket-camera-result button { width:min(300px,100%); min-height:50px; padding:12px; border:0; border-radius:14px; font-size:14px; font-weight:800; }
+.ticket-camera-result button.ticket-camera-primary { flex:0 0 auto; }
+.ticket-camera-spinner { width:46px; height:46px; border:4px solid #dbeafe; border-top-color:#2563eb; border-radius:50%; animation:ticket-spin .85s linear infinite; }
+@keyframes ticket-spin { to { transform:rotate(360deg); } }
+@media (prefers-reduced-motion:reduce) { .ticket-camera-spinner { animation:none; border-style:dotted; } }
+@media (orientation:landscape) and (max-height:600px) { .ticket-camera { display:grid; grid-template-columns:1fr 240px; grid-template-rows:auto 1fr; } .ticket-camera-header { grid-column:1/-1; padding:6px 14px; } .ticket-camera-footer { grid-column:2; grid-row:2; display:flex; flex-direction:column; justify-content:center; padding:12px; } .ticket-camera-stage { grid-column:1; grid-row:2; } .ticket-camera-live-actions { gap:0; grid-template-columns:1fr 76px 1fr; } .ticket-camera[data-mode=processing] .ticket-camera-stage,.ticket-camera[data-mode=reading] .ticket-camera-stage,.ticket-camera[data-mode=saving] .ticket-camera-stage,.ticket-camera[data-mode=recapture] .ticket-camera-stage,.ticket-camera[data-mode=save-error] .ticket-camera-stage { grid-column:1/-1; } }
 @media (prefers-reduced-motion:reduce) { .ticket-camera-shutter span { transition:none; } }
