@@ -3,10 +3,11 @@ import { v } from "convex/values";
 import { isAdminEmail, requireAdmin } from "./lib/security";
 import { loadDriverState } from "./lib/state";
 import { TRUCKING_COMPANY } from "./lib/fleet";
+import { isConfirmedRead } from '../src/ticket-reader/metadata.js';
 
 export const listDrivers = query({
-  args: {},
-  handler: async (ctx) => {
+  args: { payoutDate: v.optional(v.string()) },
+  handler: async (ctx, { payoutDate }) => {
     await requireAdmin(ctx);
     const profiles = (await ctx.db.query("driverProfiles").collect())
       .filter((profile) => !isAdminEmail(profile.email));
@@ -26,6 +27,13 @@ export const listDrivers = query({
             .withIndex("by_user", (q) => q.eq("userId", profile.userId))
             .collect(),
         ]);
+        const selectedSettlements = settlements.filter(s => payoutDate === undefined || s.payoutDate === payoutDate);
+        const settlementIds = new Set(selectedSettlements.map(s => String(s._id)));
+        const selectedLoads = loads.filter(l => settlementIds.has(String(l.settlementId)));
+        const loadIds = new Set(selectedLoads.map(l => String(l._id)));
+        const selectedTickets = tickets.filter(t => loadIds.has(String(t.loadId)));
+        const documentedLoads = new Set(selectedTickets.map(t => String(t.loadId)));
+        const unverifiedLoads = new Set(selectedTickets.filter(t => !isConfirmedRead(t.ticketRead)).map(t => String(t.loadId)));
         return {
           userId: profile.userId,
           email: profile.email,
@@ -34,11 +42,17 @@ export const listDrivers = query({
           company: TRUCKING_COMPANY,
           truckNumber: profile.truckNumber,
           role: profile.role,
-          settlementCount: settlements.length,
-          loadCount: loads.length,
-          ticketCount: tickets.length,
-          totalPay: loads.reduce((total, load) => total + load.calculatedPay, 0),
-          updatedAt: profile.updatedAt,
+          payoutDates: [...new Set(settlements.map(s => s.payoutDate))].sort().reverse(),
+          payoutDate: payoutDate ?? null,
+          settlementCount: selectedSettlements.length,
+          loadCount: selectedLoads.length,
+          ticketCount: selectedTickets.length,
+          missingTickets: selectedLoads.filter(l => !documentedLoads.has(String(l._id))).length,
+          unverifiedLoads: unverifiedLoads.size,
+          totalPay: selectedLoads.reduce((total, load) => total + load.calculatedPay, 0),
+          totalMiles: selectedLoads.reduce((total, load) => total + load.miles, 0),
+          totalTons: selectedLoads.reduce((total, load) => total + load.tons, 0),
+          updatedAt: [...selectedLoads, ...selectedTickets].reduce((latest, row) => Math.max(latest, row.updatedAt), profile.updatedAt),
         };
       }),
     );
@@ -47,9 +61,9 @@ export const listDrivers = query({
 });
 
 export const getDriverState = query({
-  args: { userId: v.id("users") },
+  args: { userId: v.id("users"), payoutDate: v.optional(v.string()) },
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
-    return await loadDriverState(ctx, args.userId);
+    return await loadDriverState(ctx, args.userId, args.payoutDate);
   },
 });

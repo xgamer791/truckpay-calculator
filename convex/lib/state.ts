@@ -2,8 +2,8 @@ import type { QueryCtx } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
 import { TRUCKING_COMPANY } from "./fleet";
 
-export async function loadDriverState(ctx: QueryCtx, userId: Id<"users">) {
-  const [profile, settlements, loads, tickets] = await Promise.all([
+export async function loadDriverState(ctx: QueryCtx, userId: Id<"users">, payoutDate?: string) {
+  const [profile, allSettlements, allLoads, allTickets] = await Promise.all([
     ctx.db
       .query("driverProfiles")
       .withIndex("by_user", (q) => q.eq("userId", userId))
@@ -22,6 +22,13 @@ export async function loadDriverState(ctx: QueryCtx, userId: Id<"users">) {
       .collect(),
   ]);
 
+  // Filter by persisted settlement identity before resolving any ticket images.
+  // A matching weekday or recently uploaded ticket never joins another period.
+  const settlements = allSettlements.filter(s => payoutDate === undefined || s.payoutDate === payoutDate);
+  const settlementIds = new Set(settlements.map(s => String(s._id)));
+  const loads = allLoads.filter(l => settlementIds.has(String(l.settlementId)));
+  const loadIds = new Set(loads.map(l => String(l._id)));
+  const tickets = allTickets.filter(t => loadIds.has(String(t.loadId)));
   const ticketViews = await Promise.all(
     tickets.map(async (ticket) => ({
       ...ticket,
