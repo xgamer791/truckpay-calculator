@@ -46,6 +46,8 @@ describe('original ticket vision',()=>{
     }
     expect(darkInk/(result.width*result.height)).toBeGreaterThan(.01);
     expect(cleanPaper/(result.width*result.height)).toBeGreaterThan(.9);
+    expect(result.readerPixels).toBeInstanceOf(Uint8ClampedArray);
+    expect(result.readerPixels).not.toBe(result.pixels);
     expect(result.enhancementVersion).toBe(2);
   });
   it('does not find a document in a uniform frame',()=>{

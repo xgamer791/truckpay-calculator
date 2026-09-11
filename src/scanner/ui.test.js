@@ -11,7 +11,7 @@ class TestWorker {
   postMessage(message){
     requests.push(message);
     if(message.type==='reset')return;
-    const result=message.type==='detect'?(detection?{...detection,corners:detection.corners.map(p=>({x:p.x*message.width/320,y:p.y*message.height/280}))}:null):message.type==='quality'?quality:{width:190,height:210,enhancementVersion,pixels:new Uint8ClampedArray(190*210*4).fill(255)};
+    const result=message.type==='detect'?(detection?{...detection,corners:detection.corners.map(p=>({x:p.x*message.width/320,y:p.y*message.height/280}))}:null):message.type==='quality'?quality:{width:190,height:210,enhancementVersion,pixels:new Uint8ClampedArray(190*210*4).fill(255),readerPixels:new Uint8ClampedArray(190*210*4).fill(220)};
     setTimeout(()=>this.onmessage?.({data:{id:message.id,result}}),message.type==='detect'?detectionDelay:1);
   }
   terminate(){this.onmessage=null;}
