@@ -15,7 +15,9 @@ self.onmessage=({data:message})=>{
       self.postMessage({id,result:measureCaptureQuality(new Uint8ClampedArray(buffer),width,height,corners)});
     } else if(type==='process'||type==='enhance'){
       const result=type==='process'?processTicket(new Uint8ClampedArray(buffer),width,height,corners):enhanceTicket(new Uint8ClampedArray(buffer),width,height);
-      self.postMessage({id,result},{transfer:[result.pixels.buffer]});
+      const transfer=[result.pixels.buffer];
+      if(result.readerPixels)transfer.push(result.readerPixels.buffer);
+      self.postMessage({id,result},{transfer});
     }
   }catch(error){self.postMessage({id,error:error.message||'Ticket processing failed.'});}
 };

@@ -128,9 +128,35 @@ export async function createEngine(ort, models, dictionaryText, options = {}) {
 }
 
 const compact = value => String(value || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-function identityText(lines, image, region) {
-  return compact(lines.filter(line => line.confidence >= .80 && (!image ||
-    (line.box.x < image.width * region.width && line.box.y < image.height * region.height))).map(line => line.text).join(' '));
+const comparable = value => compact(value).replace(/[1i]/g, 'l').replace(/0/g, 'o').replace(/5/g, 's');
+function identityLines(lines, image, region, minimumConfidence = .80) {
+  return lines.filter(line => line.confidence >= minimumConfidence && (!image ||
+    (line.box.x < image.width * region.width && line.box.y < image.height * region.height)));
+}
+function identityText(lines, image, region, minimumConfidence = .80) {
+  return compact(identityLines(lines, image, region, minimumConfidence).map(line => line.text).join(' '));
+}
+function editDistance(a, b) {
+  let previous = Array.from({ length: b.length + 1 }, (_, index) => index);
+  for (let i = 0; i < a.length; i++) {
+    const current = [i + 1];
+    for (let j = 0; j < b.length; j++) current[j + 1] = Math.min(
+      current[j] + 1, previous[j + 1] + 1, previous[j] + (a[i] === b[j] ? 0 : 1),
+    );
+    previous = current;
+  }
+  return previous[b.length];
+}
+function approximatelyIncludes(value, expected, allowedErrors = 2) {
+  const text = comparable(value), target = comparable(expected);
+  if (text.includes(target)) return true;
+  const shortest = Math.max(1, target.length - allowedErrors), longest = target.length + allowedErrors;
+  for (let length = shortest; length <= longest; length++) {
+    for (let start = 0; start + length <= text.length; start++) {
+      if (editDistance(text.slice(start, start + length), target) <= allowedErrors) return true;
+    }
+  }
+  return false;
 }
 export function isMarietta(lines, image) {
   const text = identityText(lines, image, MARIETTA_TEMPLATE.identityRegion);
@@ -141,7 +167,11 @@ export function isMarietta(lines, image) {
 }
 
 export function isColorado(lines, image) {
-  return identityText(lines, image, COLORADO_TEMPLATE.identityRegion).includes(COLORADO_TEMPLATE.companyHeading);
+  const relaxed = identityText(lines, image, COLORADO_TEMPLATE.identityRegion, .68);
+  // Hunter Stone's own form says "A Division of Colorado Materials". Its
+  // prominent Hunter heading must win instead of being mislabeled Colorado.
+  if (approximatelyIncludes(relaxed, 'hunterstone', 1)) return false;
+  return approximatelyIncludes(relaxed, COLORADO_TEMPLATE.companyHeading, 2);
 }
 
 export function isLaGrange(lines, image) {
@@ -196,7 +226,18 @@ export async function readPlantTicket(image, engine) {
     const lines = (await engine.lines(identity)).map(line => ({ ...line, box: {
       x: line.box.x * sx, y: line.box.y * sy, width: line.box.width * sx, height: line.box.height * sy,
     } }));
-    const template = classifyPlant(lines, page);
+    let template = classifyPlant(lines, page);
+    if (!template) {
+      // Retry only the identity area at higher detail. This avoids rejecting a
+      // clean ticket merely because its small supplier heading was downscaled.
+      const detailRegion = { x: 0, y: 0, width: .75, height: .38 };
+      const detail = preparePixels(image, { turns, region: detailRegion, maxWidth: 1600 });
+      const dx = page.width * detailRegion.width / detail.width, dy = page.height * detailRegion.height / detail.height;
+      const detailLines = (await engine.lines(detail)).map(line => ({ ...line, box: {
+        x: line.box.x * dx, y: line.box.y * dy, width: line.box.width * dx, height: line.box.height * dy,
+      } }));
+      template = classifyPlant([...lines, ...detailLines], page);
+    }
     if (!template) continue;
     recognizedPlant = template;
     const header = preparePixels(image, { turns, region: template.ticketRegion, maxWidth: 1400 });

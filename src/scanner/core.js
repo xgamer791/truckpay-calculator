@@ -349,10 +349,12 @@ export function cleanMonochrome(gray,w,h) {
 
 export function processTicket(rgba,w,h,corners){
   const warped=rectify(rgba,w,h,corners);
-  const scanned=cleanMonochrome(warped.gray,warped.width,warped.height);
+  const readerPixels=cleanMonochrome(warped.gray,warped.width,warped.height);
   // Existing scans received this finishing pass during migration. New photos
-  // need it too, after rectification/scan cleanup and before OCR or JPEG export.
-  return {...enhanceTicket(scanned,warped.width,warped.height),enhancementVersion:2};
+  // need it too before JPEG export. OCR uses the first, lossless cleanup pass:
+  // running small header text through the finishing curve twice can erase the
+  // thin strokes that distinguish a known plant name.
+  return {...enhanceTicket(readerPixels,warped.width,warped.height),readerPixels,enhancementVersion:2};
 }
 
 export function enhanceTicket(rgba,w,h){return {width:w,height:h,pixels:cleanMonochrome(luminance(rgba,w,h),w,h)};}

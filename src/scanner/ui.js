@@ -339,8 +339,10 @@ class TicketScanner {
       if(result.enhancementVersion!==2)throw new Error('Ticket enhancement did not finish');
       this.enhancementVersion=result.enhancementVersion;
       this.processed=makeCanvas();this.processed.width=result.width;this.processed.height=result.height;this.processed.getContext('2d').putImageData(new ImageData(result.pixels,result.width,result.height),0,0);
+      const reader=makeCanvas();reader.width=result.width;reader.height=result.height;
+      reader.getContext('2d').putImageData(new ImageData(result.readerPixels||result.pixels,result.width,result.height),0,0);
       this.setMode('reading');
-      const ticketRead=await readTicket(this.processed);
+      const ticketRead=await readTicket(reader);
       if(!this.root||session!==this.session)return;
       if(!isConfirmedRead(ticketRead)){
         this.requireRetake(ticketRead?.status==='ignored'?'Plant not recognized. Capture the whole Martin Marietta, Colorado Materials, or La Grange ticket, including the plant name and ticket number.':'The ticket number is blurry, missing, or could not be verified. Retake the whole ticket with the guide green.');return;

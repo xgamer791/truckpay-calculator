@@ -35,6 +35,15 @@ it('distinguishes Colorado Materials from Marietta and rejects ambiguous heading
   expect(classifyPlant(colorado.slice(1))).toBeNull();
 });
 
+it('recognizes a clean Colorado ticket despite ordinary heading OCR errors', () => {
+  expect(isColorado([line('Coiorado Materlals, Ltd.', 10, 10, .72)])).toBe(true);
+  expect(isColorado([
+    line('HUNTER STONE', 10, 10, .75),
+    line('A Division of Colorado Materials, Ltd.', 10, 35, .75),
+  ])).toBe(false);
+  expect(isColorado([line('Colorado Quarry Materials', 10, 10, .75)])).toBe(false);
+});
+
 it('revisits previously ignored Colorado tickets while retaining confirmed Marietta reads', () => {
   const marietta = { version: 1, status: 'matched', plant: 'martin-marietta', ticketNumber: '23696214', confidence: .99 };
   const colorado = { version: 2, status: 'matched', plant: 'colorado-materials', ticketNumber: '3556031', confidence: .99 };
