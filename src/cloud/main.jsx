@@ -11,12 +11,14 @@ import {
   useQuery,
 } from "convex/react";
 import { cloudApi } from "./api";
+import AdminWorkspace from './AdminWorkspace.jsx';
+import { localDateKey, payoutForDate } from './pay-periods.js';
 import {
   buildSnapshot,
-  driverTotals,
   uploadPendingTicketImages,
 } from "./state";
 import "./styles.css";
+import './admin.css';
 import "../scanner/scanner.css";
 import "../scanner/ui.js";
 import { readTicket, applyTicketRead } from '../ticket-reader/browser.js';
@@ -24,6 +26,7 @@ import { needsTicketRead, isConfirmedRead } from '../ticket-reader/metadata.js';
 import { replacementIds, duplicateInHistory, duplicateError } from '../ticket-reader/duplicates.js';
 
 window.DriverTicketReader = { readTicket, applyTicketRead, isConfirmedRead, replacementIds, duplicateInHistory, duplicateError };
+window.DriverPayPeriods = { localDateKey, payoutForDate };
 
 const convexUrl = import.meta.env.VITE_CONVEX_URL;
 
@@ -284,97 +287,6 @@ function AccountModal({ profileState, onClose }) {
   );
 }
 
-function AdminDriverDetails({ userId }) {
-  const state = useQuery(cloudApi.admin.getDriverState, userId ? { userId } : "skip");
-  if (!userId) return <div className="admin-empty">Select a driver to view their records.</div>;
-  if (state === undefined) return <div className="admin-empty">Loading driver records…</div>;
-  const totals = driverTotals(state.history);
-  return (
-    <div className="admin-details">
-      <div className="admin-profile-line">
-        <strong>{state.profile?.fullName}</strong>
-        <span>{state.profile?.email}</span>
-        <span>{state.profile?.company} · {truckLabel(state.profile?.truckNumber)}</span>
-      </div>
-      <div className="admin-stat-grid">
-        <div><strong>{totals.settlements}</strong><span>Settlements</span></div>
-        <div><strong>{totals.loads}</strong><span>Loads</span></div>
-        <div><strong>{totals.tickets}</strong><span>Tickets</span></div>
-        <div><strong>${totals.pay.toFixed(2)}</strong><span>Driver Pay</span></div>
-      </div>
-      <div className="admin-settlements">
-        {state.history.map((settlement) => (
-          <section key={settlement.id}>
-            <h3>Settlement {settlement.payoutDate}</h3>
-            {settlement.loads.map((load) => (
-              <div className="admin-load" key={load.id}>
-                <div><strong>{load.miles} mi · {load.tons} tons</strong><span>{load.day} · ${(Number(load.calculatedPay) || 0).toFixed(2)}</span></div>
-                {load.note && <p>{load.note}</p>}
-                <div className="admin-tickets">
-                  {(load.documents || []).map((ticket) => (
-                    <a key={ticket.id} href={ticket.processed} target="_blank" rel="noreferrer">
-                      <img src={ticket.processed} alt={`Ticket ${ticket.ocr?.ticketNumber || "photo"}`} />
-                      <span>{ticket.ocr?.ticketNumber ? `#${ticket.ocr.ticketNumber}` : "View ticket"}</span>
-                    </a>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </section>
-        ))}
-        {!state.history.length && <div className="admin-empty">This driver has no cloud records yet.</div>}
-      </div>
-    </div>
-  );
-}
-
-function AdminWorkspace() {
-  const drivers = useQuery(cloudApi.admin.listDrivers, {});
-  const [expandedDriver, setExpandedDriver] = useState(null);
-
-  return (
-    <div className="admin-layout">
-      <aside className="admin-driver-list">
-        {drivers === undefined && <div className="admin-empty">Loading drivers…</div>}
-        {drivers?.map((driver) => {
-          const expanded = expandedDriver === driver.userId;
-          const detailId = `admin-driver-${driver.userId}`;
-          return (
-            <section key={driver.userId} className={`admin-driver-card${expanded ? " expanded" : ""}`}>
-              <button
-                className="admin-driver-summary"
-                onClick={() => setExpandedDriver(expanded ? null : driver.userId)}
-                aria-expanded={expanded}
-                aria-controls={detailId}
-              >
-                <span className="admin-driver-copy">
-                  <strong>{driver.fullName}</strong>
-                  <span>{driver.company} · {truckLabel(driver.truckNumber)}</span>
-                  <small>{driver.loadCount} loads · {driver.ticketCount} tickets</small>
-                </span>
-                <span className="admin-driver-pay">
-                  <small>Total Driver Pay</small>
-                  <strong>${(Number(driver.totalPay) || 0).toFixed(2)}</strong>
-                </span>
-                <span className="admin-driver-chevron" aria-hidden="true">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="6 9 12 15 18 9" />
-                  </svg>
-                </span>
-              </button>
-              {expanded && (
-                <div className="admin-driver-expanded" id={detailId}>
-                  <AdminDriverDetails userId={driver.userId} />
-                </div>
-              )}
-            </section>
-          );
-        })}
-        {drivers?.length === 0 && <div className="admin-empty">No driver accounts yet.</div>}
-      </aside>
-    </div>
-  );
-}
 
 function AdminModal({ onClose }) {
   return (
@@ -399,8 +311,9 @@ function AdminHelpModal({ onClose }) {
           <button className="cloud-close" onClick={onClose} aria-label="Close">×</button>
         </div>
         <div className="admin-help-content">
-          <section><strong>Expand a driver</strong><p>Tap a driver card to review their profile, settlements, loads, pay totals, and uploaded tickets.</p></section>
-          <section><strong>Open a ticket</strong><p>Tap any ticket thumbnail to open the stored image at full size.</p></section>
+          <section><strong>Choose a pay period</strong><p>Work weeks start Friday and end Thursday. Payout is the following Saturday. All totals, driver records, and exports follow the selected period.</p></section>
+          <section><strong>Review a driver</strong><p>Search by name or truck, open a driver, and review loads grouped by workday. Use the ticket filters to find missing photos or unverified numbers.</p></section>
+          <section><strong>Export and print</strong><p>Export a fleet pay summary or a driver's filtered load ledger. Print the selected driver's full period. Ticket photos expand without leaving the ledger.</p></section>
           <section><strong>Automatic updates</strong><p>The dashboard refreshes automatically when drivers synchronize new records.</p></section>
         </div>
       </div>
@@ -512,10 +425,6 @@ function AdminHome({ profileState }) {
           </div>
         </header>
         <main className="admin-home-panel">
-          <div className="admin-home-panel-head">
-            <div><div className="auth-kicker">DRIVERS</div><h1>Driver Accounts</h1></div>
-            <p>Review every driver’s loads, pay, and uploaded tickets.</p>
-          </div>
           <AdminWorkspace />
         </main>
       </div>
